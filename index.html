@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CV Genius Ghana</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar" id="navbar">
+  <div class="nav-container">
+    <div class="nav-logo">
+      <span class="logo-icon">⭐</span>
+      <span class="logo-text">CV <span class="accent">Genius</span> Ghana</span>
+    </div>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="#home">Home</a></li>
+      <li><a href="#how">How It Works</a></li>
+      <li><a href="#refine">Refine CV</a></li>
+      <li><a href="#build">Build CV</a></li>
+      <li><a href="#learn">CV Tips</a></li>
+      <li><a href="#samples">Samples</a></li>
+    </ul>
+    <button class="nav-cta" onclick="scrollToSection('refine')">Get Started</button>
+    <button class="hamburger" id="hamburger" onclick="toggleMenu()">
+      <i class="fas fa-bars"></i>
+    </button>
+  </div>
+</nav>
+
+<!-- HERO SECTION -->
+<section class="hero" id="home">
+  <div class="hero-bg-shapes">
+    <div class="shape shape-1"></div>
+    <div class="shape shape-2"></div>
+    <div class="shape shape-3"></div>
+  </div>
+  <div class="hero-content">
+    <div class="hero-badge"><span>🇬🇭</span> Built for Ghanaian Students & Professionals</div>
+    <h1 class="hero-title">Your CV. <span class="gradient-text">Perfected.</span><br/>Opportunities. <span class="gradient-text">Unlocked.</span></h1>
+    <p class="hero-subtitle">Whether you're a student, final year, job seeker, national service applicant, or graduate programme candidate — CV Genius Ghana helps you craft a powerful, professional CV that gets noticed.</p>
+    <div class="hero-actions">
+      <button class="btn-primary" onclick="scrollToSection('refine')">
+        <i class="fas fa-magic"></i> Refine My CV
+      </button>
+      <button class="btn-secondary" onclick="scrollToSection('build')">
+        <i class="fas fa-pen"></i> Build From Scratch
+      </button>
+    </div>
+    <div class="hero-stats">
+      <div class="stat"><span class="stat-number">10K+</span><span class="stat-label">CVs Refined</span></div>
+      <div class="stat-divider"></div>
+      <div class="stat"><span class="stat-number">95%</span><span class="stat-label">Success Rate</span></div>
+      <div class="stat-divider"></div>
+      <div class="stat"><span class="stat-number">50+</span><span class="stat-label">Industries Covered</span></div>
+    </div>
+  </div>
+  <div class="hero-visual">
+    <div class="cv-mockup">
+      <div class="cv-mock-header">
+        <div class="cv-mock-name"></div>
+        <div class="cv-mock-contact"></div>
+      </div>
+      <div class="cv-mock-section">
+        <div class="cv-mock-title"></div>
+        <div class="cv-mock-line"></div>
+        <div class="cv-mock-line short"></div>
+      </div>
+      <div class="cv-mock-section">
+        <div class="cv-mock-title"></div>
+        <div class="cv-mock-line"></div>
+        <div class="cv-mock-line"></div>
+        <div class="cv-mock-line short"></div>
+      </div>
+      <div class="cv-mock-section">
+        <div class="cv-mock-title"></div>
+        <div class="cv-mock-line"></div>
+        <div class="cv-mock-line short"></div>
+      </div>
+      <div class="cv-badge-overlay"><i class="fas fa-check-circle"></i> Professional</div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS SECTION -->
+<section class="how-section" id="how">
+  <div class="container">
+    <div class="section-header">
+      <h2>How It Works</h2>
+      <p>Three simple paths to a powerful, professional CV — choose the one that fits you.</p>
+    </div>
+    <div class="how-tracks">
+      <div class="how-track">
+        <div class="track-badge">Track 1</div>
+        <h3><i class="fas fa-magic"></i> Refine an Existing CV</h3>
+        <ol class="how-steps">
+          <li><span class="how-num">1</span><div><strong>Choose your target</strong> — Select the opportunity type: job, national service, grad programme, academia, etc.</div></li>
+          <li><span class="how-num">2</span><div><strong>Upload or paste your CV</strong> — Drop your PDF/DOCX or paste the text directly.</div></li>
+          <li><span class="how-num">3</span><div><strong>Set your preferences</strong> — Length, tone, spelling convention, and any special instructions.</div></li>
+          <li><span class="how-num">4</span><div><strong>Download your refined CV</strong> — Get a polished, professional version ready to send.</div></li>
+        </ol>
+        <button class="btn-primary mt-20" onclick="scrollToSection('refine')"><i class="fas fa-magic"></i> Refine My CV</button>
+      </div>
+      <div class="how-track how-track-mid">
+        <div class="track-badge track-badge-gold">Track 2</div>
+        <h3><i class="fas fa-pen"></i> Build from Scratch</h3>
+        <ol class="how-steps">
+          <li><span class="how-num" style="background:var(--gold);color:#1a1a2e;">1</span><div><strong>Fill in your details</strong> — Personal info, education, experience, leadership, skills, and awards.</div></li>
+          <li><span class="how-num" style="background:var(--gold);color:#1a1a2e;">2</span><div><strong>Preview your CV</strong> — See a live, professionally formatted preview in real time.</div></li>
+          <li><span class="how-num" style="background:var(--gold);color:#1a1a2e;">3</span><div><strong>Check your score</strong> — Run the CV Score tool to identify gaps and improvements.</div></li>
+          <li><span class="how-num" style="background:var(--gold);color:#1a1a2e;">4</span><div><strong>Download &amp; apply</strong> — Save as PDF with one click, then send with confidence.</div></li>
+        </ol>
+        <button class="btn-primary mt-20" style="background:var(--gold-dark);color:#1a1a2e;" onclick="scrollToSection('build')"><i class="fas fa-pen"></i> Build My CV</button>
+      </div>
+      <div class="how-track">
+        <div class="track-badge">Track 3</div>
+        <h3><i class="fas fa-book-open"></i> Learn the Rules</h3>
+        <ol class="how-steps">
+          <li><span class="how-num">1</span><div><strong>Read the guidelines</strong> — Master the foundational rules for professional CV writing.</div></li>
+          <li><span class="how-num">2</span><div><strong>Study the tips</strong> — Action verbs, quantification, consistency, and what to exclude.</div></li>
+          <li><span class="how-num">3</span><div><strong>Browse sample CVs</strong> — See what a polished CV looks like across different fields.</div></li>
+          <li><span class="how-num">4</span><div><strong>Apply your knowledge</strong> — Use the builder or refiner to put it all into practice.</div></li>
+        </ol>
+        <button class="btn-primary mt-20" onclick="scrollToSection('learn')"><i class="fas fa-book-open"></i> Learn the Rules</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WHO IS THIS FOR -->
+<section class="who-section" id="features">
+  <div class="container">
+    <div class="section-header">
+      <h2>Who Is CV Genius Ghana For?</h2>
+      <p>No matter where you are in your career journey, we've got you covered.</p>
+    </div>
+    <div class="who-grid">
+      <div class="who-card"><div class="who-icon">🎓</div><h3>Final Year Students</h3><p>Polish your very first professional CV before graduation</p></div>
+      <div class="who-card"><div class="who-icon">🏢</div><h3>Job Seekers</h3><p>Stand out in competitive Ghanaian & international job markets</p></div>
+      <div class="who-card"><div class="who-icon">🇬🇭</div><h3>National Service</h3><p>Craft a CV that earns you your preferred national service placement</p></div>
+      <div class="who-card"><div class="who-icon">🔬</div><h3>Graduate Programmes</h3><p>Target competitive graduate schemes at top companies in Ghana & abroad</p></div>
+      <div class="who-card"><div class="who-icon">📚</div><h3>Postgraduate Studies</h3><p>Tailor your CV/resume for MSc, MBA, PhD applications worldwide</p></div>
+      <div class="who-card"><div class="who-icon">💼</div><h3>Working Professionals</h3><p>Refresh your CV for that promotion or career switch you've been planning</p></div>
+      <div class="who-card"><div class="who-icon">🌍</div><h3>Internship Hunters</h3><p>Compete for internships at top firms locally and internationally</p></div>
+      <div class="who-card"><div class="who-icon">✍️</div><h3>Cover Letter Writers</h3><p>Craft compelling cover letters tailored to specific opportunities</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- REFINE CV SECTION -->
+<section class="refine-section" id="refine">
+  <div class="container">
+    <div class="section-header light">
+      <h2>Refine Your CV</h2>
+      <p>Upload your existing CV, Resume, or Cover Letter and let us professionally refine it for your target opportunity.</p>
+    </div>
+    <div class="refine-wrapper">
+      <!-- STEP 1: Target -->
+      <div class="refine-steps">
+        <div class="step active" id="step-indicator-1"><span class="step-num">1</span><span class="step-label">Target</span></div>
+        <div class="step-line"></div>
+        <div class="step" id="step-indicator-2"><span class="step-num">2</span><span class="step-label">Upload</span></div>
+        <div class="step-line"></div>
+        <div class="step" id="step-indicator-3"><span class="step-num">3</span><span class="step-label">Refine</span></div>
+        <div class="step-line"></div>
+        <div class="step" id="step-indicator-4"><span class="step-num">4</span><span class="step-label">Download</span></div>
+      </div>
+
+      <div class="refine-card" id="refine-step-1">
+        <h3><i class="fas fa-crosshairs"></i> Step 1: Choose Your Target Opportunity</h3>
+        <div class="target-grid">
+          <label class="target-option"><input type="radio" name="target" value="corporate_job"><div class="target-box"><span class="t-icon">🏢</span><span class="t-name">Corporate Job</span></div></label>
+          <label class="target-option"><input type="radio" name="target" value="national_service"><div class="target-box"><span class="t-icon">🇬🇭</span><span class="t-name">National Service</span></div></label>
+          <label class="target-option"><input type="radio" name="target" value="graduate_programme"><div class="target-box"><span class="t-icon">🎯</span><span class="t-name">Graduate Programme</span></div></label>
+          <label class="target-option"><input type="radio" name="target" value="postgraduate"><div class="target-box"><span class="t-icon">🎓</span><span class="t-name">Postgraduate Studies</span></div></label>
+          <label class="target-option"><input type="radio" name="target" value="internship"><div class="target-box"><span class="t-icon">📋</span><span class="t-name">Internship</span></div></label>
+          <label class="target-option"><input type="radio" name="target" value="academia"><div class="target-box"><span class="t-icon">🔬</span><span class="t-name">Academic/Research</span></div></label>
+          <label class="target-option"><input type="radio" name="target" value="ngo"><div class="target-box"><span class="t-icon">🌍</span><span class="t-name">NGO / Development</span></div></label>
+          <label class="target-option"><input type="radio" name="target" value="banking"><div class="target-box"><span class="t-icon">🏦</span><span class="t-name">Banking & Finance</span></div></label>
+          <label class="target-option"><input type="radio" name="target" value="tech"><div class="target-box"><span class="t-icon">💻</span><span class="t-name">Tech / Engineering</span></div></label>
+          <label class="target-option"><input type="radio" name="target" value="cover_letter"><div class="target-box"><span class="t-icon">✉️</span><span class="t-name">Cover Letter</span></div></label>
+        </div>
+        <div class="form-group mt-20">
+          <label>Specific Role / Programme (optional)</label>
+          <input type="text" id="specific-role" placeholder="e.g. Investment Banking Analyst at Stanbic Bank Ghana, or MSc Finance at UG" class="form-input"/>
+        </div>
+        <button class="btn-primary mt-20" onclick="goToStep(2)">Next: Upload CV <i class="fas fa-arrow-right"></i></button>
+      </div>
+
+      <div class="refine-card hidden" id="refine-step-2">
+        <h3><i class="fas fa-upload"></i> Step 2: Upload Your Document</h3>
+        <div class="upload-zone" id="uploadZone" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragleave="handleDragLeave(event)">
+          <div class="upload-icon"><i class="fas fa-cloud-upload-alt"></i></div>
+          <p class="upload-main">Drag & drop your CV, Resume, or Cover Letter here</p>
+          <p class="upload-sub">Supports PDF, DOCX, DOC, TXT — Max 10MB</p>
+          <button class="btn-outline mt-10" onclick="document.getElementById('fileInput').click()">
+            <i class="fas fa-folder-open"></i> Browse Files
+          </button>
+          <input type="file" id="fileInput" accept=".pdf,.doc,.docx,.txt" style="display:none" onchange="handleFileSelect(event)"/>
+        </div>
+        <div class="upload-preview hidden" id="uploadPreview">
+          <div class="file-info">
+            <i class="fas fa-file-alt file-icon"></i>
+            <div>
+              <p class="file-name" id="fileName">document.pdf</p>
+              <p class="file-size" id="fileSize">245 KB</p>
+            </div>
+            <button class="remove-file" onclick="removeFile()"><i class="fas fa-times"></i></button>
+          </div>
+        </div>
+        <div class="or-divider"><span>OR</span></div>
+        <div class="paste-zone">
+          <label>Paste your CV text directly</label>
+          <textarea id="cvPasteText" class="form-textarea" rows="8" placeholder="Paste the full content of your CV here..."></textarea>
+        </div>
+        <div class="step-actions">
+          <button class="btn-outline" onclick="goToStep(1)"><i class="fas fa-arrow-left"></i> Back</button>
+          <button class="btn-primary" onclick="goToStep(3)">Next: Refinement Options <i class="fas fa-arrow-right"></i></button>
+        </div>
+      </div>
+
+      <div class="refine-card hidden" id="refine-step-3">
+        <h3><i class="fas fa-sliders-h"></i> Step 3: Refinement Preferences</h3>
+        <div class="prefs-grid">
+          <div class="pref-item">
+            <label>CV Length Preference</label>
+            <select class="form-select" id="cvLength">
+              <option value="auto">Auto-detect (Recommended)</option>
+              <option value="1page">1 Page (Under 3 years experience)</option>
+              <option value="2page">2 Pages (3+ years experience)</option>
+            </select>
+          </div>
+          <div class="pref-item">
+            <label>Tone & Style</label>
+            <select class="form-select" id="cvTone">
+              <option value="professional">Professional & Formal</option>
+              <option value="academic">Academic</option>
+              <option value="dynamic">Dynamic & Results-Driven</option>
+              <option value="concise">Concise & Impactful</option>
+            </select>
+          </div>
+          <div class="pref-item">
+            <label>Spelling Convention</label>
+            <select class="form-select" id="spelling">
+              <option value="british">British English</option>
+              <option value="american">American English</option>
+            </select>
+          </div>
+          <div class="pref-item">
+            <label>Include Cover Letter?</label>
+            <select class="form-select" id="includeCL">
+              <option value="no">No, just the CV</option>
+              <option value="yes">Yes, generate a cover letter too</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group mt-20">
+          <label>Additional Instructions (optional)</label>
+          <textarea class="form-textarea" id="extraInstructions" rows="3" placeholder="e.g. Emphasize my finance experience, downplay unrelated internships, highlight my leadership roles..."></textarea>
+        </div>
+        <div class="step-actions">
+          <button class="btn-outline" onclick="goToStep(2)"><i class="fas fa-arrow-left"></i> Back</button>
+          <button class="btn-primary" onclick="refineCV()"><i class="fas fa-magic"></i> Refine My CV Now</button>
+          <button class="btn-outline" onclick="scoreCVFromPaste()" style="margin-left:auto;"><i class="fas fa-chart-bar"></i> Check CV Score</button>
+        </div>
+      </div>
+
+      <div class="refine-card hidden" id="refine-step-4">
+        <h3><i class="fas fa-check-circle success-icon"></i> Step 4: Your Refined CV is Ready!</h3>
+        <div class="refined-output-wrapper">
+          <div class="refined-output" id="refinedOutput"></div>
+        </div>
+        <div class="feedback-section">
+          <h4>What was improved:</h4>
+          <ul class="improvements-list" id="improvementsList"></ul>
+        </div>
+        <div class="download-actions">
+          <button class="btn-primary" onclick="downloadRefinedCV()"><i class="fas fa-download"></i> Download as PDF</button>
+          <button class="btn-outline" onclick="copyRefinedCV()"><i class="fas fa-copy"></i> Copy Text</button>
+          <button class="btn-outline" onclick="generateCoverLetterFromRefine()"><i class="fas fa-envelope"></i> Generate Cover Letter</button>
+          <button class="btn-outline" onclick="goToStep(1)"><i class="fas fa-redo"></i> Refine Another</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- BUILD CV FROM SCRATCH -->
+<section class="build-section" id="build">
+  <div class="container">
+    <div class="section-header">
+      <h2>Build Your CV From Scratch</h2>
+      <p>Fill in your details below and we'll generate a perfectly formatted, professional CV for you.</p>
+    </div>
+    <div class="builder-wrapper">
+      <div class="builder-nav">
+        <button class="builder-tab active" onclick="switchTab('personal')" id="tab-personal"><i class="fas fa-user"></i> Personal Info</button>
+        <button class="builder-tab" onclick="switchTab('education')" id="tab-education"><i class="fas fa-graduation-cap"></i> Education</button>
+        <button class="builder-tab" onclick="switchTab('experience')" id="tab-experience"><i class="fas fa-briefcase"></i> Experience</button>
+        <button class="builder-tab" onclick="switchTab('leadership')" id="tab-leadership"><i class="fas fa-users"></i> Leadership</button>
+        <button class="builder-tab" onclick="switchTab('skills')" id="tab-skills"><i class="fas fa-tools"></i> Skills</button>
+        <button class="builder-tab" onclick="switchTab('awards')" id="tab-awards"><i class="fas fa-trophy"></i> Certifications & Awards</button>
+        <button class="builder-tab" onclick="switchTab('preview')" id="tab-preview"><i class="fas fa-eye"></i> Preview & Download</button>
+      </div>
+
+      <div class="builder-content">
+        <!-- PERSONAL INFO TAB -->
+        <div class="tab-panel active" id="panel-personal">
+          <h3>Personal Information</h3>
+          <div class="form-row">
+            <div class="form-group"><label>First Name *</label><input type="text" id="b-firstName" class="form-input" placeholder="e.g. Veronica"/></div>
+            <div class="form-group"><label>Middle Name (Optional)</label><input type="text" id="b-middleName" class="form-input" placeholder="e.g. Ama"/></div>
+            <div class="form-group"><label>Last Name *</label><input type="text" id="b-lastName" class="form-input" placeholder="e.g. Mensah"/></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Professional Email *</label><input type="email" id="b-email" class="form-input" placeholder="e.g. vmensah@gmail.com"/></div>
+            <div class="form-group"><label>Phone (with country code) *</label><input type="tel" id="b-phone" class="form-input" placeholder="e.g. +233 54 023 4567"/></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>LinkedIn Profile URL</label><input type="url" id="b-linkedin" class="form-input" placeholder="e.g. linkedin.com/in/veronica-mensah"/></div>
+            <div class="form-group"><label>Portfolio / GitHub URL (Optional)</label><input type="url" id="b-portfolio" class="form-input" placeholder="e.g. github.com/yourusername"/></div>
+          </div>
+          <div class="tip-box"><i class="fas fa-lightbulb"></i> <strong>Pro Tip:</strong> Your email should be professional — ideally a variation of your name (e.g. vmensah@gmail.com). Avoid casual or inappropriate email addresses.</div>
+          <button class="btn-primary mt-20" onclick="switchTab('education')">Next: Education <i class="fas fa-arrow-right"></i></button>
+        </div>
+
+        <!-- EDUCATION TAB -->
+        <div class="tab-panel" id="panel-education">
+          <h3>Education</h3>
+          <div class="tip-box"><i class="fas fa-lightbulb"></i> Include only tertiary education. Do not list secondary/high school unless specifically required.</div>
+          <div id="educationEntries">
+            <div class="entry-card" id="edu-0">
+              <div class="entry-header"><span>Education Entry 1</span><button class="remove-entry" onclick="removeEntry('edu-0')" style="display:none"><i class="fas fa-trash"></i></button></div>
+              <div class="form-row">
+                <div class="form-group"><label>University / Institution *</label><input type="text" class="form-input edu-uni" placeholder="e.g. University of Ghana"/></div>
+                <div class="form-group"><label>Location *</label><input type="text" class="form-input edu-loc" placeholder="e.g. Accra, Ghana"/></div>
+              </div>
+              <div class="form-row">
+                <div class="form-group"><label>Degree / Programme *</label><input type="text" class="form-input edu-degree" placeholder="e.g. BSc. Accounting and Finance"/></div>
+                <div class="form-group"><label>Academic Standing</label><input type="text" class="form-input edu-standing" placeholder="e.g. First Class Honours / GPA 3.8/4.0"/></div>
+              </div>
+              <div class="form-row">
+                <div class="form-group"><label>Start Date *</label><input type="text" class="form-input edu-start" placeholder="e.g. Sep 2021"/></div>
+                <div class="form-group"><label>End Date / Expected *</label><input type="text" class="form-input edu-end" placeholder="e.g. Jun 2025 or Expected Jun 2025"/></div>
+              </div>
+              <div class="form-group"><label>Relevant Courses (optional)</label><input type="text" class="form-input edu-courses" placeholder="e.g. Corporate Finance, Financial Accounting, Econometrics"/></div>
+            </div>
+          </div>
+          <button class="btn-outline mt-10" onclick="addEducationEntry()"><i class="fas fa-plus"></i> Add Another Institution</button>
+          <div class="step-actions mt-20">
+            <button class="btn-outline" onclick="switchTab('personal')"><i class="fas fa-arrow-left"></i> Back</button>
+            <button class="btn-primary" onclick="switchTab('experience')">Next: Experience <i class="fas fa-arrow-right"></i></button>
+          </div>
+        </div>
+
+        <!-- EXPERIENCE TAB -->
+        <div class="tab-panel" id="panel-experience">
+          <h3>Professional Experience</h3>
+          <div class="tip-box"><i class="fas fa-lightbulb"></i> Use strong action verbs (Developed, Led, Built, Increased, Executed) and include real figures to show your impact. List most recent experience first.</div>
+          <div id="experienceEntries">
+            <div class="entry-card" id="exp-0">
+              <div class="entry-header"><span>Experience Entry 1</span><button class="remove-entry" onclick="removeEntry('exp-0')" style="display:none"><i class="fas fa-trash"></i></button></div>
+              <div class="form-row">
+                <div class="form-group"><label>Organisation Name *</label><input type="text" class="form-input exp-org" placeholder="e.g. JPMorgan Chase & Co."/></div>
+                <div class="form-group"><label>Location *</label><input type="text" class="form-input exp-loc" placeholder="e.g. London, United Kingdom"/></div>
+              </div>
+              <div class="form-row">
+                <div class="form-group"><label>Your Title / Role *</label><input type="text" class="form-input exp-title" placeholder="e.g. Investment Banking Summer Analyst"/></div>
+                <div class="form-group"><label>Department (optional)</label><input type="text" class="form-input exp-dept" placeholder="e.g. Mergers & Acquisitions"/></div>
+              </div>
+              <div class="form-row">
+                <div class="form-group"><label>Start Date *</label><input type="text" class="form-input exp-start" placeholder="e.g. Jun 2024"/></div>
+                <div class="form-group"><label>End Date *</label><input type="text" class="form-input exp-end" placeholder="e.g. Aug 2024 or Present"/></div>
+              </div>
+              <div class="form-group">
+                <label>Key Achievements & Responsibilities *</label>
+                <p class="field-hint">Enter each bullet point on a new line. Include numbers/figures where possible.</p>
+                <textarea class="form-textarea exp-bullets" rows="5" placeholder="• Contributed to deal strategy and execution for 2 M&A transactions (average EV: £3bn)&#10;• Developed key sections of the CIM for a £300m technology sell-side transaction&#10;• Led VDR management, organising and uploading sensitive data for due diligence"></textarea>
+              </div>
+            </div>
+          </div>
+          <button class="btn-outline mt-10" onclick="addExperienceEntry()"><i class="fas fa-plus"></i> Add Another Experience</button>
+          <div class="step-actions mt-20">
+            <button class="btn-outline" onclick="switchTab('education')"><i class="fas fa-arrow-left"></i> Back</button>
+            <button class="btn-primary" onclick="switchTab('leadership')">Next: Leadership <i class="fas fa-arrow-right"></i></button>
+          </div>
+        </div>
+
+        <!-- LEADERSHIP TAB -->
+        <div class="tab-panel" id="panel-leadership">
+          <h3>Leadership & Extracurricular Experience</h3>
+          <div class="tip-box"><i class="fas fa-lightbulb"></i> Include significant leadership roles in clubs, student associations, community organisations, or volunteer work.</div>
+          <div id="leadershipEntries">
+            <div class="entry-card" id="lead-0">
+              <div class="entry-header"><span>Leadership Entry 1</span><button class="remove-entry" onclick="removeEntry('lead-0')" style="display:none"><i class="fas fa-trash"></i></button></div>
+              <div class="form-row">
+                <div class="form-group"><label>Organisation / Association *</label><input type="text" class="form-input lead-org" placeholder="e.g. Enactus University of Ghana"/></div>
+                <div class="form-group"><label>Your Role / Title *</label><input type="text" class="form-input lead-role" placeholder="e.g. Vice President of Projects"/></div>
+              </div>
+              <div class="form-row">
+                <div class="form-group"><label>Start Date</label><input type="text" class="form-input lead-start" placeholder="e.g. Oct 2024"/></div>
+                <div class="form-group"><label>End Date</label><input type="text" class="form-input lead-end" placeholder="e.g. Present"/></div>
+              </div>
+              <div class="form-group">
+                <label>Key Achievements (optional)</label>
+                <textarea class="form-textarea lead-bullets" rows="3" placeholder="• Oversaw 3 high-impact social innovation projects, coordinating 25 team members&#10;• Achieved a 40% increase in funding while benefiting 1,200+ community members"></textarea>
+              </div>
+            </div>
+          </div>
+          <button class="btn-outline mt-10" onclick="addLeadershipEntry()"><i class="fas fa-plus"></i> Add Another Role</button>
+          <div class="step-actions mt-20">
+            <button class="btn-outline" onclick="switchTab('experience')"><i class="fas fa-arrow-left"></i> Back</button>
+            <button class="btn-primary" onclick="switchTab('skills')">Next: Skills <i class="fas fa-arrow-right"></i></button>
+          </div>
+        </div>
+
+        <!-- SKILLS TAB -->
+        <div class="tab-panel" id="panel-skills">
+          <h3>Skills</h3>
+          <div class="tip-box"><i class="fas fa-lightbulb"></i> Only include skills relevant to the role you are applying for. Do not list languages you only speak at beginner level.</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Technical / Hard Skills</label>
+              <textarea class="form-textarea" id="b-techSkills" rows="4" placeholder="e.g. Financial Modelling, Excel (Advanced), Bloomberg Terminal, Python, AutoCAD, MATLAB..."></textarea>
+            </div>
+            <div class="form-group">
+              <label>Soft / Professional Skills</label>
+              <textarea class="form-textarea" id="b-softSkills" rows="4" placeholder="e.g. Leadership, Team Management, Public Speaking, Analytical Thinking..."></textarea>
+            </div>
+          </div>
+          <div class="form-group mt-10">
+            <label>Languages (Fluent or above only)</label>
+            <input type="text" id="b-languages" class="form-input" placeholder="e.g. English (Fluent), Twi (Fluent), French (Intermediate)"/>
+          </div>
+          <div class="step-actions mt-20">
+            <button class="btn-outline" onclick="switchTab('leadership')"><i class="fas fa-arrow-left"></i> Back</button>
+            <button class="btn-primary" onclick="switchTab('awards')">Next: Certifications & Awards <i class="fas fa-arrow-right"></i></button>
+          </div>
+        </div>
+
+        <!-- AWARDS TAB -->
+        <div class="tab-panel" id="panel-awards">
+          <h3>Certifications & Awards</h3>
+          <div class="tip-box"><i class="fas fa-lightbulb"></i> Highlight certifications and awards most relevant to your target role. Write full names — don't just use acronyms.</div>
+          <div id="awardsEntries">
+            <div class="entry-card" id="award-0">
+              <div class="entry-header"><span>Entry 1</span><button class="remove-entry" onclick="removeEntry('award-0')" style="display:none"><i class="fas fa-trash"></i></button></div>
+              <div class="form-row">
+                <div class="form-group"><label>Certification / Award Name *</label><input type="text" class="form-input award-name" placeholder="e.g. Financial Modelling & Valuation Analyst (FMVA) Certification"/></div>
+                <div class="form-group"><label>Issuing Organisation</label><input type="text" class="form-input award-org" placeholder="e.g. Corporate Finance Institute (CFI)"/></div>
+              </div>
+              <div class="form-row">
+                <div class="form-group"><label>Year</label><input type="text" class="form-input award-year" placeholder="e.g. 2024"/></div>
+              </div>
+            </div>
+          </div>
+          <button class="btn-outline mt-10" onclick="addAwardEntry()"><i class="fas fa-plus"></i> Add Another Entry</button>
+          <div class="step-actions mt-20">
+            <button class="btn-outline" onclick="switchTab('skills')"><i class="fas fa-arrow-left"></i> Back</button>
+            <button class="btn-primary" onclick="switchTab('preview')"><i class="fas fa-eye"></i> Preview My CV</button>
+          </div>
+        </div>
+
+        <!-- PREVIEW TAB -->
+        <div class="tab-panel" id="panel-preview">
+          <h3>Preview & Download Your CV</h3>
+          <div class="preview-actions-top">
+            <button class="btn-primary" onclick="generateCVPreview()"><i class="fas fa-sync"></i> Generate Preview</button>
+            <select class="form-select" id="previewTarget" style="width:auto">
+              <option value="general">General / All-purpose</option>
+              <option value="banking">Banking & Finance</option>
+              <option value="tech">Tech / Engineering</option>
+              <option value="academic">Academic / Research</option>
+              <option value="national_service">National Service</option>
+              <option value="graduate_programme">Graduate Programme</option>
+            </select>
+          </div>
+          <div class="cv-preview-container" id="cvPreviewContainer">
+            <div class="cv-preview-placeholder">
+              <i class="fas fa-file-alt"></i>
+              <p>Click "Generate Preview" to see your CV</p>
+            </div>
+          </div>
+          <div class="step-actions mt-20">
+            <button class="btn-outline" onclick="switchTab('awards')"><i class="fas fa-arrow-left"></i> Back</button>
+            <button class="btn-primary" onclick="downloadBuiltCV()"><i class="fas fa-download"></i> Download PDF</button>
+            <button class="btn-outline" onclick="copyBuiltCV()"><i class="fas fa-copy"></i> Copy Text</button>
+            <button class="btn-outline" onclick="scoreBuiltCV()"><i class="fas fa-chart-bar"></i> CV Score</button>
+            <button class="btn-outline" onclick="generateCoverLetterFromBuilder()"><i class="fas fa-envelope"></i> Cover Letter</button>
+          </div>
+        </div>
+
+      </div><!-- end builder-content -->
+    </div><!-- end builder-wrapper -->
+  </div>
+</section>
+
+<!-- CV WRITING TIPS / LEARN SECTION -->
+<section class="learn-section" id="learn">
+  <div class="container">
+    <div class="section-header">
+      <h2>Learn to Write a Powerful CV</h2>
+      <p>Master the art of professional CV writing with these guidelines, curated for the Ghanaian and African job market.</p>
+    </div>
+    <div class="tips-tabs">
+      <button class="tips-tab active" onclick="showTipsTab('foundational')">Foundational Rules</button>
+      <button class="tips-tab" onclick="showTipsTab('core')">Core CV Details</button>
+      <button class="tips-tab" onclick="showTipsTab('writing')">Writing Tips</button>
+      <button class="tips-tab" onclick="showTipsTab('attention')">Attention to Detail</button>
+      <button class="tips-tab" onclick="showTipsTab('exclude')">What to Exclude</button>
+      <button class="tips-tab" onclick="showTipsTab('verbs')">Action Verbs</button>
+      <button class="tips-tab" onclick="showTipsTab('targets')">By Opportunity</button>
+    </div>
+
+    <div class="tips-content">
+      <div class="tips-panel active" id="tips-foundational">
+        <div class="tips-grid">
+          <div class="tip-card"><div class="tip-num">01</div><h4>CV Length</h4><p>Keep your CV to <strong>1 page</strong> if you have under 3 years of experience. You can achieve this by being concise, removing unnecessary data, and adjusting font size and margins.</p></div>
+          <div class="tip-card"><div class="tip-num">02</div><h4>Font Choice</h4><p>Use a formal font — <strong>Times New Roman is highly recommended</strong>. Font size should be between 9.5–11 for body text, and up to size 22 for your name only.</p></div>
+          <div class="tip-card"><div class="tip-num">03</div><h4>Font Colour</h4><p>Use <strong>black font only</strong>. Coloured text can appear unprofessional and may not print well on standard printers.</p></div>
+          <div class="tip-card"><div class="tip-num">04</div><h4>File Format</h4><p>Always submit your CV as a <strong>PDF document</strong>. Never send an MS Word document — formatting can shift on different computers.</p></div>
+        </div>
+      </div>
+
+      <div class="tips-panel" id="tips-core">
+        <div class="tips-grid">
+          <div class="tip-card"><div class="tip-num">01</div><h4>Your Name</h4><p>Write in the order: <strong>First Name, Middle Name (optional), Last Name</strong>. Do not put your family name first.</p></div>
+          <div class="tip-card"><div class="tip-num">02</div><h4>Contact Info</h4><p>Include your <strong>professional email address</strong> and phone number with its country code (e.g. +233). Keep it clean and easily readable.</p></div>
+          <div class="tip-card"><div class="tip-num">03</div><h4>LinkedIn Profile</h4><p>Having a LinkedIn account and linking it in your CV gives you <strong>more credibility</strong> with recruiters. Ensure your profile is up to date.</p></div>
+          <div class="tip-card"><div class="tip-num">04</div><h4>Education</h4><p>Highlight only your <strong>tertiary education</strong>. Include university name, location, programme, academic standing, and relevant courses. No secondary school.</p></div>
+          <div class="tip-card"><div class="tip-num">05</div><h4>Work Experience</h4><p>Include: organisation name, your title, location, time period, and your <strong>achievements</strong> — not just responsibilities. Show impact with data.</p></div>
+          <div class="tip-card"><div class="tip-num">06</div><h4>Skills Section</h4><p>List only skills <strong>relevant to the role</strong> you are applying for. Tailor this section for every application.</p></div>
+        </div>
+      </div>
+
+      <div class="tips-panel" id="tips-writing">
+        <div class="tips-grid">
+          <div class="tip-card"><div class="tip-num">01</div><h4>Use Action Words</h4><p>Start every bullet with a strong verb: <strong>Developed, Built, Led, Executed, Increased, Analysed, Designed, Managed</strong>. Never say "Responsible for..."</p></div>
+          <div class="tip-card"><div class="tip-num">02</div><h4>Quantify Your Impact</h4><p>Use real figures wherever possible: <em>"Reduced processing time by 25%"</em>, <em>"Managed a portfolio of GHS 500,000"</em>, <em>"Onboarded 5 new enterprise clients"</em>.</p></div>
+          <div class="tip-card"><div class="tip-num">03</div><h4>Tailor to the Role</h4><p>Highlight work experience and certifications <strong>most relevant to the job</strong>. If applying for finance, lead with finance skills — don't bury them.</p></div>
+          <div class="tip-card"><div class="tip-num">04</div><h4>Write Full Names</h4><p>Write organisation names in full: <em>"Goldman Sachs International"</em>, not <em>"GS"</em>. Not all recruiters know every acronym.</p></div>
+          <div class="tip-card"><div class="tip-num">05</div><h4>Avoid Jargon Overload</h4><p>Don't overuse highly technical jargon or acronyms that a recruiter (who may not be technical) would not understand.</p></div>
+          <div class="tip-card"><div class="tip-num">06</div><h4>Portfolio / GitHub</h4><p>If your field requires a portfolio (engineering, design, software), include a short, <strong>functional link</strong>. Use a link shortener like Bitly if needed.</p></div>
+        </div>
+      </div>
+
+      <div class="tips-panel" id="tips-attention">
+        <div class="tips-grid">
+          <div class="tip-card"><div class="tip-num">01</div><h4>Date Consistency</h4><p>Use only <strong>one date format</strong> throughout your CV. Don't mix "Jul 2023" with "March 2022". Pick one style and stick to it.</p></div>
+          <div class="tip-card"><div class="tip-num">02</div><h4>Formatting Consistency</h4><p>Be consistent with bold vs normal text, capitalisation, bullet point types, hyphen lengths, and spacing. Visual consistency signals attention to detail.</p></div>
+          <div class="tip-card"><div class="tip-num">03</div><h4>Grammar & Spelling</h4><p>Proofread multiple times. Stick to either <strong>British or American English</strong> consistently — don't mix them. Spelling errors are red flags.</p></div>
+          <div class="tip-card"><div class="tip-num">04</div><h4>Check All Links</h4><p>Ensure every link in your CV is <strong>functional and accessible</strong>. A broken LinkedIn link is worse than no link at all.</p></div>
+          <div class="tip-card"><div class="tip-num">05</div><h4>Name Your File</h4><p>Name your CV file professionally: <em>"Veronica Mensah – CV.pdf"</em>. Not "CV_final_v3_REAL.pdf".</p></div>
+          <div class="tip-card"><div class="tip-num">06</div><h4>Get a Second Opinion</h4><p>Proofread your CV multiple times — both <strong>individually and with others</strong>. Fresh eyes catch what yours miss.</p></div>
+        </div>
+      </div>
+
+      <div class="tips-panel" id="tips-exclude">
+        <div class="tips-grid">
+          <div class="tip-card exclude-card"><div class="tip-num red">✗</div><h4>Personal Data</h4><p>Do NOT include: gender, age, date of birth, marital status, residential address, religion, nationality, or race/ethnicity.</p></div>
+          <div class="tip-card exclude-card"><div class="tip-num red">✗</div><h4>Headshot / Photo</h4><p>Do NOT include a headshot or photo unless specifically requested. It's not standard for professional applications.</p></div>
+          <div class="tip-card exclude-card"><div class="tip-num red">✗</div><h4>Beginner Languages</h4><p>Do NOT list languages you only speak at beginner level. Only include languages you are at intermediate level or above.</p></div>
+          <div class="tip-card exclude-card"><div class="tip-num red">✗</div><h4>Secondary School</h4><p>Do NOT include your secondary/high school education unless the application process specifically requests it.</p></div>
+          <div class="tip-card exclude-card"><div class="tip-num red">✗</div><h4>Unprofessional Email</h4><p>Do NOT use casual email addresses like <em>sexygirl54@gmail.com</em>. Your email should be a professional variation of your name.</p></div>
+          <div class="tip-card exclude-card"><div class="tip-num red">✗</div><h4>References</h4><p>References are generally not needed on a CV. "References available upon request" is also unnecessary — it's assumed.</p></div>
+        </div>
+      </div>
+
+      <div class="tips-panel" id="tips-verbs">
+        <div class="tip-card" style="margin-bottom:20px;">
+          <h4 style="margin-bottom:12px;">💪 Power Action Verbs for Your CV</h4>
+          <p style="margin-bottom:16px;">Start every bullet point with a strong action verb. Here are the best verbs organised by category:</p>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;">
+            <div>
+              <p style="font-weight:700;color:var(--primary);margin-bottom:8px;">Leadership & Management</p>
+              <div>Led · Managed · Oversaw · Directed · Coordinated · Supervised · Spearheaded · Championed · Delegated · Mentored · Guided · Established</div>
+            </div>
+            <div>
+              <p style="font-weight:700;color:var(--primary);margin-bottom:8px;">Analysis & Research</p>
+              <div>Analysed · Researched · Evaluated · Assessed · Examined · Investigated · Reviewed · Identified · Diagnosed · Forecasted · Modelled · Interpreted</div>
+            </div>
+            <div>
+              <p style="font-weight:700;color:var(--primary);margin-bottom:8px;">Creation & Development</p>
+              <div>Developed · Designed · Built · Created · Launched · Implemented · Engineered · Constructed · Drafted · Authored · Produced · Programmed</div>
+            </div>
+            <div>
+              <p style="font-weight:700;color:var(--primary);margin-bottom:8px;">Achievement & Improvement</p>
+              <div>Increased · Reduced · Improved · Achieved · Delivered · Exceeded · Optimised · Streamlined · Accelerated · Generated · Maximised · Saved</div>
+            </div>
+            <div>
+              <p style="font-weight:700;color:var(--primary);margin-bottom:8px;">Collaboration & Communication</p>
+              <div>Collaborated · Negotiated · Presented · Communicated · Facilitated · Trained · Advised · Liaised · Partnered · Supported · Advocated · Pitched</div>
+            </div>
+            <div>
+              <p style="font-weight:700;color:var(--primary);margin-bottom:8px;">Finance & Operations</p>
+              <div>Executed · Managed · Reconciled · Audited · Processed · Allocated · Budgeted · Forecasted · Reported · Administered · Compiled · Monitored</div>
+            </div>
+          </div>
+          <div style="margin-top:20px;padding:12px 16px;background:#fff3cd;border-radius:8px;border-left:3px solid #e6b800;">
+            <p style="font-size:0.85rem;color:#7a6000;"><strong>❌ Never use these:</strong> "Responsible for..." · "Was on..." · "Helped with..." · "Worked on..." · "Was involved in..." · "Duties included..."</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="tips-panel" id="tips-targets">
+        <div class="tips-grid">
+          <div class="tip-card">
+            <div class="tip-num">🇬🇭</div><h4>National Service</h4>
+            <p>Emphasise your <strong>academic standing</strong>, leadership roles, community involvement, and extracurriculars. GPA and class of degree are important. Keep to 1 page.</p>
+          </div>
+          <div class="tip-card">
+            <div class="tip-num">🏦</div><h4>Banking & Finance</h4>
+            <p>Quantify everything — deal values, portfolio sizes, cedis managed. Highlight FMVA, CFA, ACCA certifications. Commercial awareness and analytical skills are key.</p>
+          </div>
+          <div class="tip-card">
+            <div class="tip-num">💻</div><h4>Tech & Engineering</h4>
+            <p>Lead with your technical skills section. Include GitHub, specific languages and tools, project work, and any engineering certifications. Quantify system improvements.</p>
+          </div>
+          <div class="tip-card">
+            <div class="tip-num">🔬</div><h4>Academic / Research</h4>
+            <p>Lead with GPA and class of degree. Include publications, research projects, conference presentations, and academic awards. Use an academic CV format if needed.</p>
+          </div>
+          <div class="tip-card">
+            <div class="tip-num">🎓</div><h4>Postgraduate Studies</h4>
+            <p>Foreground your academic excellence and research interests. Include your final year project or dissertation topic. Show evidence of independent thinking and scholarship.</p>
+          </div>
+          <div class="tip-card">
+            <div class="tip-num">🎯</div><h4>Graduate Programmes</h4>
+            <p>Highlight leadership, commercial awareness, internship experiences, and any measurable impact. Graduate recruiters love initiative, quantified results, and well-rounded profiles.</p>
+          </div>
+          <div class="tip-card">
+            <div class="tip-num">🌍</div><h4>NGO / Development</h4>
+            <p>Emphasise community impact, volunteer experience, and data that demonstrates social change. Show your commitment to the mission. Include languages and field experience.</p>
+          </div>
+          <div class="tip-card">
+            <div class="tip-num">📋</div><h4>Internships</h4>
+            <p>Keep to 1 page. Lead with your strongest academic achievement and any prior work experience. Include relevant courses and skills. Show enthusiasm and eagerness to learn.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SAMPLE CVs SECTION -->
+<section class="samples-section" id="samples">
+  <div class="container">
+    <div class="section-header">
+      <h2>Sample CVs for Inspiration</h2>
+      <p>See how a well-structured CV looks across different profiles and fields.</p>
+    </div>
+    <div class="samples-grid">
+      <div class="sample-card" onclick="showSample('veronica')">
+        <div class="sample-icon">👩‍💼</div>
+        <h4>Finance & Banking</h4>
+        <p>Veronica Mensah — BSc Accounting & Finance, JPMorgan M&A Analyst</p>
+        <span class="sample-tag">Investment Banking</span>
+      </div>
+      <div class="sample-card" onclick="showSample('engineering')">
+        <div class="sample-icon">⚡</div>
+        <h4>Engineering</h4>
+        <p>Kwabena Mensah Boateng — BSc Electrical Engineering, GRIDCo & VRA</p>
+        <span class="sample-tag">Technical / Engineering</span>
+      </div>
+      <div class="sample-card" onclick="showSample('national_service')">
+        <div class="sample-icon">🇬🇭</div>
+        <h4>National Service</h4>
+        <p>A fresh graduate targeting a competitive national service placement</p>
+        <span class="sample-tag">National Service</span>
+      </div>
+      <div class="sample-card" onclick="showSample('postgrad')">
+        <div class="sample-icon">🎓</div>
+        <h4>Postgraduate Studies</h4>
+        <p>A professional applying for an MSc or MBA programme</p>
+        <span class="sample-tag">Academia</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CV SCORE MODAL -->
+<div class="modal-overlay" id="scoreModal" onclick="closeScoreModal(event)">
+  <div class="modal-box" style="max-width:600px;">
+    <button class="modal-close" onclick="closeScoreModal(null,true)"><i class="fas fa-times"></i></button>
+    <h3 style="font-size:1.3rem;font-weight:700;margin-bottom:20px;display:flex;align-items:center;gap:10px;"><i class="fas fa-chart-bar" style="color:var(--primary)"></i> CV Score Report</h3>
+    <div id="scoreContent"></div>
+  </div>
+</div>
+
+<!-- COVER LETTER MODAL -->
+<div class="modal-overlay" id="coverLetterModal" onclick="closeCLModal(event)">
+  <div class="modal-box" style="max-width:760px;">
+    <button class="modal-close" onclick="closeCLModal(null,true)"><i class="fas fa-times"></i></button>
+    <h3 style="font-size:1.3rem;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:10px;"><i class="fas fa-envelope-open-text" style="color:var(--primary)"></i> Your Cover Letter</h3>
+    <p style="font-size:0.85rem;color:var(--text-light);margin-bottom:20px;">Professionally generated cover letter tailored to your target opportunity.</p>
+    <div class="refined-output-wrapper" style="max-height:420px;">
+      <div id="coverLetterContent" style="font-family:'Times New Roman',serif;font-size:11pt;line-height:1.7;color:#000;white-space:pre-wrap;"></div>
+    </div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:20px;">
+      <button class="btn-primary" onclick="downloadCoverLetter()"><i class="fas fa-download"></i> Download PDF</button>
+      <button class="btn-outline" onclick="copyCoverLetter()"><i class="fas fa-copy"></i> Copy Text</button>
+      <button class="btn-outline" onclick="closeCLModal(null,true)"><i class="fas fa-times"></i> Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- SAMPLE MODAL -->
+<div class="modal-overlay" id="sampleModal" onclick="closeSampleModal(event)">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeSampleModal(null, true)"><i class="fas fa-times"></i></button>
+    <div class="modal-content" id="modalContent"></div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:24px;border-top:1px solid var(--border);padding-top:20px;">
+      <button class="btn-primary" onclick="downloadSampleCV()"><i class="fas fa-download"></i> Download This Sample</button>
+      <button class="btn-outline" onclick="useSampleAsTemplate()"><i class="fas fa-copy"></i> Use as Template</button>
+      <button class="btn-outline" onclick="closeSampleModal(null,true)"><i class="fas fa-times"></i> Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-content">
+      <div class="footer-brand">
+        <div class="nav-logo" style="justify-content:flex-start"><span class="logo-icon">⭐</span><span class="logo-text">CV <span class="accent">Genius</span> Ghana</span></div>
+        <p>Empowering Ghanaian students and professionals to land their dream opportunities with powerful, professional CVs.</p>
+      </div>
+      <div class="footer-links">
+        <h5>Quick Links</h5>
+        <ul>
+          <li><a href="#refine">Refine CV</a></li>
+          <li><a href="#build">Build CV</a></li>
+          <li><a href="#learn">CV Tips</a></li>
+          <li><a href="#samples">Sample CVs</a></li>
+        </ul>
+      </div>
+      <div class="footer-links">
+        <h5>Opportunities</h5>
+        <ul>
+          <li><a href="#refine">National Service</a></li>
+          <li><a href="#refine">Graduate Programmes</a></li>
+          <li><a href="#refine">Internships</a></li>
+          <li><a href="#refine">Postgraduate Studies</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 CV Genius Ghana. Empowering the next generation of Ghanaian professionals. 🇬🇭</p>
+    </div>
+  </div>
+</footer>
+
+<!-- Print/PDF hidden container -->
+<div id="printContainer" style="display:none"></div>
+
+<!-- SCROLL TO TOP -->
+<button class="scroll-top" id="scrollTopBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Back to top">
+  <i class="fas fa-chevron-up"></i>
+</button>
+
+<script src="app.js"></script>
+</body>
+</html>
