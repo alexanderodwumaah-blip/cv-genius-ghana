@@ -313,7 +313,12 @@ function getImprovements(target, includeCL) {
 // ===== DOWNLOAD REFINED CV =====
 function downloadRefinedCV() {
   const content = document.getElementById('refinedOutput').innerHTML;
+  const target = document.querySelector('input[name="target"]:checked')?.value || 'general';
+  const role = document.getElementById('specific-role').value.trim();
+  const title = `Refined CV${role ? ' – ' + role : ''} (${new Date().toLocaleDateString('en-GB')})`;
   printCV(content, 'Refined_CV');
+  // Auto-save to Firestore if logged in
+  if (window.saveCVToFirestore) saveCVToFirestore('refined', title, content, target, role);
 }
 
 function copyRefinedCV() {
@@ -543,7 +548,10 @@ function downloadBuiltCV() {
   }
   const firstName = document.getElementById('b-firstName').value.trim();
   const lastName = document.getElementById('b-lastName').value.trim();
+  const title = `${firstName} ${lastName} CV (${new Date().toLocaleDateString('en-GB')})`;
   printCV(content, `${firstName}_${lastName}_CV`);
+  // Auto-save to Firestore if logged in
+  if (window.saveCVToFirestore) saveCVToFirestore('built', title, content, document.getElementById('previewTarget')?.value || 'general', '');
 }
 
 function copyBuiltCV() {
@@ -997,6 +1005,9 @@ function downloadCoverLetter() {
     </head><body><pre style="font-family:'Times New Roman',serif;font-size:12pt;white-space:pre-wrap;line-height:1.8;">${text}</pre></body></html>`);
   printWin.document.close();
   setTimeout(() => { printWin.print(); }, 500);
+  // Auto-save to Firestore if logged in
+  const htmlContent = `<pre style="font-family:'Times New Roman',serif;font-size:11pt;line-height:1.8;white-space:pre-wrap;">${text}</pre>`;
+  if (window.saveCVToFirestore) saveCVToFirestore('cover_letter', `Cover Letter (${new Date().toLocaleDateString('en-GB')})`, htmlContent, '', '');
 }
 
 function copyCoverLetter() {

@@ -345,3 +345,27 @@ body { font-family: 'Inter', sans-serif; color: #1a1a2e; background: #fff; line-
 /* ===== HOW SECTION RESPONSIVE ===== */
 @media (max-width: 900px) { .how-tracks { grid-template-columns: 1fr; } }
 
+
+/* ===== NAV AUTH ===== */
+.nav-user-chip { display: flex; align-items: center; gap: 8px; background: var(--primary-light); border: 1.5px solid rgba(0,107,63,0.2); border-radius: 100px; padding: 5px 12px 5px 6px; font-family: 'Inter', sans-serif; }
+.nav-user-chip.hidden { display: none !important; }
+.user-avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; flex-shrink: 0; }
+.user-name { font-size: 0.85rem; font-weight: 600; color: var(--text); max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.user-menu-btn { background: none; border: none; color: var(--primary); cursor: pointer; font-size: 0.9rem; padding: 2px 4px; border-radius: 4px; transition: var(--transition); }
+.user-menu-btn:hover { background: rgba(0,107,63,0.1); }
+
+/* ===== DASHBOARD GRID ===== */
+.dashboard-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
+.dash-card { background: var(--bg-light); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 18px; transition: var(--transition); font-family: 'Inter', sans-serif; }
+.dash-card:hover { box-shadow: var(--shadow); border-color: var(--primary); transform: translateY(-2px); }
+.dash-card-top { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.dash-icon { font-size: 1.6rem; flex-shrink: 0; }
+.dash-meta { flex: 1; }
+.dash-type { display: block; font-size: 0.72rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.04em; }
+.dash-date { font-size: 0.78rem; color: var(--text-light); }
+.dash-delete { background: none; border: none; color: #ccc; cursor: pointer; font-size: 0.85rem; padding: 4px; border-radius: 6px; transition: var(--transition); margin-left: auto; }
+.dash-delete:hover { color: var(--red); background: #ffe8ea; }
+.dash-title { font-size: 0.92rem; font-weight: 700; color: var(--text); margin-bottom: 6px; line-height: 1.4; }
+.dash-tag { display: inline-block; background: var(--primary-light); color: var(--primary); font-size: 0.72rem; font-weight: 600; padding: 2px 10px; border-radius: 100px; margin-bottom: 6px; }
+.dash-role { font-size: 0.8rem; color: var(--text-light); margin-bottom: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dash-actions { display: flex; gap: 8px; margin-top: 12px; }

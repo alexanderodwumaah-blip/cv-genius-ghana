@@ -6,6 +6,8 @@
       ".firebaserc",
       ".gitignore",
       "README.md",
+      "firestore.rules",
+      "firestore.indexes.json",
       ".git/**",
       ".vscode/**"
     ],
@@ -23,5 +25,8 @@
         ]
       }
     ]
+  },
+  "firestore": {
+    "rules": "firestore.rules"
   }
 }

@@ -25,11 +25,20 @@
       <li><a href="#build">Build CV</a></li>
       <li><a href="#learn">CV Tips</a></li>
       <li><a href="#samples">Samples</a></li>
+      <li><a href="#" onclick="loadDashboard()"><i class="fas fa-folder-open"></i> My CVs</a></li>
     </ul>
     <button class="nav-cta" onclick="scrollToSection('refine')">Get Started</button>
     <button class="hamburger" id="hamburger" onclick="toggleMenu()">
       <i class="fas fa-bars"></i>
     </button>
+    <!-- Auth nav elements -->
+    <button class="nav-cta" id="navAuthBtn" onclick="openAuthModal('signin')" style="margin-left:8px;"><i class="fas fa-user"></i> Sign In</button>
+    <div class="nav-user-chip hidden" id="navUserChip">
+      <span class="user-avatar"></span>
+      <span class="user-name"></span>
+      <button class="user-menu-btn" onclick="loadDashboard()" title="My CVs"><i class="fas fa-folder-open"></i></button>
+      <button class="user-menu-btn" onclick="signOutUser()" title="Sign out"><i class="fas fa-sign-out-alt"></i></button>
+    </div>
   </div>
 </nav>
 
@@ -756,6 +765,51 @@
   </div>
 </footer>
 
+<!-- AUTH MODAL -->
+<div class="modal-overlay" id="authModal" onclick="closeAuthModal(event)">
+  <div class="modal-box" style="max-width:440px;">
+    <button class="modal-close" onclick="closeAuthModal(null,true)"><i class="fas fa-times"></i></button>
+    <div style="text-align:center;margin-bottom:24px;">
+      <div style="font-size:2rem;margin-bottom:8px;">⭐</div>
+      <h3 id="authModalTitle" style="font-size:1.3rem;font-weight:700;color:var(--text);font-family:'Inter',sans-serif;">Sign In</h3>
+      <p style="font-size:0.85rem;color:var(--text-light);margin-top:4px;">Save your CVs and access them anytime</p>
+    </div>
+    <button onclick="signInWithGoogle()" style="width:100%;display:flex;align-items:center;justify-content:center;gap:12px;padding:12px;border:1.5px solid var(--border);border-radius:10px;background:#fff;font-size:0.95rem;font-weight:600;cursor:pointer;margin-bottom:20px;font-family:'Inter',sans-serif;transition:all 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">
+      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20" height="20" alt="Google"/>
+      Continue with Google
+    </button>
+    <div class="or-divider"><span>or</span></div>
+    <div style="display:flex;flex-direction:column;gap:12px;margin-top:16px;">
+      <input type="email" id="authEmail" class="form-input" placeholder="Email address"/>
+      <input type="password" id="authPassword" class="form-input" placeholder="Password (min. 6 characters)"/>
+      <button id="authSubmitBtn" class="btn-primary" style="width:100%;justify-content:center;" onclick="signInEmail()">Sign In</button>
+    </div>
+    <p id="authToggleText" style="text-align:center;font-size:0.85rem;color:var(--text-light);margin-top:16px;font-family:'Inter',sans-serif;">
+      New here? <a href="#" onclick="switchAuthMode('signup')" style="color:var(--primary);font-weight:600;">Create an account</a>
+    </p>
+  </div>
+</div>
+
+<!-- DASHBOARD MODAL -->
+<div class="modal-overlay" id="dashboardModal" onclick="if(event.target===this)closeDashboard()">
+  <div class="modal-box" style="max-width:900px;max-height:92vh;">
+    <button class="modal-close" onclick="closeDashboard()"><i class="fas fa-times"></i></button>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
+      <div>
+        <h3 style="font-size:1.3rem;font-weight:700;color:var(--text);font-family:'Inter',sans-serif;display:flex;align-items:center;gap:10px;">
+          <i class="fas fa-folder-open" style="color:var(--primary);"></i> My Saved CVs
+        </h3>
+        <p style="font-size:0.85rem;color:var(--text-light);font-family:'Inter',sans-serif;margin-top:2px;">All your CVs, cover letters and refinements in one place</p>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn-outline" style="font-size:0.85rem;" onclick="loadDashboard()"><i class="fas fa-sync"></i> Refresh</button>
+        <button class="btn-primary" style="font-size:0.85rem;" onclick="closeDashboard();scrollToSection('build')"><i class="fas fa-plus"></i> New CV</button>
+      </div>
+    </div>
+    <div id="dashboardList"></div>
+  </div>
+</div>
+
 <!-- Print/PDF hidden container -->
 <div id="printContainer" style="display:none"></div>
 
@@ -765,5 +819,6 @@
 </button>
 
 <script src="app.js"></script>
+<script type="module" src="firebase-app.js"></script>
 </body>
 </html>
