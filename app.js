@@ -436,6 +436,13 @@ function generateCVPreview() {
   let html = `<div class="cv-name">${fullName}</div>`;
   html += `<div class="cv-contact">${contactParts.join(' | ')}</div>`;
 
+  // PROFESSIONAL SUMMARY (extra section — goes before education)
+  const summaryText = document.getElementById('es-summary-text')?.value.trim();
+  if (summaryText) {
+    html += `<div class="cv-section-title">PROFESSIONAL SUMMARY</div>`;
+    html += `<div style="font-size:10pt;line-height:1.6;margin-bottom:4px;">${renderRichText(summaryText).replace(/\n/g,'<br/>')}</div>`;
+  }
+
   // EDUCATION
   const eduEntries = document.querySelectorAll('#educationEntries .entry-card');
   if (eduEntries.length > 0) {
@@ -476,7 +483,7 @@ function generateCVPreview() {
       if (bullets) {
         const lines = bullets.split('\n').filter(l => l.trim());
         html += `<ul class="cv-bullets">`;
-        lines.forEach(l => { html += `<li>${l.replace(/^[•\-*]\s*/,'')}</li>`; });
+        lines.forEach(l => { html += `<li>${renderRichText(l.replace(/^[•\-*]\s*/,''))}</li>`; });
         html += `</ul>`;
       }
       html += `<br/>`;
@@ -535,6 +542,9 @@ function generateCVPreview() {
     });
     html += `</ul>`;
   }
+
+  // ===== EXTRA SECTIONS =====
+  html += buildExtraSectionsHTML();
 
   const container = document.getElementById('cvPreviewContainer');
   container.innerHTML = html;
@@ -1037,3 +1047,570 @@ document.querySelectorAll('.nav-links a').forEach(a => {
 });
 
 console.log('%c CV Genius Ghana 🇬🇭 ', 'background:#006b3f; color:#fcd116; font-size:16px; padding:8px 16px; border-radius:8px; font-weight:bold;');
+
+
+// ============================================================
+// ===== RICH TEXT TOOLBAR ENGINE =====
+// ============================================================
+
+// Get the textarea associated with a toolbar button
+function rtGetArea(btn) {
+  const toolbar = btn.closest('.rich-toolbar');
+  const targetId = toolbar?.dataset.target;
+  return targetId ? document.getElementById(targetId) : toolbar?.nextElementSibling;
+}
+
+// Insert text at cursor position in a textarea
+function rtInsertAt(area, text) {
+  const start = area.selectionStart;
+  const end = area.selectionEnd;
+  const before = area.value.substring(0, start);
+  const after = area.value.substring(end);
+  area.value = before + text + after;
+  area.selectionStart = area.selectionEnd = start + text.length;
+  area.focus();
+}
+
+// Wrap selected text with markers
+function rtWrapSelection(area, open, close) {
+  const start = area.selectionStart;
+  const end = area.selectionEnd;
+  const selected = area.value.substring(start, end);
+  if (!selected) { rtInsertAt(area, open + 'text' + close); return; }
+  const before = area.value.substring(0, start);
+  const after = area.value.substring(end);
+  area.value = before + open + selected + close + after;
+  area.selectionStart = start;
+  area.selectionEnd = end + open.length + close.length;
+  area.focus();
+}
+
+window.rtFormat = function(btn, type) {
+  const area = rtGetArea(btn);
+  if (!area) return;
+  const cursorAtLineStart = area.value.slice(0, area.selectionStart).endsWith('\n') || area.selectionStart === 0;
+  const prefix = (!cursorAtLineStart && area.value.length > 0) ? '\n' : '';
+  switch (type) {
+    case 'bullet':
+      rtInsertAt(area, prefix + '• ');
+      break;
+    case 'number': {
+      const lines = area.value.split('\n').filter(l => l.match(/^\d+\./));
+      const next = lines.length + 1;
+      rtInsertAt(area, prefix + next + '. ');
+      break;
+    }
+    case 'bold':
+      rtWrapSelection(area, '**', '**');
+      break;
+    case 'italic':
+      rtWrapSelection(area, '_', '_');
+      break;
+    case 'underline':
+      rtWrapSelection(area, '__', '__');
+      break;
+  }
+  // Visual feedback
+  btn.classList.add('rt-active');
+  setTimeout(() => btn.classList.remove('rt-active'), 300);
+};
+
+// Action verb picker popup
+const ACTION_VERBS = [
+  'Developed','Built','Led','Executed','Managed','Analysed','Designed','Increased',
+  'Reduced','Implemented','Coordinated','Delivered','Achieved','Established','Oversaw',
+  'Spearheaded','Contributed','Collaborated','Streamlined','Launched','Created',
+  'Improved','Generated','Negotiated','Secured','Drove','Facilitated','Authored',
+  'Trained','Supervised','Directed','Championed','Delegated','Mentored','Evaluated',
+  'Forecasted','Reported','Compiled','Administered','Presented','Advised','Pitched'
+];
+
+window.rtInsertVerb = function(btn) {
+  const area = rtGetArea(btn);
+  if (!area) return;
+  // Remove existing picker if open
+  const existing = document.querySelector('.verb-picker-popup');
+  if (existing) { existing.remove(); return; }
+  const popup = document.createElement('div');
+  popup.className = 'verb-picker-popup';
+  popup.innerHTML = `<div class="verb-picker-header"><span>⚡ Pick an Action Verb</span><button onclick="this.closest('.verb-picker-popup').remove()">✕</button></div>
+    <div class="verb-picker-grid">${ACTION_VERBS.map(v =>
+      `<button class="verb-chip" onclick="rtPickVerb(this,'${v}')">${v}</button>`
+    ).join('')}</div>`;
+  popup.dataset.areaId = area.id || '';
+  // Position below the button
+  const rect = btn.getBoundingClientRect();
+  popup.style.cssText = `position:fixed;top:${rect.bottom+6}px;left:${Math.min(rect.left,window.innerWidth-320)}px;z-index:3000;`;
+  document.body.appendChild(popup);
+  // Store reference to area
+  popup._area = area;
+  setTimeout(() => document.addEventListener('click', function h(e) {
+    if (!popup.contains(e.target) && e.target !== btn) { popup.remove(); document.removeEventListener('click', h); }
+  }), 100);
+};
+
+window.rtPickVerb = function(chip, verb) {
+  const popup = chip.closest('.verb-picker-popup');
+  const area = popup._area;
+  if (area) rtInsertAt(area, verb + ' ');
+  popup.remove();
+};
+
+window.rtClear = function(btn) {
+  const area = rtGetArea(btn);
+  if (!area) return;
+  if (confirm('Clear all content in this field?')) { area.value = ''; area.focus(); }
+};
+
+// Render inline markdown-like markers → HTML for CV preview
+function renderRichText(text) {
+  if (!text) return '';
+  return text
+    .split('\n')
+    .filter(l => l.trim())
+    .map(line => {
+      // Apply inline formatting
+      line = line
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/__(.+?)__/g, '<u>$1</u>')
+        .replace(/_(.+?)_/g, '<em>$1</em>');
+      return line;
+    })
+    .join('\n');
+}
+
+// ============================================================
+// ===== EXTRA SECTIONS ENGINE =====
+// ============================================================
+
+const EXTRA_SECTION_DEFS = {
+  summary: {
+    label: 'Professional Summary',
+    icon: '📝',
+    note: 'Will appear at the top of your CV, before Education.',
+    warn: false,
+    fields: () => `
+      <div class="form-group">
+        <label>Professional Summary <span style="font-size:0.78rem;color:var(--text-light);">(3–5 sentences max)</span></label>
+        <div class="rich-toolbar" data-target="es-summary-text">
+          ${richToolbarHTML('es-summary-text')}
+        </div>
+        <textarea class="form-textarea rich-area" id="es-summary-text" rows="4"
+          placeholder="e.g. Results-driven finance professional with 3+ years of experience in investment banking and asset management. Proven track record of delivering complex M&A transactions and building financial models. Seeking to leverage analytical expertise and leadership skills in a graduate finance role."></textarea>
+      </div>`
+  },
+  publications: {
+    label: 'Publications & Projects',
+    icon: '📚',
+    note: 'List academic papers, research publications, or major projects.',
+    warn: false,
+    fields: () => `<div id="es-pub-entries"><div class="es-sub-entry" id="es-pub-0">
+      <div class="form-row">
+        <div class="form-group"><label>Title *</label><input type="text" class="form-input es-pub-title" placeholder="e.g. Smart Grid Load Shedding Optimisation for Ghana's Power Sector"/></div>
+        <div class="form-group"><label>Year</label><input type="text" class="form-input es-pub-year" placeholder="e.g. 2025"/></div>
+      </div>
+      <div class="form-group"><label>Publisher / Conference / Description</label><input type="text" class="form-input es-pub-desc" placeholder="e.g. Presented at GhIE Annual Conference, 2025 | UENR Final Year Project"/></div>
+    </div></div>
+    <button class="btn-outline mt-10" style="font-size:0.82rem;" onclick="addESSubEntry('es-pub-entries','pub')"><i class="fas fa-plus"></i> Add Another</button>`
+  },
+  research: {
+    label: 'Research Area / Final Year Project',
+    icon: '🔬',
+    note: 'Great for students and academic applications.',
+    warn: false,
+    fields: () => `
+      <div class="form-group"><label>Research Title / Project Title *</label>
+        <input type="text" class="form-input" id="es-research-title" placeholder="e.g. Smart Grid Enabled Household-Level Load Shedding for Ghana's Demand Response Program Optimisation"/>
+      </div>
+      <div class="form-group mt-10"><label>Brief Description</label>
+        <div class="rich-toolbar" data-target="es-research-desc">${richToolbarHTML('es-research-desc')}</div>
+        <textarea class="form-textarea rich-area" id="es-research-desc" rows="3" placeholder="Describe your research focus, methodology, and key findings or objectives..."></textarea>
+      </div>
+      <div class="form-row mt-10">
+        <div class="form-group"><label>Supervisor (optional)</label><input type="text" class="form-input" id="es-research-super" placeholder="e.g. Dr. Kofi Asante"/></div>
+        <div class="form-group"><label>Status</label>
+          <select class="form-select" id="es-research-status">
+            <option value="ongoing">Ongoing</option><option value="completed">Completed</option><option value="published">Published</option>
+          </select>
+        </div>
+      </div>`
+  },
+  profbodies: {
+    label: 'Professional Bodies & Memberships',
+    icon: '🏛️',
+    note: 'e.g. Member, Ghana Institution of Engineering (GhIE)',
+    warn: false,
+    fields: () => `<div id="es-pb-entries"><div class="es-sub-entry" id="es-pb-0">
+      <div class="form-row">
+        <div class="form-group"><label>Organisation Name *</label><input type="text" class="form-input es-pb-org" placeholder="e.g. Ghana Institution of Engineering (GhIE)"/></div>
+        <div class="form-group"><label>Membership Status</label><input type="text" class="form-input es-pb-status" placeholder="e.g. Student Member / Associate Member"/></div>
+      </div>
+      <div class="form-group"><label>Year Joined</label><input type="text" class="form-input es-pb-year" placeholder="e.g. 2023"/></div>
+    </div></div>
+    <button class="btn-outline mt-10" style="font-size:0.82rem;" onclick="addESSubEntry('es-pb-entries','pb')"><i class="fas fa-plus"></i> Add Another</button>`
+  },
+  volunteer: {
+    label: 'Volunteer Experience',
+    icon: '🤝',
+    note: 'Community service, NGO work, tutoring, etc.',
+    warn: false,
+    fields: () => `<div id="es-vol-entries"><div class="es-sub-entry" id="es-vol-0">
+      <div class="form-row">
+        <div class="form-group"><label>Organisation *</label><input type="text" class="form-input es-vol-org" placeholder="e.g. Ghana Red Cross Society"/></div>
+        <div class="form-group"><label>Role</label><input type="text" class="form-input es-vol-role" placeholder="e.g. Community Health Volunteer"/></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Start Date</label><input type="text" class="form-input es-vol-start" placeholder="e.g. Jan 2023"/></div>
+        <div class="form-group"><label>End Date</label><input type="text" class="form-input es-vol-end" placeholder="e.g. Present"/></div>
+      </div>
+      <div class="form-group"><label>Description (optional)</label>
+        <textarea class="form-textarea es-vol-desc" rows="2" placeholder="• Brief description of your contribution and impact..."></textarea>
+      </div>
+    </div></div>
+    <button class="btn-outline mt-10" style="font-size:0.82rem;" onclick="addESSubEntry('es-vol-entries','vol')"><i class="fas fa-plus"></i> Add Another</button>`
+  },
+  references: {
+    label: 'References',
+    icon: '👥',
+    note: 'Only include if the role specifically requests references.',
+    warn: false,
+    fields: () => `<div id="es-ref-entries"><div class="es-sub-entry" id="es-ref-0">
+      <div class="form-row">
+        <div class="form-group"><label>Full Name *</label><input type="text" class="form-input es-ref-name" placeholder="e.g. Prof. Kofi Mensah"/></div>
+        <div class="form-group"><label>Position / Title *</label><input type="text" class="form-input es-ref-pos" placeholder="e.g. Head of Department, Electrical Engineering"/></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Institution / Organisation *</label><input type="text" class="form-input es-ref-inst" placeholder="e.g. University of Energy and Natural Resources (UENR)"/></div>
+        <div class="form-group"><label>Relationship to You</label><input type="text" class="form-input es-ref-rel" placeholder="e.g. Academic Supervisor / Former Manager"/></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Email</label><input type="email" class="form-input es-ref-email" placeholder="e.g. kmensah@uenr.edu.gh"/></div>
+        <div class="form-group"><label>Phone (optional)</label><input type="tel" class="form-input es-ref-phone" placeholder="e.g. +233 24 000 0000"/></div>
+      </div>
+    </div></div>
+    <button class="btn-outline mt-10" style="font-size:0.82rem;" onclick="addESSubEntry('es-ref-entries','ref')"><i class="fas fa-plus"></i> Add Another Referee</button>`
+  },
+  hobbies: {
+    label: 'Hobbies & Interests',
+    icon: '🎯',
+    note: '⚠️ Generally not recommended for professional CVs unless directly relevant.',
+    warn: true,
+    fields: () => `
+      <div class="form-group">
+        <label>Hobbies & Interests</label>
+        <input type="text" class="form-input" id="es-hobbies-text" placeholder="e.g. Chess, Reading (Finance & Economics), Football, Community Mentoring"/>
+      </div>`
+  },
+  languages: {
+    label: 'Languages',
+    icon: '🌍',
+    note: 'Only include Intermediate level or above.',
+    warn: false,
+    fields: () => `<div id="es-lang-entries"><div class="es-sub-entry" id="es-lang-0">
+      <div class="form-row">
+        <div class="form-group"><label>Language *</label><input type="text" class="form-input es-lang-name" placeholder="e.g. French"/></div>
+        <div class="form-group"><label>Proficiency</label>
+          <select class="form-select es-lang-level">
+            <option>Intermediate</option><option>Upper-Intermediate</option><option>Advanced</option><option>Fluent</option><option>Native</option>
+          </select>
+        </div>
+      </div>
+    </div></div>
+    <button class="btn-outline mt-10" style="font-size:0.82rem;" onclick="addESSubEntry('es-lang-entries','lang')"><i class="fas fa-plus"></i> Add Another Language</button>`
+  },
+  custom: {
+    label: 'Specify / Other',
+    icon: '✏️',
+    note: 'Create your own custom section with any title.',
+    warn: false,
+    fields: () => `
+      <div class="form-group">
+        <label>Section Title *</label>
+        <input type="text" class="form-input" id="es-custom-title" placeholder="e.g. Conferences Attended / Extracurricular Activities / Training"/>
+      </div>
+      <div class="form-group mt-10">
+        <label>Content</label>
+        <div class="rich-toolbar" data-target="es-custom-content">${richToolbarHTML('es-custom-content')}</div>
+        <textarea class="form-textarea rich-area" id="es-custom-content" rows="5"
+          placeholder="• Enter each item on a new line&#10;• Use bullet points for a clean, professional look&#10;• Include dates where relevant (e.g. Jan 2024 – Mar 2024)"></textarea>
+      </div>`
+  }
+};
+
+// Helper: generate toolbar HTML for a given textarea id
+function richToolbarHTML(targetId) {
+  return `<button type="button" class="rt-btn" onclick="rtFormat(this,'bullet')" title="Bullet point">• Bullet</button>
+  <div class="rt-divider"></div>
+  <button type="button" class="rt-btn" onclick="rtFormat(this,'bold')" title="Bold"><b>B</b></button>
+  <button type="button" class="rt-btn" onclick="rtFormat(this,'italic')" title="Italic"><i>I</i></button>
+  <button type="button" class="rt-btn" onclick="rtFormat(this,'underline')" title="Underline"><u>U</u></button>
+  <div class="rt-divider"></div>
+  <button type="button" class="rt-btn" onclick="rtFormat(this,'number')" title="Numbered list">1. List</button>
+  <button type="button" class="rt-btn rt-verb" onclick="rtInsertVerb(this)" title="Insert action verb">⚡ Verb</button>
+  <button type="button" class="rt-btn rt-clear" onclick="rtClear(this)" title="Clear">✕</button>`;
+}
+
+// Track which extra sections have been added
+const addedExtraSections = new Set();
+
+window.addExtraSection = function(type) {
+  if (addedExtraSections.has(type)) {
+    showToast(`"${EXTRA_SECTION_DEFS[type].label}" is already added.`, true);
+    return;
+  }
+  const def = EXTRA_SECTION_DEFS[type];
+  if (!def) return;
+  addedExtraSections.add(type);
+
+  const list = document.getElementById('extraSectionsList');
+  const div = document.createElement('div');
+  div.className = 'extra-section-card' + (def.warn ? ' extra-section-warn' : '');
+  div.id = `es-card-${type}`;
+  div.innerHTML = `
+    <div class="es-card-header">
+      <span class="es-card-icon">${def.icon}</span>
+      <span class="es-card-title">${def.label}</span>
+      ${def.warn ? `<span class="es-warn-badge">⚠️ Not always advisable</span>` : ''}
+      <button class="remove-entry" onclick="removeExtraSection('${type}')" title="Remove section"><i class="fas fa-trash"></i> Remove</button>
+    </div>
+    ${def.note ? `<p class="es-card-note">${def.note}</p>` : ''}
+    <div class="es-card-fields">${def.fields()}</div>`;
+  list.appendChild(div);
+
+  // Mark picker option as added
+  const opt = document.querySelector(`.picker-option[data-section="${type}"]`);
+  if (opt) {
+    opt.classList.add('picker-option-added');
+    opt.querySelector('.picker-note').textContent = '✓ Added';
+  }
+
+  // Smooth scroll to new section
+  setTimeout(() => div.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
+  showToast(`"${def.label}" section added!`);
+};
+
+window.removeExtraSection = function(type) {
+  addedExtraSections.delete(type);
+  document.getElementById(`es-card-${type}`)?.remove();
+  const opt = document.querySelector(`.picker-option[data-section="${type}"]`);
+  if (opt) {
+    opt.classList.remove('picker-option-added');
+    const def = EXTRA_SECTION_DEFS[type];
+    if (def) opt.querySelector('.picker-note').textContent = def.note;
+  }
+};
+
+// Add sub-entries (publications, references, etc.)
+let esSubCounts = {};
+window.addESSubEntry = function(containerId, type) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  if (!esSubCounts[type]) esSubCounts[type] = 1;
+  const n = esSubCounts[type]++;
+  const id = `es-${type}-${n}`;
+  const div = document.createElement('div');
+  div.className = 'es-sub-entry';
+  div.id = id;
+  const templates = {
+    pub: `<div class="es-sub-entry-header"><span>Entry ${n+1}</span><button class="remove-entry" onclick="this.closest('.es-sub-entry').remove()"><i class="fas fa-trash"></i></button></div>
+      <div class="form-row">
+        <div class="form-group"><label>Title *</label><input type="text" class="form-input es-pub-title" placeholder="Publication or project title"/></div>
+        <div class="form-group"><label>Year</label><input type="text" class="form-input es-pub-year" placeholder="e.g. 2024"/></div>
+      </div>
+      <div class="form-group"><label>Publisher / Description</label><input type="text" class="form-input es-pub-desc" placeholder="Conference, journal, or brief description"/></div>`,
+    pb: `<div class="es-sub-entry-header"><span>Entry ${n+1}</span><button class="remove-entry" onclick="this.closest('.es-sub-entry').remove()"><i class="fas fa-trash"></i></button></div>
+      <div class="form-row">
+        <div class="form-group"><label>Organisation *</label><input type="text" class="form-input es-pb-org" placeholder="e.g. Association of Chartered Certified Accountants (ACCA)"/></div>
+        <div class="form-group"><label>Status</label><input type="text" class="form-input es-pb-status" placeholder="e.g. Affiliate Member"/></div>
+      </div>
+      <div class="form-group"><label>Year</label><input type="text" class="form-input es-pb-year" placeholder="e.g. 2024"/></div>`,
+    vol: `<div class="es-sub-entry-header"><span>Entry ${n+1}</span><button class="remove-entry" onclick="this.closest('.es-sub-entry').remove()"><i class="fas fa-trash"></i></button></div>
+      <div class="form-row">
+        <div class="form-group"><label>Organisation *</label><input type="text" class="form-input es-vol-org" placeholder="Organisation"/></div>
+        <div class="form-group"><label>Role</label><input type="text" class="form-input es-vol-role" placeholder="Your role"/></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Start</label><input type="text" class="form-input es-vol-start" placeholder="e.g. Jan 2023"/></div>
+        <div class="form-group"><label>End</label><input type="text" class="form-input es-vol-end" placeholder="e.g. Present"/></div>
+      </div>
+      <div class="form-group"><label>Description</label><textarea class="form-textarea es-vol-desc" rows="2" placeholder="• Brief impact..."></textarea></div>`,
+    ref: `<div class="es-sub-entry-header"><span>Referee ${n+1}</span><button class="remove-entry" onclick="this.closest('.es-sub-entry').remove()"><i class="fas fa-trash"></i></button></div>
+      <div class="form-row">
+        <div class="form-group"><label>Full Name *</label><input type="text" class="form-input es-ref-name" placeholder="e.g. Dr. Ama Owusu"/></div>
+        <div class="form-group"><label>Position *</label><input type="text" class="form-input es-ref-pos" placeholder="e.g. Senior Lecturer"/></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Institution *</label><input type="text" class="form-input es-ref-inst" placeholder="Institution or organisation"/></div>
+        <div class="form-group"><label>Relationship</label><input type="text" class="form-input es-ref-rel" placeholder="e.g. Thesis Supervisor"/></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Email</label><input type="email" class="form-input es-ref-email" placeholder="Email address"/></div>
+        <div class="form-group"><label>Phone</label><input type="tel" class="form-input es-ref-phone" placeholder="+233 ..."/></div>
+      </div>`,
+    lang: `<div class="es-sub-entry-header"><span>Language ${n+1}</span><button class="remove-entry" onclick="this.closest('.es-sub-entry').remove()"><i class="fas fa-trash"></i></button></div>
+      <div class="form-row">
+        <div class="form-group"><label>Language *</label><input type="text" class="form-input es-lang-name" placeholder="e.g. Arabic"/></div>
+        <div class="form-group"><label>Proficiency</label>
+          <select class="form-select es-lang-level"><option>Intermediate</option><option>Upper-Intermediate</option><option>Advanced</option><option>Fluent</option><option>Native</option></select>
+        </div>
+      </div>`
+  };
+  div.innerHTML = templates[type] || '';
+  container.appendChild(div);
+};
+
+// ============================================================
+// ===== BUILD EXTRA SECTIONS HTML FOR CV PREVIEW =====
+// ============================================================
+function buildExtraSectionsHTML() {
+  let html = '';
+
+  // Publications / Projects
+  if (addedExtraSections.has('publications')) {
+    const entries = document.querySelectorAll('#es-pub-entries .es-sub-entry');
+    const items = [];
+    entries.forEach(e => {
+      const title = e.querySelector('.es-pub-title')?.value.trim();
+      const year = e.querySelector('.es-pub-year')?.value.trim();
+      const desc = e.querySelector('.es-pub-desc')?.value.trim();
+      if (title) items.push({ title, year, desc });
+    });
+    if (items.length) {
+      html += `<div class="cv-section-title">PUBLICATIONS & PROJECTS</div><ul class="cv-awards-list">`;
+      items.forEach(i => {
+        let line = i.title;
+        if (i.desc) line += ` — ${i.desc}`;
+        if (i.year) line += ` (${i.year})`;
+        html += `<li>${line}</li>`;
+      });
+      html += `</ul>`;
+    }
+  }
+
+  // Research Area
+  if (addedExtraSections.has('research')) {
+    const title = document.getElementById('es-research-title')?.value.trim();
+    const desc = document.getElementById('es-research-desc')?.value.trim();
+    const supervisor = document.getElementById('es-research-super')?.value.trim();
+    const status = document.getElementById('es-research-status')?.value;
+    if (title) {
+      html += `<div class="cv-section-title">RESEARCH AREA / FINAL YEAR PROJECT</div>`;
+      html += `<div class="cv-entry-header"><span class="cv-entry-title">${title}</span><span class="cv-entry-date">${status ? status.charAt(0).toUpperCase()+status.slice(1) : ''}</span></div>`;
+      if (desc) {
+        const lines = desc.split('\n').filter(l => l.trim());
+        html += `<ul class="cv-bullets">`;
+        lines.forEach(l => { html += `<li>${renderRichText(l.replace(/^[•\-*\d.]\s*/,''))}</li>`; });
+        html += `</ul>`;
+      }
+      if (supervisor) html += `<div style="font-size:10pt;margin-top:2px;"><em>Supervisor: ${supervisor}</em></div>`;
+    }
+  }
+
+  // Professional Bodies
+  if (addedExtraSections.has('profbodies')) {
+    const entries = document.querySelectorAll('#es-pb-entries .es-sub-entry');
+    const items = [];
+    entries.forEach(e => {
+      const org = e.querySelector('.es-pb-org')?.value.trim();
+      const status = e.querySelector('.es-pb-status')?.value.trim();
+      const year = e.querySelector('.es-pb-year')?.value.trim();
+      if (org) items.push({ org, status, year });
+    });
+    if (items.length) {
+      html += `<div class="cv-section-title">PROFESSIONAL BODIES & MEMBERSHIPS</div><ul class="cv-awards-list">`;
+      items.forEach(i => {
+        let line = i.status ? `${i.status}, ${i.org}` : i.org;
+        if (i.year) line += ` (${i.year})`;
+        html += `<li>${line}</li>`;
+      });
+      html += `</ul>`;
+    }
+  }
+
+  // Volunteer Experience
+  if (addedExtraSections.has('volunteer')) {
+    const entries = document.querySelectorAll('#es-vol-entries .es-sub-entry');
+    const hasVol = Array.from(entries).some(e => e.querySelector('.es-vol-org')?.value.trim());
+    if (hasVol) {
+      html += `<div class="cv-section-title">VOLUNTEER EXPERIENCE</div>`;
+      entries.forEach(e => {
+        const org = e.querySelector('.es-vol-org')?.value.trim();
+        const role = e.querySelector('.es-vol-role')?.value.trim();
+        const start = e.querySelector('.es-vol-start')?.value.trim();
+        const end = e.querySelector('.es-vol-end')?.value.trim();
+        const desc = e.querySelector('.es-vol-desc')?.value.trim();
+        if (!org) return;
+        html += `<div class="cv-entry-header"><span class="cv-entry-title">${role ? role+', '+org : org}</span><span class="cv-entry-date">${[start,end].filter(Boolean).join(' – ')}</span></div>`;
+        if (desc) {
+          const lines = desc.split('\n').filter(l => l.trim());
+          html += `<ul class="cv-bullets">`;
+          lines.forEach(l => { html += `<li>${renderRichText(l.replace(/^[•\-*]\s*/,''))}</li>`; });
+          html += `</ul>`;
+        }
+      });
+    }
+  }
+
+  // Languages (extra section)
+  if (addedExtraSections.has('languages')) {
+    const entries = document.querySelectorAll('#es-lang-entries .es-sub-entry');
+    const langs = [];
+    entries.forEach(e => {
+      const name = e.querySelector('.es-lang-name')?.value.trim();
+      const level = e.querySelector('.es-lang-level')?.value;
+      if (name) langs.push(`${name} (${level})`);
+    });
+    if (langs.length) {
+      html += `<div class="cv-section-title">LANGUAGES</div>`;
+      html += `<div style="font-size:10pt;">${langs.join(' &nbsp;·&nbsp; ')}</div>`;
+    }
+  }
+
+  // References
+  if (addedExtraSections.has('references')) {
+    const entries = document.querySelectorAll('#es-ref-entries .es-sub-entry');
+    const refs = [];
+    entries.forEach(e => {
+      const name = e.querySelector('.es-ref-name')?.value.trim();
+      const pos = e.querySelector('.es-ref-pos')?.value.trim();
+      const inst = e.querySelector('.es-ref-inst')?.value.trim();
+      const email = e.querySelector('.es-ref-email')?.value.trim();
+      const phone = e.querySelector('.es-ref-phone')?.value.trim();
+      if (name) refs.push({ name, pos, inst, email, phone });
+    });
+    if (refs.length) {
+      html += `<div class="cv-section-title">REFERENCES</div>`;
+      html += `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;">`;
+      refs.forEach(r => {
+        html += `<div style="font-size:10pt;"><strong>${r.name}</strong><br/>${r.pos || ''}${r.inst ? '<br/>'+r.inst : ''}${r.email ? '<br/>'+r.email : ''}${r.phone ? '<br/>'+r.phone : ''}</div>`;
+      });
+      html += `</div>`;
+    }
+  }
+
+  // Hobbies
+  if (addedExtraSections.has('hobbies')) {
+    const text = document.getElementById('es-hobbies-text')?.value.trim();
+    if (text) {
+      html += `<div class="cv-section-title">HOBBIES & INTERESTS</div>`;
+      html += `<div style="font-size:10pt;">${text}</div>`;
+    }
+  }
+
+  // Custom section
+  if (addedExtraSections.has('custom')) {
+    const title = document.getElementById('es-custom-title')?.value.trim();
+    const content = document.getElementById('es-custom-content')?.value.trim();
+    if (title) {
+      html += `<div class="cv-section-title">${title.toUpperCase()}</div>`;
+      if (content) {
+        const lines = content.split('\n').filter(l => l.trim());
+        html += `<ul class="cv-bullets">`;
+        lines.forEach(l => { html += `<li>${renderRichText(l.replace(/^[•\-*\d.]\s*/,''))}</li>`; });
+        html += `</ul>`;
+      }
+    }
+  }
+
+  return html;
+}

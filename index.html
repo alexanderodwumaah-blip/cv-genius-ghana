@@ -388,8 +388,19 @@
               </div>
               <div class="form-group">
                 <label>Key Achievements & Responsibilities *</label>
-                <p class="field-hint">Enter each bullet point on a new line. Include numbers/figures where possible.</p>
-                <textarea class="form-textarea exp-bullets" rows="5" placeholder="• Contributed to deal strategy and execution for 2 M&A transactions (average EV: £3bn)&#10;• Developed key sections of the CIM for a £300m technology sell-side transaction&#10;• Led VDR management, organising and uploading sensitive data for due diligence"></textarea>
+                <p class="field-hint">Use the toolbar to format text, then type each bullet on a new line.</p>
+                <div class="rich-toolbar" data-target="exp-bullets-0">
+                  <button type="button" class="rt-btn" onclick="rtFormat(this,'bullet')" title="Add bullet point">• Bullet</button>
+                  <div class="rt-divider"></div>
+                  <button type="button" class="rt-btn" onclick="rtFormat(this,'bold')" title="Bold"><b>B</b></button>
+                  <button type="button" class="rt-btn" onclick="rtFormat(this,'italic')" title="Italic"><i>I</i></button>
+                  <button type="button" class="rt-btn" onclick="rtFormat(this,'underline')" title="Underline"><u>U</u></button>
+                  <div class="rt-divider"></div>
+                  <button type="button" class="rt-btn" onclick="rtFormat(this,'number')" title="Numbered point">1. List</button>
+                  <button type="button" class="rt-btn rt-verb" onclick="rtInsertVerb(this)" title="Insert action verb">⚡ Verb</button>
+                  <button type="button" class="rt-btn rt-clear" onclick="rtClear(this)" title="Clear formatting">✕ Clear</button>
+                </div>
+                <textarea class="form-textarea exp-bullets rich-area" id="exp-bullets-0" rows="5" placeholder="• Contributed to deal strategy and execution for 2 M&A transactions (average EV: £3bn)&#10;• Developed key sections of the CIM for a £300m technology sell-side transaction&#10;• Led VDR management, organising and uploading sensitive data for due diligence"></textarea>
               </div>
             </div>
           </div>
@@ -417,7 +428,17 @@
               </div>
               <div class="form-group">
                 <label>Key Achievements (optional)</label>
-                <textarea class="form-textarea lead-bullets" rows="3" placeholder="• Oversaw 3 high-impact social innovation projects, coordinating 25 team members&#10;• Achieved a 40% increase in funding while benefiting 1,200+ community members"></textarea>
+                <div class="rich-toolbar" data-target="lead-bullets-0">
+                  <button type="button" class="rt-btn" onclick="rtFormat(this,'bullet')" title="Add bullet point">• Bullet</button>
+                  <div class="rt-divider"></div>
+                  <button type="button" class="rt-btn" onclick="rtFormat(this,'bold')" title="Bold"><b>B</b></button>
+                  <button type="button" class="rt-btn" onclick="rtFormat(this,'italic')" title="Italic"><i>I</i></button>
+                  <button type="button" class="rt-btn" onclick="rtFormat(this,'underline')" title="Underline"><u>U</u></button>
+                  <div class="rt-divider"></div>
+                  <button type="button" class="rt-btn" onclick="rtFormat(this,'number')" title="Numbered point">1. List</button>
+                  <button type="button" class="rt-btn rt-verb" onclick="rtInsertVerb(this)" title="Insert action verb">⚡ Verb</button>
+                </div>
+                <textarea class="form-textarea lead-bullets rich-area" id="lead-bullets-0" rows="3" placeholder="• Oversaw 3 high-impact social innovation projects, coordinating 25 team members&#10;• Achieved a 40% increase in funding while benefiting 1,200+ community members"></textarea>
               </div>
             </div>
           </div>
@@ -469,6 +490,69 @@
             </div>
           </div>
           <button class="btn-outline mt-10" onclick="addAwardEntry()"><i class="fas fa-plus"></i> Add Another Entry</button>
+
+          <!-- ===== OPTIONAL EXTRA SECTIONS ===== -->
+          <div class="extra-sections-wrapper" id="extraSectionsWrapper">
+            <div class="extra-sections-divider">
+              <span>Optional Sections</span>
+            </div>
+            <p class="extra-sections-intro">Would you like to add any additional sections to your CV? Select from the options below — only add what is relevant to your profile.</p>
+
+            <!-- Added extra sections render here -->
+            <div id="extraSectionsList"></div>
+
+            <!-- Section picker -->
+            <div class="extra-section-picker" id="extraSectionPicker">
+              <div class="picker-grid" id="pickerGrid">
+                <div class="picker-option" onclick="addExtraSection('summary')" data-section="summary">
+                  <span class="picker-icon">📝</span>
+                  <span class="picker-name">Professional Summary</span>
+                  <span class="picker-note">Goes at the top, before Education</span>
+                </div>
+                <div class="picker-option" onclick="addExtraSection('publications')" data-section="publications">
+                  <span class="picker-icon">📚</span>
+                  <span class="picker-name">Publications / Projects</span>
+                  <span class="picker-note">Research papers, key projects</span>
+                </div>
+                <div class="picker-option" onclick="addExtraSection('research')" data-section="research">
+                  <span class="picker-icon">🔬</span>
+                  <span class="picker-name">Research Area / Topic</span>
+                  <span class="picker-note">Final year project, dissertation</span>
+                </div>
+                <div class="picker-option" onclick="addExtraSection('profbodies')" data-section="profbodies">
+                  <span class="picker-icon">🏛️</span>
+                  <span class="picker-name">Professional Bodies</span>
+                  <span class="picker-note">e.g. Member, GhIE; ACCA student</span>
+                </div>
+                <div class="picker-option" onclick="addExtraSection('volunteer')" data-section="volunteer">
+                  <span class="picker-icon">🤝</span>
+                  <span class="picker-name">Volunteer Experience</span>
+                  <span class="picker-note">Community service, NGO work</span>
+                </div>
+                <div class="picker-option" onclick="addExtraSection('references')" data-section="references">
+                  <span class="picker-icon">👥</span>
+                  <span class="picker-name">References</span>
+                  <span class="picker-note">Referee name, role, contact</span>
+                </div>
+                <div class="picker-option picker-option-warn" onclick="addExtraSection('hobbies')" data-section="hobbies">
+                  <span class="picker-icon">🎯</span>
+                  <span class="picker-name">Hobbies & Interests</span>
+                  <span class="picker-note">⚠️ Not advisable for professional CVs</span>
+                </div>
+                <div class="picker-option" onclick="addExtraSection('languages')" data-section="languages">
+                  <span class="picker-icon">🌍</span>
+                  <span class="picker-name">Languages</span>
+                  <span class="picker-note">Fluent / Intermediate only</span>
+                </div>
+                <div class="picker-option picker-option-custom" onclick="addExtraSection('custom')" data-section="custom">
+                  <span class="picker-icon">✏️</span>
+                  <span class="picker-name">Specify / Other</span>
+                  <span class="picker-note">Enter your own section title</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div class="step-actions mt-20">
             <button class="btn-outline" onclick="switchTab('skills')"><i class="fas fa-arrow-left"></i> Back</button>
             <button class="btn-primary" onclick="switchTab('preview')"><i class="fas fa-eye"></i> Preview My CV</button>
