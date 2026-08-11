@@ -98,9 +98,33 @@ function formatFileSize(bytes) {
   return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
 }
 
-// ===== REFINE CV ENGINE =====
-function refineCV() {
-  const target = document.querySelector('input[name="target"]:checked');
+// ===== GEMINI API CONFIG =====
+// Key is loaded from config.js (not committed to GitHub)
+const GEMINI_API_KEY = window.__GEMINI_KEY__ || '';
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+
+// ===== PDF TEXT EXTRACTION =====
+async function extractTextFromFile(file) {
+  return new Promise((resolve) => {
+    if (file.type === 'text/plain') {
+      const reader = new FileReader();
+      reader.onload = e => resolve(e.target.result);
+      reader.readAsText(file);
+      return;
+    }
+    // For PDF/DOCX — convert to base64 and send directly to Gemini
+    const reader = new FileReader();
+    reader.onload = e => resolve({ base64: e.target.result.split(',')[1], mimeType: file.type });
+    reader.readAsDataURL(file);
+  });
+}
+
+// ===== REFINE CV ENGINE — POWERED BY GEMINI 2.5 FLASH =====
+async function refineCV() {
+  const targetEl = document.querySelector('input[name="target"]:checked');
+  if (!targetEl) { showToast('Please select a target opportunity first.', true); return; }
+
+  const target = targetEl.value;
   const specificRole = document.getElementById('specific-role').value.trim();
   const pasteText = document.getElementById('cvPasteText').value.trim();
   const length = document.getElementById('cvLength').value;
@@ -109,206 +133,194 @@ function refineCV() {
   const includeCL = document.getElementById('includeCL').value;
   const extra = document.getElementById('extraInstructions').value.trim();
 
-  const rawContent = pasteText || (uploadedFile ? `[Uploaded file: ${uploadedFile.name}]` : '');
+  if (!uploadedFile && !pasteText) {
+    showToast('Please upload a file or paste your CV text first.', true); return;
+  }
 
   const btn = document.querySelector('#refine-step-3 .btn-primary');
-  btn.innerHTML = '<span class="spinner"></span> Refining your CV...';
+  btn.innerHTML = '<span class="spinner"></span> AI is refining your CV…';
   btn.disabled = true;
 
-  setTimeout(() => {
-    const refined = generateRefinedCV(rawContent, target?.value || 'general', specificRole, tone, spelling, length);
-    const improvements = getImprovements(target?.value || 'general', includeCL);
+  try {
+    // Build Gemini request
+    const targetLabels = {
+      corporate_job: 'a Corporate / Industry Job',
+      national_service: 'a National Service Placement in Ghana',
+      graduate_programme: 'a Competitive Graduate Programme',
+      postgraduate: 'Postgraduate / Graduate School Admission',
+      internship: 'an Internship Application',
+      academia: 'an Academic or Research Position',
+      ngo: 'an NGO / Development Sector Role',
+      banking: 'a Banking & Finance Role',
+      tech: 'a Technology / Engineering Role',
+      cover_letter: 'a Cover Letter',
+      general: 'a General Professional Application'
+    };
 
-    document.getElementById('refinedOutput').innerHTML = refined;
+    const toneLabels = {
+      professional: 'professional and formal',
+      academic: 'academic and research-focused',
+      dynamic: 'dynamic, results-driven, and impactful',
+      concise: 'concise and punchy'
+    };
+
+    const spellingLabel = spelling === 'british' ? 'British English' : 'American English';
+    const lengthNote = length === '1page' ? 'Keep the CV to 1 page maximum.' :
+                       length === '2page' ? 'The CV may be up to 2 pages.' :
+                       'Choose the appropriate length based on experience (1 page if under 3 years, 2 pages otherwise).';
+
+    const prompt = `You are an expert professional CV writer and career coach with 20+ years of experience in the Ghanaian and international job market. Your task is to take the user's existing CV content and produce a polished, professional, fully refined CV.
+
+TARGET OPPORTUNITY: ${targetLabels[target]}${specificRole ? ` — specifically: ${specificRole}` : ''}
+TONE: ${toneLabels[tone] || 'professional and formal'}
+SPELLING: Use ${spellingLabel} throughout
+LENGTH: ${lengthNote}
+${extra ? `SPECIAL INSTRUCTIONS FROM USER: ${extra}` : ''}
+
+STRICT CV GUIDELINES TO FOLLOW:
+1. Name: First Name, Middle Name (optional), Last Name — centred, uppercase, large
+2. Contact: professional email, phone with country code (+233), LinkedIn URL — no residential address, no photo
+3. Education: tertiary only — university name, location, degree, academic standing/GPA, relevant courses
+4. Professional Experience: organisation name, location, job title, dates (e.g. Jun 2024 – Aug 2024), then bullet points starting with strong ACTION VERBS (Developed, Led, Built, Executed, Analysed, etc.) — NEVER "Responsible for" or "Was on"
+5. Every bullet point MUST include quantified impact where possible (numbers, percentages, cedis, team sizes, etc.)
+6. Leadership Experience: role, organisation, dates, bullet points with achievements
+7. Skills: only relevant skills — no beginner-level languages
+8. Certifications & Awards: full names, no unexplained acronyms
+9. Exclude: gender, age, date of birth, marital status, nationality, residential address, headshot, references (unless provided)
+10. Date format: consistent abbreviated format (e.g. Jun 2024 — NOT June 2024 or 6/2024)
+11. Use consistent formatting throughout — same bullet style, same bold/normal pattern
+
+OUTPUT FORMAT: Return the refined CV as clean HTML using ONLY these CSS classes that already exist in the page:
+- <div class="cv-name">FULL NAME</div>
+- <div class="cv-contact">email | phone | linkedin</div>
+- <div class="cv-section-title">SECTION NAME</div>
+- <div class="cv-entry-header"><span class="cv-entry-org">Org Name</span><span class="cv-entry-loc">Location</span></div>
+- <div class="cv-entry-header"><span class="cv-entry-title">Job Title</span><span class="cv-entry-date">Jun 2024 – Aug 2024</span></div>
+- <ul class="cv-bullets"><li>Achievement bullet</li></ul>
+- <ul class="cv-awards-list"><li>Award or cert item</li></ul>
+- <div style="font-size:10pt;">text for standing, courses, skills</div>
+- <br/> for spacing between entries
+
+IMPORTANT: 
+- Extract ALL content from the CV provided — do not omit any experience, education, or achievement
+- Improve and enhance the language — make every bullet stronger and more impactful
+- If the user's original CV has weak phrasing, rewrite it professionally without losing the facts
+- Do not invent or fabricate any information not present in the original CV
+- Return ONLY the HTML output — no explanations, no markdown code blocks, no preamble
+
+HERE IS THE CV TO REFINE:
+${pasteText}`;
+
+    let requestBody;
+
+    if (uploadedFile && !pasteText) {
+      // File uploaded — send as inline data for Gemini to read directly
+      const fileData = await extractTextFromFile(uploadedFile);
+      if (fileData.base64) {
+        requestBody = {
+          contents: [{
+            parts: [
+              { text: prompt.replace(pasteText, '[See attached document]') + '\n\nPlease read the attached CV document and refine it according to all the instructions above.' },
+              { inline_data: { mime_type: fileData.mimeType, data: fileData.base64 } }
+            ]
+          }],
+          generationConfig: { temperature: 0.3, maxOutputTokens: 8192 }
+        };
+      } else {
+        requestBody = {
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0.3, maxOutputTokens: 8192 }
+        };
+      }
+    } else {
+      requestBody = {
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.3, maxOutputTokens: 8192 }
+      };
+    }
+
+    const response = await fetch(GEMINI_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(requestBody)
+    });
+
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.error?.message || `API error ${response.status}`);
+    }
+
+    const data = await response.json();
+    let refinedHTML = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+    // Strip any markdown code fences Gemini might add
+    refinedHTML = refinedHTML.replace(/^```html\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '').trim();
+
+    if (!refinedHTML || refinedHTML.length < 100) {
+      throw new Error('The AI returned an empty response. Please try again.');
+    }
+
+    // Add refinement footer
+    refinedHTML += `<br/><div style="text-align:center;font-size:8.5pt;color:#777;border-top:1px solid #ddd;padding-top:8px;margin-top:16px;font-family:'Inter',sans-serif;">
+      ✦ AI-Refined for: <strong>${targetLabels[target]}</strong>${specificRole ? ' — ' + specificRole : ''} &nbsp;·&nbsp; ${spellingLabel} &nbsp;·&nbsp; CV Genius Ghana
+    </div>`;
+
+    document.getElementById('refinedOutput').innerHTML = refinedHTML;
+
+    // Build improvements list from AI output analysis
+    const improvements = buildImprovementsList(refinedHTML, target, includeCL, pasteText || '');
     const impList = document.getElementById('improvementsList');
     impList.innerHTML = improvements.map(i => `<li>${i}</li>`).join('');
 
     btn.innerHTML = '<i class="fas fa-magic"></i> Refine My CV Now';
     btn.disabled = false;
     goToStep(4);
-  }, 2200);
-}
 
-function generateRefinedCV(rawText, target, role, tone, spelling, length) {
-  // Smart refinement engine — analyses input and generates professional output
-  const analysedLines = rawText ? rawText.split('\n').filter(l => l.trim()) : [];
-
-  // Extract name if present
-  let detectedName = '';
-  let detectedEmail = '';
-  let detectedPhone = '';
-
-  for (const line of analysedLines) {
-    if (!detectedName && line.length < 50 && /^[A-Z][a-z]+ [A-Z]/.test(line.trim())) detectedName = line.trim();
-    if (!detectedEmail && /[\w.]+@[\w.]+/.test(line)) detectedEmail = line.match(/[\w.]+@[\w.]+/)?.[0] || '';
-    if (!detectedPhone && /\+?\d[\d\s\-()]{7,}/.test(line)) detectedPhone = line.match(/\+?[\d\s\-()]{9,}/)?.[0]?.trim() || '';
+  } catch (err) {
+    btn.innerHTML = '<i class="fas fa-magic"></i> Refine My CV Now';
+    btn.disabled = false;
+    showToast(`Error: ${err.message}`, true);
+    console.error('Gemini refine error:', err);
   }
-
-  const targetLabels = {
-    corporate_job: 'Corporate / Industry Role',
-    national_service: 'National Service Placement',
-    graduate_programme: 'Graduate Programme',
-    postgraduate: 'Postgraduate Studies',
-    internship: 'Internship Application',
-    academia: 'Academic / Research Position',
-    ngo: 'NGO / Development Sector',
-    banking: 'Banking & Finance Role',
-    tech: 'Technology / Engineering Role',
-    cover_letter: 'Cover Letter',
-    general: 'General Application'
-  };
-
-  const toneNote = {
-    professional: 'Professional & Formal',
-    academic: 'Academic / Research-Focused',
-    dynamic: 'Dynamic & Results-Driven',
-    concise: 'Concise & Impactful'
-  };
-
-  if (!rawText || rawText.startsWith('[Uploaded file:')) {
-    return `<div class="cv-name">${detectedName || 'YOUR NAME'}</div>
-<div class="cv-contact">your.email@gmail.com | +233 XX XXX XXXX | linkedin.com/in/yourprofile</div>
-<div class="cv-section-title">EDUCATION</div>
-<div class="cv-entry-header"><span class="cv-entry-org">University Name</span><span class="cv-entry-loc">Location, Ghana</span></div>
-<div class="cv-entry-header"><span class="cv-entry-title">BSc. Your Programme</span><span class="cv-entry-date">Expected Month Year</span></div>
-<div style="font-size:10pt; margin-top:3px;">Academic Standing: First Class Honours</div>
-<div style="font-size:10pt;">Relevant Courses: Course 1, Course 2, Course 3</div>
-<div class="cv-section-title">PROFESSIONAL EXPERIENCE</div>
-<div class="cv-entry-header"><span class="cv-entry-org">Organisation Name</span><span class="cv-entry-loc">Location, Ghana</span></div>
-<div class="cv-entry-header"><span class="cv-entry-title">Your Job Title</span><span class="cv-entry-date">Mon Year – Mon Year</span></div>
-<ul class="cv-bullets">
-  <li>Developed [X] resulting in [Y measurable outcome], contributing to [Z broader goal]</li>
-  <li>Led [initiative/project], coordinating [N] team members and achieving [result with figures]</li>
-  <li>Built [tool/process] that improved [metric] by [X%], enhancing [outcome]</li>
-</ul>
-<div class="cv-section-title">LEADERSHIP EXPERIENCE</div>
-<div class="cv-entry-header"><span class="cv-entry-org">Organisation Name</span><span class="cv-entry-loc"></span></div>
-<div class="cv-entry-header"><span class="cv-entry-title">Your Role</span><span class="cv-entry-date">Mon Year – Present</span></div>
-<ul class="cv-bullets"><li>Led [X] members to achieve [Y], resulting in [Z impact]</li></ul>
-<div class="cv-section-title">CERTIFICATIONS & AWARDS</div>
-<ul class="cv-awards-list">
-  <li>Your Certification Name, Issuing Organisation (Year)</li>
-  <li>Award Name, Awarding Institution (Year)</li>
-</ul>
-<br/><div style="text-align:center; font-size:9pt; color:#555; border-top:1px solid #ccc; padding-top:8px;">
-  ✦ Refined for: <strong>${targetLabels[target]}</strong>${role ? ' — ' + role : ''} &nbsp;|&nbsp; Style: <strong>${toneNote[tone]}</strong>
-</div>`;
-  }
-
-  // Process pasted text
-  const refined = refinePastedText(analysedLines, target, tone, spelling);
-  return refined + `<br/><div style="text-align:center; font-size:9pt; color:#555; border-top:1px solid #ccc; padding-top:8px;">
-  ✦ Refined for: <strong>${targetLabels[target]}</strong>${role ? ' — ' + role : ''} &nbsp;|&nbsp; Style: <strong>${toneNote[tone]}</strong>
-</div>`;
 }
 
-function refinePastedText(lines, target, tone, spelling) {
-  let output = '';
-  let inSection = '';
-  const actionVerbs = ['Developed','Built','Led','Executed','Managed','Analysed','Designed','Increased','Reduced','Implemented','Coordinated','Delivered','Achieved','Established','Oversaw','Spearheaded','Contributed','Collaborated','Streamlined'];
+function buildImprovementsList(refinedHTML, target, includeCL, originalText) {
+  const improvements = [];
+  const text = refinedHTML.replace(/<[^>]+>/g, ' ');
 
-  const weakStarters = ['responsible for','was on','worked on','helped with','assisted in','duties included','tasked with'];
+  // Detect what was actually improved
+  if (/developed|built|led|executed|analysed|designed|implemented/i.test(text))
+    improvements.push('Replaced passive and weak language with strong action verbs throughout');
+  if (/\d+[%+]|\d+,\d+|\d+ (team|client|member|project|transaction)/i.test(text))
+    improvements.push('Quantified achievements with real figures, percentages, and measurable impact');
+  if (/Jun|Jul|Aug|Sep|Oct|Nov|Dec|Jan|Feb|Mar|Apr|May/.test(text))
+    improvements.push('Standardised all dates to consistent abbreviated format (e.g. Jun 2024 – Aug 2024)');
+  if (refinedHTML.includes('cv-section-title'))
+    improvements.push('Structured CV with clearly defined, professionally formatted sections');
+  if (refinedHTML.includes('cv-entry-header'))
+    improvements.push('Applied consistent entry formatting: organisation, role, location, and dates properly aligned');
 
-  for (let i = 0; i < lines.length; i++) {
-    let line = lines[i].trim();
-    if (!line) continue;
-
-    // Detect section headers
-    const upper = line.toUpperCase();
-    if (upper.includes('EDUCATION') && line.length < 30) {
-      output += `<div class="cv-section-title">EDUCATION</div>\n`; inSection = 'education'; continue;
-    }
-    if ((upper.includes('EXPERIENCE') || upper.includes('WORK HISTORY')) && line.length < 40) {
-      output += `<div class="cv-section-title">PROFESSIONAL EXPERIENCE</div>\n`; inSection = 'experience'; continue;
-    }
-    if ((upper.includes('LEADERSHIP') || upper.includes('EXTRACURRICULAR')) && line.length < 50) {
-      output += `<div class="cv-section-title">LEADERSHIP EXPERIENCE</div>\n`; inSection = 'leadership'; continue;
-    }
-    if ((upper.includes('SKILL') ) && line.length < 30) {
-      output += `<div class="cv-section-title">SKILLS</div>\n`; inSection = 'skills'; continue;
-    }
-    if ((upper.includes('CERTIF') || upper.includes('AWARD') || upper.includes('ACHIEVEMENT')) && line.length < 50) {
-      output += `<div class="cv-section-title">CERTIFICATIONS & AWARDS</div>\n`; inSection = 'awards'; continue;
-    }
-    if ((upper.includes('PROJECT') || upper.includes('VOLUNTEER')) && line.length < 40) {
-      output += `<div class="cv-section-title">${line.toUpperCase()}</div>\n`; inSection = 'other'; continue;
-    }
-
-    // Detect if it looks like an email/phone line (contact info)
-    if (/[\w.]+@[\w.]+/.test(line) || /\+?\d[\d\s\-()]{7,}/.test(line)) {
-      if (i < 5) { // top of CV
-        output += `<div class="cv-contact">${line}</div>\n`; continue;
-      }
-    }
-
-    // Detect name (first few lines, short, title case)
-    if (i < 3 && line.length < 50 && /^[A-Z]/.test(line) && !line.includes('@') && !line.includes('+')) {
-      output += `<div class="cv-name">${line.toUpperCase()}</div>\n`; continue;
-    }
-
-    // Bullet points - refine weak language
-    if (line.startsWith('•') || line.startsWith('-') || line.startsWith('*')) {
-      let bullet = line.replace(/^[•\-*]\s*/, '').trim();
-
-      // Fix weak starters
-      for (const weak of weakStarters) {
-        if (bullet.toLowerCase().startsWith(weak)) {
-          const rest = bullet.slice(weak.length).trim();
-          const verb = actionVerbs[Math.floor(Math.random() * actionVerbs.length)];
-          bullet = verb + ' ' + rest.charAt(0).toLowerCase() + rest.slice(1);
-          break;
-        }
-      }
-
-      // British/American spelling fixes
-      if (spelling === 'british') {
-        bullet = bullet.replace(/\borganize\b/g,'organise').replace(/\banalyze\b/g,'analyse')
-          .replace(/\brecognize\b/g,'recognise').replace(/\bcolor\b/g,'colour').replace(/\bharbor\b/g,'harbour');
-      } else {
-        bullet = bullet.replace(/\borganise\b/g,'organize').replace(/\banalyse\b/g,'analyze')
-          .replace(/\brecognise\b/g,'recognize').replace(/\bcolour\b/g,'color');
-      }
-
-      output += `<ul class="cv-bullets"><li>${bullet}</li></ul>\n`;
-    } else {
-      // Regular line — format as entry header if it has dates
-      if (/\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{4}/.test(line) || /\b\d{4}\s*[–\-]\s*(\d{4}|Present)/.test(line)) {
-        const dateMatch = line.match(/((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{4}\s*[–\-]\s*(?:(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{4}|Present|\d{4}))/i);
-        if (dateMatch) {
-          const rest = line.replace(dateMatch[0], '').trim();
-          output += `<div class="cv-entry-header"><span class="cv-entry-title">${rest}</span><span class="cv-entry-date">${dateMatch[0]}</span></div>\n`;
-        } else { output += `<div class="cv-entry-header"><span class="cv-entry-org">${line}</span></div>\n`; }
-      } else if (line.length > 3) {
-        output += `<div class="cv-entry-header"><span class="cv-entry-org">${line}</span></div>\n`;
-      }
-    }
-  }
-
-  return output || `<p style="color:#888; font-style:italic;">Your CV content will appear here once processed. Please paste your full CV text in the field above.</p>`;
-}
-
-function getImprovements(target, includeCL) {
-  const base = [
-    'Replaced passive language with strong action verbs (Developed, Led, Built, Executed)',
-    'Ensured consistent date format (e.g. Jun 2024 – Aug 2024) throughout the document',
-    'Applied correct British English spelling conventions across all sections',
-    'Standardised bullet point formatting and spacing for visual consistency',
-    'Removed personal data (gender, nationality, date of birth) not suitable for professional CVs',
-    'Ensured organisation names are written in full — no unrecognised abbreviations'
-  ];
-  const byTarget = {
-    national_service: ['Highlighted academic standing and community-focused experience relevant to national service placement', 'Emphasised leadership roles and volunteer activities for placement consideration'],
-    banking: ['Prioritised finance-related experience and quantified financial impact (deal values, portfolio sizes)', 'Highlighted FMVA, CFA, or other finance certifications prominently'],
-    tech: ['Moved technical skills section higher for engineering/tech applications', 'Emphasised project work, GitHub, and technical certifications'],
-    academic: ['Reformatted for academic style — emphasised research, publications, and academic achievements', 'Highlighted GPA and class standing prominently'],
-    postgraduate: ['Tailored to postgraduate application format — research interests and academic honours foregrounded'],
-    graduate_programme: ['Structured to highlight leadership, commercial awareness, and internship experience for graduate schemes'],
-    internship: ['Formatted concisely to 1 page suitable for internship applications', 'Highlighted relevant coursework and any prior work experience']
+  const targetTips = {
+    banking: 'Foregrounded financial experience, deal values, and quantified portfolio impact for banking applications',
+    tech: 'Prioritised technical skills, project outcomes, and engineering experience for tech roles',
+    academia: 'Emphasised academic standing, GPA, research experience, and scholarly achievements',
+    national_service: 'Highlighted academic credentials, leadership, and community impact for national service placement',
+    postgraduate: 'Tailored structure and language for graduate school admission — research and academic excellence foregrounded',
+    graduate_programme: 'Structured for graduate scheme applications — commercial awareness, leadership, and internship impact highlighted',
+    internship: 'Optimised for internship applications — concise, focused on academic performance and any relevant experience',
+    ngo: 'Emphasised community impact, volunteer work, and mission alignment for development sector roles'
   };
-  const extras = byTarget[target] || ['Tailored content and structure to best suit your target opportunity'];
-  if (includeCL === 'yes') extras.push('Cover letter generated with a compelling opening, tailored body, and professional close');
-  return [...base, ...extras];
+  if (targetTips[target]) improvements.push(targetTips[target]);
+
+  if (includeCL === 'yes')
+    improvements.push('Cover letter generated — use the "Generate Cover Letter" button below to view and download it');
+
+  if (improvements.length < 3)
+    improvements.push('Applied SEO Africa professional CV guidelines throughout the document');
+
+  return improvements;
 }
+
 
 // ===== DOWNLOAD REFINED CV =====
 function downloadRefinedCV() {

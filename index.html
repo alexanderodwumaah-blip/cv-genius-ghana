@@ -205,8 +205,8 @@
         <h3><i class="fas fa-upload"></i> Step 2: Upload Your Document</h3>
         <div class="upload-zone" id="uploadZone" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragleave="handleDragLeave(event)">
           <div class="upload-icon"><i class="fas fa-cloud-upload-alt"></i></div>
-          <p class="upload-main">Drag & drop your CV, Resume, or Cover Letter here</p>
-          <p class="upload-sub">Supports PDF, DOCX, DOC, TXT — Max 10MB</p>
+          <p class="upload-main">Drag & drop your CV here</p>
+          <p class="upload-sub">PDF, DOCX, DOC, TXT — Max 10MB &nbsp;·&nbsp; <strong>AI reads your file directly</strong></p>
           <button class="btn-outline mt-10" onclick="document.getElementById('fileInput').click()">
             <i class="fas fa-folder-open"></i> Browse Files
           </button>
@@ -274,7 +274,7 @@
         </div>
         <div class="step-actions">
           <button class="btn-outline" onclick="goToStep(2)"><i class="fas fa-arrow-left"></i> Back</button>
-          <button class="btn-primary" onclick="refineCV()"><i class="fas fa-magic"></i> Refine My CV Now</button>
+          <button class="btn-primary" onclick="refineCV()"><i class="fas fa-magic"></i> Refine My CV with AI</button>
           <button class="btn-outline" onclick="scoreCVFromPaste()" style="margin-left:auto;"><i class="fas fa-chart-bar"></i> Check CV Score</button>
         </div>
       </div>
@@ -902,6 +902,7 @@
   <i class="fas fa-chevron-up"></i>
 </button>
 
+<script src="config.js"></script>
 <script src="app.js"></script>
 <script type="module" src="firebase-app.js"></script>
 </body>
