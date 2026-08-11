@@ -106,13 +106,18 @@ const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemi
 // ===== PDF TEXT EXTRACTION =====
 async function extractTextFromFile(file) {
   return new Promise((resolve) => {
-    if (file.type === 'text/plain') {
+    if (file.type === 'text/plain' || file.name.endsWith('.txt')) {
       const reader = new FileReader();
-      reader.onload = e => resolve(e.target.result);
+      reader.onload = e => {
+        // Put the text in the paste area too so scoring works
+        const ta = document.getElementById('cvPasteText');
+        if (ta && !ta.value.trim()) ta.value = e.target.result;
+        resolve({ text: e.target.result });
+      };
       reader.readAsText(file);
       return;
     }
-    // For PDF/DOCX — convert to base64 and send directly to Gemini
+    // For PDF/DOCX — convert to base64 and send directly to Gemini's vision
     const reader = new FileReader();
     reader.onload = e => resolve({ base64: e.target.result.split(',')[1], mimeType: file.type });
     reader.readAsDataURL(file);
@@ -138,8 +143,23 @@ async function refineCV() {
   }
 
   const btn = document.querySelector('#refine-step-3 .btn-primary');
-  btn.innerHTML = '<span class="spinner"></span> AI is refining your CV…';
+  const originalBtnText = '<i class="fas fa-magic"></i> Refine My CV with AI';
+  btn.innerHTML = '<span class="spinner"></span> AI is reading your CV…';
   btn.disabled = true;
+
+  // Show a live progress message so the user knows it's working
+  const progressMessages = [
+    'AI is reading your CV…',
+    'Analysing your experience…',
+    'Rewriting with stronger language…',
+    'Applying professional formatting…',
+    'Polishing the final output…'
+  ];
+  let msgIdx = 0;
+  const msgTimer = setInterval(() => {
+    msgIdx = Math.min(msgIdx + 1, progressMessages.length - 1);
+    if (btn.disabled) btn.innerHTML = `<span class="spinner"></span> ${progressMessages[msgIdx]}`;
+  }, 4000);
 
   try {
     // Build Gemini request
@@ -189,6 +209,7 @@ STRICT CV GUIDELINES TO FOLLOW:
 9. Exclude: gender, age, date of birth, marital status, nationality, residential address, headshot, references (unless provided)
 10. Date format: consistent abbreviated format (e.g. Jun 2024 — NOT June 2024 or 6/2024)
 11. Use consistent formatting throughout — same bullet style, same bold/normal pattern
+12. PRESERVE ALL CONTENT — every job, internship, education entry, award, and leadership role from the original must appear in the output. Do not drop anything.
 
 OUTPUT FORMAT: Return the refined CV as clean HTML using ONLY these CSS classes that already exist in the page:
 - <div class="cv-name">FULL NAME</div>
@@ -201,41 +222,47 @@ OUTPUT FORMAT: Return the refined CV as clean HTML using ONLY these CSS classes 
 - <div style="font-size:10pt;">text for standing, courses, skills</div>
 - <br/> for spacing between entries
 
-IMPORTANT: 
-- Extract ALL content from the CV provided — do not omit any experience, education, or achievement
+CRITICAL RULES:
+- Extract EVERY SINGLE piece of information from the CV — do not omit any experience, education, or achievement
 - Improve and enhance the language — make every bullet stronger and more impactful
-- If the user's original CV has weak phrasing, rewrite it professionally without losing the facts
-- Do not invent or fabricate any information not present in the original CV
-- Return ONLY the HTML output — no explanations, no markdown code blocks, no preamble
+- Rewrite weak phrasing professionally without losing the facts
+- Do NOT invent or fabricate any information not present in the original CV
+- Return ONLY the HTML output — no explanations, no markdown code blocks, no preamble, no \`\`\`html wrapper`;
 
-HERE IS THE CV TO REFINE:
-${pasteText}`;
+    // Build prompt for file upload (no paste text)
+    const filePrompt = prompt + '\n\nHERE IS THE CV TO REFINE:\n[The CV document is attached below — read it in full and refine every section.]';
+    const textPrompt = prompt + `\n\nHERE IS THE CV TO REFINE:\n${pasteText}`;
 
     let requestBody;
 
     if (uploadedFile && !pasteText) {
-      // File uploaded — send as inline data for Gemini to read directly
+      // File uploaded — send as inline data + proper file prompt
       const fileData = await extractTextFromFile(uploadedFile);
-      if (fileData.base64) {
+      if (fileData && fileData.base64) {
+        // PDF or DOCX — send as binary inline data, Gemini reads it natively
         requestBody = {
           contents: [{
             parts: [
-              { text: prompt.replace(pasteText, '[See attached document]') + '\n\nPlease read the attached CV document and refine it according to all the instructions above.' },
+              { text: filePrompt },
               { inline_data: { mime_type: fileData.mimeType, data: fileData.base64 } }
             ]
           }],
-          generationConfig: { temperature: 0.3, maxOutputTokens: 8192 }
+          generationConfig: { temperature: 0.2, maxOutputTokens: 65536 }
         };
       } else {
+        // TXT file — text was extracted, use as paste text
+        const extracted = fileData?.text || '';
+        const resolvedPrompt = prompt + `\n\nHERE IS THE CV TO REFINE:\n${extracted}`;
         requestBody = {
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.3, maxOutputTokens: 8192 }
+          contents: [{ parts: [{ text: resolvedPrompt }] }],
+          generationConfig: { temperature: 0.2, maxOutputTokens: 65536 }
         };
       }
     } else {
+      // Pasted text
       requestBody = {
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.3, maxOutputTokens: 8192 }
+        contents: [{ parts: [{ text: textPrompt }] }],
+        generationConfig: { temperature: 0.2, maxOutputTokens: 65536 }
       };
     }
 
@@ -272,12 +299,14 @@ ${pasteText}`;
     const impList = document.getElementById('improvementsList');
     impList.innerHTML = improvements.map(i => `<li>${i}</li>`).join('');
 
-    btn.innerHTML = '<i class="fas fa-magic"></i> Refine My CV Now';
+    clearInterval(msgTimer);
+    btn.innerHTML = originalBtnText;
     btn.disabled = false;
     goToStep(4);
 
   } catch (err) {
-    btn.innerHTML = '<i class="fas fa-magic"></i> Refine My CV Now';
+    clearInterval(msgTimer);
+    btn.innerHTML = originalBtnText;
     btn.disabled = false;
     showToast(`Error: ${err.message}`, true);
     console.error('Gemini refine error:', err);
@@ -924,10 +953,89 @@ function closeScoreModal(e, force) {
 }
 
 // ===== COVER LETTER GENERATOR =====
+
+// OpenAI config — key loaded from config.js
+const OPENAI_API_KEY = window.__OPENAI_KEY__ || '';
+const OPENAI_URL = 'https://api.openai.com/v1/chat/completions';
+
+async function generateCoverLetterAI(name, contact, target, role, cvText) {
+  if (!OPENAI_API_KEY || OPENAI_API_KEY === 'PASTE_NEW_KEY_HERE') return null;
+
+  const targetLabels = {
+    corporate_job: 'a Corporate / Industry Job',
+    national_service: 'a National Service Placement in Ghana',
+    graduate_programme: 'a Competitive Graduate Programme',
+    postgraduate: 'Postgraduate / Graduate School Admission',
+    internship: 'an Internship Application',
+    academia: 'an Academic or Research Position',
+    ngo: 'an NGO / Development Sector Role',
+    banking: 'a Banking & Finance Role',
+    tech: 'a Technology / Engineering Role',
+    cover_letter: 'a Cover Letter',
+    general: 'a General Professional Application'
+  };
+
+  const today = new Date();
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const dateStr = `${today.getDate()} ${months[today.getMonth()]} ${today.getFullYear()}`;
+
+  const prompt = `You are an expert professional CV writer and career coach specialising in the Ghanaian and international job market. Write a compelling, personalised cover letter based on the CV content provided.
+
+TARGET OPPORTUNITY: ${targetLabels[target] || 'a Professional Position'}${role ? ` — specifically: ${role}` : ''}
+APPLICANT NAME: ${name || 'Detect from CV'}
+DATE: ${dateStr}
+
+COVER LETTER REQUIREMENTS:
+1. Format: Business letter format — Date, Salutation, RE: line, 3–4 body paragraphs, Closing
+2. Salutation: Use "Dear [appropriate title based on target]," (e.g. "Dear Hiring Manager," / "Dear Graduate Recruitment Team," / "Dear Admissions Committee,")
+3. Opening paragraph: Strong, engaging hook that immediately signals why the candidate is exceptional — avoid generic "I am writing to apply…" openers
+4. Second paragraph: Highlight 2–3 specific achievements pulled directly from the CV with real figures and context — make this concrete and impactful
+5. Third paragraph: Connect the candidate's background to the specific opportunity/organisation — show genuine interest and fit
+6. Closing paragraph: Confident call to action — express availability for interview, thank the reader, sign off professionally
+7. Tone: Professional, confident, and tailored to the target opportunity type
+8. Length: 250–350 words maximum — concise and punchy, not padded
+9. Spelling: British English
+10. Closing: "Yours faithfully," then the applicant's name on a new line
+
+IMPORTANT:
+- Extract real achievements and experiences from the CV below — do not fabricate anything
+- The letter should feel genuinely tailored, not generic
+- Use specific numbers, figures, and role titles from the CV
+- Do NOT include "Attached: CV" or "Enc:" lines
+
+CV CONTENT:
+${cvText || '[No CV text provided — write a strong general letter using the name and target provided]'}
+
+Return ONLY the cover letter text — no explanations, no preamble, no markdown formatting.`;
+
+  const response = await fetch(OPENAI_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${OPENAI_API_KEY}`
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o',
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.4,
+      max_tokens: 600
+    })
+  });
+
+  if (!response.ok) {
+    const err = await response.json();
+    throw new Error(err.error?.message || `OpenAI error ${response.status}`);
+  }
+
+  const data = await response.json();
+  return data.choices?.[0]?.message?.content?.trim() || null;
+}
+
 function generateCoverLetterFromRefine() {
   const target = document.querySelector('input[name="target"]:checked')?.value || 'general';
   const role = document.getElementById('specific-role').value.trim();
-  const cvText = document.getElementById('cvPasteText').value.trim() || '';
+  const cvText = document.getElementById('cvPasteText').value.trim()
+    || document.getElementById('refinedOutput')?.innerText || '';
   showCoverLetter(null, null, target, role, cvText);
 }
 
@@ -944,10 +1052,34 @@ function generateCoverLetterFromBuilder() {
   showCoverLetter(fullName, { email, phone }, target, '', cvText);
 }
 
-function showCoverLetter(name, contact, target, role, cvText) {
+async function showCoverLetter(name, contact, target, role, cvText) {
+  const modal = document.getElementById('coverLetterModal');
+  const contentEl = document.getElementById('coverLetterContent');
+
+  // Show modal immediately with loading state
+  contentEl.textContent = '';
+  modal.classList.add('active');
+
+  // Show spinner inside the modal content area
+  contentEl.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;gap:16px;color:#5a5a7a;font-family:'Inter',sans-serif;">
+    <div class="spinner" style="width:40px;height:40px;border-width:4px;border-top-color:var(--primary);"></div>
+    <p style="font-size:0.95rem;">GPT-4o is writing your cover letter…</p>
+  </div>`;
+
+  try {
+    const aiLetter = await generateCoverLetterAI(name, contact, target, role, cvText);
+    if (aiLetter) {
+      contentEl.textContent = aiLetter;
+      return;
+    }
+  } catch (err) {
+    console.warn('OpenAI cover letter failed, falling back to template:', err.message);
+    showToast('AI generation failed — showing template version.', true);
+  }
+
+  // Fallback: static template
   const cl = buildCoverLetter(name, contact, target, role, cvText);
-  document.getElementById('coverLetterContent').textContent = cl;
-  document.getElementById('coverLetterModal').classList.add('active');
+  contentEl.textContent = cl;
 }
 
 function buildCoverLetter(name, contact, target, role, cvText) {
@@ -1020,7 +1152,11 @@ ${name}`;
 }
 
 function downloadCoverLetter() {
-  const text = document.getElementById('coverLetterContent').textContent;
+  const contentEl = document.getElementById('coverLetterContent');
+  const text = contentEl.textContent;
+  if (!text || text.includes('GPT-4o is writing')) {
+    showToast('Please wait for the cover letter to finish generating.', true); return;
+  }
   const printWin = window.open('', '_blank', 'width=800,height=900');
   printWin.document.write(`<!DOCTYPE html><html><head><title>Cover Letter</title>
     <style>body{font-family:'Times New Roman',serif;font-size:12pt;margin:2.5cm;color:#000;line-height:1.8;}p{margin-bottom:12pt;}</style>
@@ -1033,7 +1169,11 @@ function downloadCoverLetter() {
 }
 
 function copyCoverLetter() {
-  const text = document.getElementById('coverLetterContent').textContent;
+  const contentEl = document.getElementById('coverLetterContent');
+  const text = contentEl.textContent;
+  if (!text || text.includes('GPT-4o is writing')) {
+    showToast('Please wait for the cover letter to finish generating.', true); return;
+  }
   navigator.clipboard.writeText(text).then(() => showToast('Cover letter copied to clipboard!'));
 }
 
