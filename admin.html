@@ -163,7 +163,7 @@
     .tab-panel.active { display: block; }
     .section-divider { font-size: 0.72rem; font-weight: 700; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.08em; margin: 20px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
     /* ACCESS DENIED */
-    .access-denied { min-height: 100vh; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 16px; text-align: center; padding: 40px; }
+    .access-denied { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 16px; text-align: center; padding: 40px; background: var(--bg); z-index: 1000; }
     .access-denied .icon { font-size: 4rem; }
     @keyframes shake {
       0%,100% { transform: translateX(0); }
@@ -284,7 +284,7 @@
 </div>
 
 <!-- LOADING -->
-<div id="loadingScreen" style="min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;color:var(--text-light);font-size:0.9rem;">
+<div id="loadingScreen" style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;color:var(--text-light);font-size:0.9rem;background:var(--bg);z-index:1000;">
   <div class="spinner" style="width:36px;height:36px;border-width:4px;"></div>
   <p>Verifying admin access…</p>
 </div>
