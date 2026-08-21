@@ -1,0 +1,820 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Submit CV for Expert Review â€” CV Genius Ghana</title>
+  <link rel="stylesheet" href="style.css"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <style>
+    :root {
+      --primary: #006b3f;
+      --primary-light: #e8f5ee;
+      --gold: #fcd116;
+      --gold-dark: #e6b800;
+      --red: #ce1126;
+      --text: #1a1a2e;
+      --text-light: #5a5a7a;
+      --border: #e5e7ef;
+      --bg: #f8fafc;
+      --white: #ffffff;
+      --radius: 14px;
+      --shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    /* NAV */
+    .top-nav { background: #fff; border-bottom: 1px solid var(--border); padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+    .nav-logo { display: flex; align-items: center; gap: 8px; font-size: 1.1rem; font-weight: 800; color: var(--text); text-decoration: none; }
+    .logo-icon { font-size: 1.3rem; }
+    .accent { color: var(--primary); }
+    .nav-back { display: flex; align-items: center; gap: 8px; color: var(--text-light); text-decoration: none; font-size: 0.9rem; font-weight: 500; transition: color 0.2s; }
+    .nav-back:hover { color: var(--primary); }
+
+    /* PAGE HERO */
+    .page-hero { background: linear-gradient(135deg, #006b3f 0%, #004d2d 100%); color: #fff; padding: 56px 24px 40px; text-align: center; }
+    .page-hero-badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); border-radius: 100px; padding: 6px 16px; font-size: 0.82rem; font-weight: 600; margin-bottom: 20px; letter-spacing: 0.02em; }
+    .page-hero h1 { font-size: clamp(1.6rem, 4vw, 2.4rem); font-weight: 800; margin-bottom: 12px; line-height: 1.2; }
+    .page-hero p { font-size: 1rem; opacity: 0.85; max-width: 560px; margin: 0 auto 24px; line-height: 1.6; }
+    .hero-features { display: flex; justify-content: center; gap: 24px; flex-wrap: wrap; }
+    .hero-feat { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; background: rgba(255,255,255,0.1); padding: 8px 16px; border-radius: 100px; border: 1px solid rgba(255,255,255,0.2); }
+
+    /* MAIN CONTENT */
+    .page-content { max-width: 760px; margin: 0 auto; padding: 40px 20px 80px; }
+
+    /* SIGN-IN PROMPT */
+    .signin-prompt { background: #fff; border: 2px solid var(--gold); border-radius: var(--radius); padding: 32px; text-align: center; margin-bottom: 32px; }
+    .signin-prompt .prompt-icon { font-size: 2.5rem; margin-bottom: 12px; }
+    .signin-prompt h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 8px; }
+    .signin-prompt p { color: var(--text-light); font-size: 0.9rem; margin-bottom: 20px; }
+
+    /* FORM CARD */
+    .form-card { background: #fff; border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+    .form-card-header { background: var(--primary); color: #fff; padding: 20px 24px; display: flex; align-items: center; gap: 12px; }
+    .form-card-header .step-badge { background: rgba(255,255,255,0.2); border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; flex-shrink: 0; }
+    .form-card-header h2 { font-size: 1rem; font-weight: 700; }
+    .form-card-body { padding: 28px 24px; }
+
+    .form-group { margin-bottom: 20px; }
+    .form-group label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--text); margin-bottom: 7px; }
+    .form-group label .required { color: var(--red); margin-left: 3px; }
+    .form-input, .form-select, .form-textarea { width: 100%; padding: 11px 14px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 0.9rem; font-family: 'Inter', sans-serif; color: var(--text); background: #fff; transition: border-color 0.2s, box-shadow 0.2s; }
+    .form-input:focus, .form-select:focus, .form-textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0,107,63,0.1); }
+    .form-textarea { resize: vertical; min-height: 100px; line-height: 1.5; }
+
+    /* UPLOAD ZONE */
+    .upload-zone { border: 2.5px dashed var(--border); border-radius: var(--radius); padding: 40px 24px; text-align: center; cursor: pointer; transition: all 0.25s; background: #fafbff; }
+    .upload-zone:hover, .upload-zone.dragover { border-color: var(--primary); background: var(--primary-light); }
+    .upload-icon { font-size: 3rem; color: var(--primary); margin-bottom: 12px; }
+    .upload-main { font-size: 1rem; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+    .upload-sub { font-size: 0.82rem; color: var(--text-light); margin-bottom: 16px; }
+    .upload-preview { display: none; background: var(--primary-light); border: 1.5px solid var(--primary); border-radius: 10px; padding: 14px 16px; margin-top: 12px; }
+    .upload-preview.show { display: flex; align-items: center; gap: 12px; }
+    .file-icon-lg { font-size: 1.8rem; color: var(--primary); }
+    .file-details { flex: 1; }
+    .file-name { font-weight: 600; font-size: 0.9rem; color: var(--text); }
+    .file-size { font-size: 0.78rem; color: var(--text-light); margin-top: 2px; }
+    .remove-file-btn { background: none; border: none; cursor: pointer; color: var(--red); font-size: 1.1rem; padding: 4px; border-radius: 6px; transition: background 0.15s; }
+    .remove-file-btn:hover { background: #ffe5e8; }
+
+    /* PROGRESS */
+    .upload-progress { display: none; margin-top: 12px; }
+    .upload-progress.show { display: block; }
+    .progress-bar-wrap { background: #e8f5ee; border-radius: 100px; height: 10px; overflow: hidden; margin-top: 6px; }
+    .progress-bar-fill { height: 100%; background: var(--primary); border-radius: 100px; transition: width 0.4s ease; }
+    .progress-label { font-size: 0.82rem; font-weight: 600; color: var(--primary); display: flex; justify-content: space-between; }
+
+    /* BTN */
+    .btn-primary { display: inline-flex; align-items: center; gap: 8px; background: var(--primary); color: #fff; border: none; padding: 13px 28px; border-radius: 10px; font-size: 0.95rem; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.2s; }
+    .btn-primary:hover { background: #004d2d; transform: translateY(-1px); box-shadow: 0 6px 18px rgba(0,107,63,0.25); }
+    .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
+    .btn-outline { display: inline-flex; align-items: center; gap: 8px; background: transparent; color: var(--primary); border: 1.5px solid var(--primary); padding: 11px 22px; border-radius: 10px; font-size: 0.9rem; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.2s; text-decoration: none; }
+    .btn-outline:hover { background: var(--primary-light); }
+    .form-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
+
+    /* STATUS SECTION */
+    .status-section { margin-top: 40px; }
+    .status-card { background: #fff; border-radius: var(--radius); box-shadow: var(--shadow); padding: 24px; margin-bottom: 16px; border-left: 4px solid var(--border); transition: border-color 0.2s; }
+    .status-card.pending { border-left-color: #FF9800; }
+    .status-card.in_review { border-left-color: #2196F3; }
+    .status-card.reviewed { border-left-color: var(--primary); }
+    .status-card.completed { border-left-color: var(--gold-dark); }
+    .status-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+    .status-title { font-weight: 700; font-size: 1rem; color: var(--text); }
+    .status-date { font-size: 0.78rem; color: var(--text-light); margin-top: 3px; }
+    .status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 100px; font-size: 0.78rem; font-weight: 700; flex-shrink: 0; }
+    .badge-pending { background: #FFF3E0; color: #E65100; }
+    .badge-in_review { background: #E3F2FD; color: #1565C0; }
+    .badge-reviewed { background: var(--primary-light); color: var(--primary); }
+    .badge-completed { background: #FFF8E1; color: #F57F17; }
+    .status-actions { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+
+    /* REVIEW MODAL */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(10,10,30,0.6); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px); }
+    .modal-overlay.active { display: flex; }
+    .modal-box { background: #fff; border-radius: 16px; width: 100%; max-width: 720px; max-height: 90vh; overflow-y: auto; position: relative; box-shadow: 0 24px 80px rgba(0,0,0,0.25); }
+    .modal-header { padding: 20px 24px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: #fff; z-index: 2; }
+    .modal-header h3 { font-size: 1.1rem; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+    .modal-close { background: #f5f5f5; border: none; width: 34px; height: 34px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem; color: var(--text); transition: background 0.15s; }
+    .modal-close:hover { background: #ffe5e8; color: var(--red); }
+    .modal-body { padding: 24px; }
+
+    /* REVIEW DISPLAY */
+    .review-score-circle { width: 80px; height: 80px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: 'Inter', sans-serif; flex-shrink: 0; }
+    .review-metric { background: #f8fafc; border-radius: 10px; padding: 14px 16px; margin-bottom: 10px; }
+    .review-metric-label { font-size: 0.8rem; font-weight: 600; color: var(--text-light); margin-bottom: 6px; display: flex; justify-content: space-between; }
+    .mini-bar { background: #e8e8f0; height: 7px; border-radius: 100px; overflow: hidden; }
+    .mini-bar-fill { height: 100%; border-radius: 100px; }
+
+    /* MESSAGES */
+    .messages-area { display: flex; flex-direction: column; gap: 12px; max-height: 320px; overflow-y: auto; padding: 4px 0; }
+    .msg-bubble { max-width: 80%; padding: 12px 16px; border-radius: 16px; font-size: 0.88rem; line-height: 1.5; }
+    .msg-bubble.admin { background: var(--primary); color: #fff; align-self: flex-start; border-bottom-left-radius: 4px; }
+    .msg-bubble.user { background: #f0f0f8; color: var(--text); align-self: flex-end; border-bottom-right-radius: 4px; }
+    .msg-meta { font-size: 0.72rem; opacity: 0.7; margin-top: 5px; }
+    .msg-input-row { display: flex; gap: 8px; margin-top: 12px; }
+    .msg-input { flex: 1; border: 1.5px solid var(--border); border-radius: 10px; padding: 10px 14px; font-family: 'Inter', sans-serif; font-size: 0.88rem; color: var(--text); }
+    .msg-input:focus { outline: none; border-color: var(--primary); }
+    .msg-send-btn { background: var(--primary); color: #fff; border: none; border-radius: 10px; padding: 10px 16px; cursor: pointer; font-size: 0.9rem; transition: background 0.2s; }
+    .msg-send-btn:hover { background: #004d2d; }
+
+    /* INFO BOXES */
+    .info-box { background: var(--primary-light); border-left: 4px solid var(--primary); border-radius: 10px; padding: 14px 16px; font-size: 0.85rem; color: #004d2d; display: flex; gap: 10px; align-items: flex-start; margin-bottom: 20px; }
+    .warn-box { background: #FFF3E0; border-left: 4px solid #FF9800; border-radius: 10px; padding: 14px 16px; font-size: 0.85rem; color: #7A3800; display: flex; gap: 10px; align-items: flex-start; margin-bottom: 20px; }
+
+    /* TIMELINE */
+    .timeline { display: flex; flex-direction: column; gap: 0; margin: 24px 0; }
+    .timeline-step { display: flex; gap: 16px; }
+    .timeline-left { display: flex; flex-direction: column; align-items: center; gap: 0; }
+    .timeline-dot { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; flex-shrink: 0; }
+    .dot-done { background: var(--primary); color: #fff; }
+    .dot-active { background: var(--gold); color: var(--text); }
+    .dot-pending { background: #e5e7ef; color: var(--text-light); }
+    .timeline-line { width: 2px; flex: 1; min-height: 24px; background: #e5e7ef; }
+    .timeline-line.done { background: var(--primary); }
+    .timeline-content { padding: 4px 0 24px; }
+    .timeline-label { font-weight: 600; font-size: 0.88rem; color: var(--text); }
+    .timeline-desc { font-size: 0.8rem; color: var(--text-light); margin-top: 2px; }
+
+    /* TOAST */
+    .toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--text); color: #fff; padding: 12px 22px; border-radius: 100px; font-size: 0.9rem; font-weight: 600; font-family: 'Inter', sans-serif; z-index: 9999; opacity: 0; transition: all 0.35s ease; white-space: nowrap; box-shadow: 0 6px 20px rgba(0,0,0,0.2); }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .toast.error { background: var(--red); }
+
+    /* SPINNER */
+    .spinner { width: 18px; height: 18px; border: 2.5px solid rgba(255,255,255,0.4); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block; vertical-align: middle; margin-right: 6px; }
+    .spinner-dark { width: 18px; height: 18px; border: 2.5px solid rgba(0,107,63,0.2); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block; vertical-align: middle; margin-right: 6px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ANNOTATED IMAGE */
+    .annotated-cv-img { max-width: 100%; border-radius: 10px; border: 1px solid var(--border); box-shadow: var(--shadow); }
+
+    /* EMPTY */
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--text-light); }
+    .empty-state .empty-icon { font-size: 3rem; margin-bottom: 16px; }
+    .empty-state h3 { color: var(--text); font-size: 1.1rem; margin-bottom: 8px; }
+    .empty-state p { font-size: 0.88rem; line-height: 1.6; max-width: 380px; margin: 0 auto; }
+
+    @media (max-width: 640px) {
+      .page-hero { padding: 40px 16px 32px; }
+      .page-hero h1 { font-size: 1.6rem; }
+      .page-content { padding: 24px 16px 60px; }
+      .form-card-body { padding: 20px 16px; }
+      .form-card-header h2 { font-size: 0.92rem; }
+      .hero-features { gap: 8px; }
+      .hero-feat { font-size: 0.75rem; padding: 6px 10px; }
+      /* Signin prompt full width */
+      .signin-prompt { padding: 28px 20px; }
+      .signin-prompt h3 { font-size: 1rem; }
+      /* Form elements */
+      .form-input, .form-select, .form-textarea { font-size: 0.88rem; }
+      /* Buttons full width on mobile */
+      .form-actions { flex-direction: column; }
+      .form-actions .btn-primary { width: 100%; justify-content: center; }
+      /* Status cards */
+      .status-header { flex-direction: column; gap: 8px; }
+      .status-actions { flex-direction: column; }
+      .status-actions .btn-primary,
+      .status-actions .btn-outline { width: 100%; justify-content: center; font-size: 0.85rem; }
+      /* Modal full screen on mobile */
+      .modal-overlay { padding: 0; align-items: flex-end; }
+      .modal-box { border-radius: 16px 16px 0 0; max-height: 92vh; }
+      /* Upload zone compact */
+      .upload-zone { padding: 28px 16px; }
+      .upload-icon { font-size: 2.2rem; }
+      /* Timeline */
+      .timeline-content { padding-bottom: 16px; }
+      .timeline-label { font-size: 0.85rem; }
+      .timeline-desc { font-size: 0.78rem; }
+      /* Welcome bar */
+      #userWelcomeBar { flex-direction: column; align-items: flex-start; gap: 10px; }
+      /* Messages */
+      .msg-bubble { max-width: 90%; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="top-nav">
+  <a href="index.html" class="nav-logo">
+    <span class="logo-icon">â­</span>
+    <span>CV <span class="accent">Genius</span> Ghana</span>
+  </a>
+  <a href="index.html" class="nav-back"><i class="fas fa-arrow-left"></i> Back to Home</a>
+</nav>
+
+<!-- HERO -->
+<div class="page-hero">
+  <div class="page-hero-badge"><span>ðŸ‘¨â€ðŸ’¼</span> Expert Human Review</div>
+  <h1>Get Your CV Reviewed by an Expert</h1>
+  <p>Upload your CV and receive detailed, professional feedback from our review team within 24â€“48 hours.</p>
+  <div class="hero-features">
+    <div class="hero-feat"><i class="fas fa-clock"></i> 24â€“48 Hour Turnaround</div>
+    <div class="hero-feat"><i class="fas fa-robot"></i> AI Pre-Analysis Included</div>
+    <div class="hero-feat"><i class="fas fa-comments"></i> Direct Messaging with Reviewer</div>
+    <div class="hero-feat"><i class="fas fa-file-upload"></i> Refined CV Upload Option</div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="page-content">
+
+  <!-- AUTH LOADING STATE - shown while Firebase resolves session -->
+  <div id="authLoadingState" style="text-align:center;padding:60px 20px;">
+    <div class="spinner" style="width:36px;height:36px;border-width:3px;border-top-color:var(--primary);margin:0 auto 16px;"></div>
+    <p style="color:var(--text-light);font-size:0.9rem;font-family:'Inter',sans-serif;">Checking your session…</p>
+  </div>
+
+  <!-- SIGN-IN PROMPT - hidden by default, shown only when auth confirms no user -->
+  <div class="signin-prompt" id="signinPrompt" style="display:none;">
+    <div class="prompt-icon">ðŸ”</div>
+    <h3>Sign in to Submit Your CV</h3>
+    <p>You need a free account to submit your CV and track your review status.</p>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:8px;">
+      <button class="btn-primary" onclick="openSignInModal()"><i class="fas fa-user"></i> Sign In</button>
+      <button class="btn-outline" onclick="openSignInModal()"><i class="fas fa-user-plus"></i> Create Free Account</button>
+    </div>
+  </div>
+
+  <!-- LOGGED IN CONTENT â€” hidden by default, shown once auth resolves -->
+  <div id="loggedInContent" style="display:none;">
+
+    <!-- SIGNED-IN WELCOME BAR -->
+    <div id="userWelcomeBar" style="background:var(--primary-light);border:1.5px solid rgba(0,107,63,0.2);border-radius:14px;padding:14px 20px;margin-bottom:24px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+      <div id="userWelcomeAvatar" style="width:40px;height:40px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.1rem;flex-shrink:0;">?</div>
+      <div style="flex:1;">
+        <div id="userWelcomeName" style="font-weight:700;font-size:0.95rem;color:var(--text);">Welcome back!</div>
+        <div id="userWelcomeEmail" style="font-size:0.78rem;color:var(--text-light);margin-top:1px;"></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="background:var(--primary);color:#fff;font-size:0.72rem;font-weight:700;padding:4px 10px;border-radius:100px;"><i class="fas fa-check-circle" style="margin-right:4px;"></i>Signed In</span>
+        <a href="index.html" style="font-size:0.78rem;color:var(--text-light);text-decoration:none;padding:4px 8px;border-radius:6px;transition:all 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-light)'"><i class="fas fa-arrow-left"></i> Back to main site</a>
+      </div>
+    </div>
+
+    <!-- HOW IT WORKS TIMELINE -->
+    <div class="form-card" style="margin-bottom: 28px;">
+      <div class="form-card-header">
+        <div class="step-badge"><i class="fas fa-info"></i></div>
+        <h2>How the Review Process Works</h2>
+      </div>
+      <div class="form-card-body">
+        <div class="timeline">
+          <div class="timeline-step">
+            <div class="timeline-left"><div class="timeline-dot dot-done"><i class="fas fa-upload"></i></div><div class="timeline-line done"></div></div>
+            <div class="timeline-content"><div class="timeline-label">You Submit Your CV</div><div class="timeline-desc">Upload your CV file (PDF or Word) and add any notes about your target opportunity.</div></div>
+          </div>
+          <div class="timeline-step">
+            <div class="timeline-left"><div class="timeline-dot dot-done"><i class="fas fa-robot"></i></div><div class="timeline-line done"></div></div>
+            <div class="timeline-content"><div class="timeline-label">AI Instantly Scans Your CV</div><div class="timeline-desc">Our AI pre-analyses your CV for formatting, language, structure, and content issues to assist the reviewer.</div></div>
+          </div>
+          <div class="timeline-step">
+            <div class="timeline-left"><div class="timeline-dot dot-active"><i class="fas fa-user-edit"></i></div><div class="timeline-line"></div></div>
+            <div class="timeline-content"><div class="timeline-label">Expert Reviews Your CV (24â€“48 hrs)</div><div class="timeline-desc">Our reviewer opens your CV, adds annotations, writes detailed feedback, and may ask you follow-up questions.</div></div>
+          </div>
+          <div class="timeline-step">
+            <div class="timeline-left"><div class="timeline-dot dot-pending"><i class="fas fa-paper-plane"></i></div></div>
+            <div class="timeline-content"><div class="timeline-label">Feedback Delivered to Your Dashboard</div><div class="timeline-desc">You receive a full review with annotated CV, written feedback, and the option to download a refined version.</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUBMISSION FORM -->
+    <div class="form-card" id="submissionFormCard">
+      <div class="form-card-header">
+        <div class="step-badge"><i class="fas fa-paper-plane"></i></div>
+        <h2>Submit Your CV for Review</h2>
+      </div>
+      <div class="form-card-body">
+
+        <div class="info-box">
+          <i class="fas fa-lightbulb" style="flex-shrink:0;margin-top:1px;"></i>
+          <div>Submit your CV along with any relevant context. Our expert reviewer will assess it thoroughly and deliver personalised feedback within 24â€“48 hours.</div>
+        </div>
+
+        <div class="form-group">
+          <label>Your Name <span class="required">*</span></label>
+          <input type="text" id="submitName" class="form-input" placeholder="e.g. Veronica Mensah"/>
+        </div>
+
+        <div class="form-group">
+          <label>Target Opportunity <span class="required">*</span></label>
+          <select id="submitTarget" class="form-select">
+            <option value="">â€” Select your target â€”</option>
+            <option value="corporate_job">Corporate / Industry Job</option>
+            <option value="national_service">National Service (Ghana)</option>
+            <option value="graduate_programme">Graduate Programme</option>
+            <option value="postgraduate">Postgraduate Studies (MSc, MBA, PhD)</option>
+            <option value="internship">Internship</option>
+            <option value="academia">Academic / Research Position</option>
+            <option value="banking">Banking & Finance Role</option>
+            <option value="tech">Technology / Engineering Role</option>
+            <option value="ngo">NGO / Development Role</option>
+            <option value="general">General / Not Sure Yet</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Upload Your CV <span class="required">*</span></label>
+          <div class="upload-zone" id="uploadZone" onclick="document.getElementById('cvFileInput').click()" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragleave="handleDragLeave(event)">
+            <div class="upload-icon"><i class="fas fa-cloud-upload-alt"></i></div>
+            <p class="upload-main">Drag & drop your CV here</p>
+            <p class="upload-sub">PDF, DOCX, or DOC â€” Max 10MB</p>
+            <button type="button" class="btn-outline" style="pointer-events:none;"><i class="fas fa-folder-open"></i> Browse Files</button>
+            <input type="file" id="cvFileInput" accept=".pdf,.doc,.docx" style="display:none;" onchange="handleFileSelect(event)"/>
+          </div>
+          <div class="upload-preview" id="uploadPreview">
+            <i class="fas fa-file-pdf file-icon-lg"></i>
+            <div class="file-details">
+              <div class="file-name" id="uploadFileName">â€”</div>
+              <div class="file-size" id="uploadFileSize">â€”</div>
+            </div>
+            <button class="remove-file-btn" onclick="removeFile()" title="Remove file"><i class="fas fa-times"></i></button>
+          </div>
+          <div class="upload-progress" id="uploadProgress">
+            <div class="progress-label"><span>Uploadingâ€¦</span><span id="progressPct">0%</span></div>
+            <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progressFill" style="width:0%"></div></div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Additional Notes <small style="font-weight:400;color:var(--text-light);">(optional but helpful)</small></label>
+          <textarea id="submitNotes" class="form-textarea" rows="4" placeholder="e.g. I'm applying for the Stanbic Graduate Programme. Please pay attention to my finance experience. I'm unsure whether my layout is appropriate for a banking role..."></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn-primary" id="submitBtn" onclick="submitCV()">
+            <i class="fas fa-paper-plane"></i> Submit for Review
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MY SUBMISSIONS -->
+    <div class="status-section" id="submissionsSection">
+      <h2 style="font-size:1.1rem;font-weight:800;color:var(--text);margin-bottom:20px;display:flex;align-items:center;gap:10px;">
+        <i class="fas fa-inbox" style="color:var(--primary);"></i> My CV Submissions
+        <button onclick="loadSubmissions()" style="background:none;border:none;cursor:pointer;color:var(--text-light);font-size:0.85rem;margin-left:auto;font-family:'Inter',sans-serif;display:flex;align-items:center;gap:5px;"><i class="fas fa-sync"></i> Refresh</button>
+      </h2>
+      <div id="submissionsList">
+        <div class="empty-state">
+          <div class="empty-icon">ðŸ“‚</div>
+          <h3>No submissions yet</h3>
+          <p>Submit your CV above to get started with your expert review.</p>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end loggedInContent -->
+</div>
+
+<!-- REVIEW MODAL -->
+<div class="modal-overlay" id="reviewModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3><i class="fas fa-star" style="color:var(--gold-dark);"></i> Your CV Review</h3>
+      <button class="modal-close" onclick="closeReviewModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body" id="reviewModalBody">
+      <p style="text-align:center;color:var(--text-light);padding:40px;">Loading reviewâ€¦</p>
+    </div>
+  </div>
+</div>
+
+<!-- MESSAGES MODAL -->
+<div class="modal-overlay" id="messagesModal">
+  <div class="modal-box" style="max-width:580px;">
+    <div class="modal-header">
+      <h3><i class="fas fa-comments" style="color:var(--primary);"></i> Messages with Reviewer</h3>
+      <button class="modal-close" onclick="closeMessagesModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="messages-area" id="messagesArea">
+        <p style="text-align:center;color:var(--text-light);font-size:0.85rem;">Loading messagesâ€¦</p>
+      </div>
+      <div class="msg-input-row" id="msgInputRow">
+        <input type="text" class="msg-input" id="msgInput" placeholder="Type your messageâ€¦" onkeydown="if(event.key==='Enter')sendMsg()"/>
+        <button class="msg-send-btn" onclick="sendMsg()" title="Send"><i class="fas fa-paper-plane"></i></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- AUTH MODAL (same as main site) -->
+<div class="modal-overlay" id="authModal">
+  <div class="modal-box" style="max-width:440px;">
+    <div class="modal-header">
+      <h3>â­ Sign In</h3>
+      <button class="modal-close" onclick="closeAuthModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <button onclick="signInWithGoogle()" style="width:100%;display:flex;align-items:center;justify-content:center;gap:12px;padding:12px;border:1.5px solid var(--border);border-radius:10px;background:#fff;font-size:0.95rem;font-weight:600;cursor:pointer;margin-bottom:20px;font-family:'Inter',sans-serif;transition:all 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20" height="20" alt="Google"/> Continue with Google
+      </button>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;"><div style="flex:1;height:1px;background:var(--border);"></div><span style="color:var(--text-light);font-size:0.8rem;">or</span><div style="flex:1;height:1px;background:var(--border);"></div></div>
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <input type="email" id="authEmail" class="form-input" placeholder="Email address"/>
+        <input type="password" id="authPassword" class="form-input" placeholder="Password"/>
+        <button class="btn-primary" style="width:100%;justify-content:center;" onclick="signInEmail()">Sign In</button>
+      </div>
+      <p style="text-align:center;font-size:0.82rem;color:var(--text-light);margin-top:14px;">
+        New here? <a href="#" onclick="switchToSignUp()" style="color:var(--primary);font-weight:600;">Create account</a>
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase + Auth â€” loaded as regular scripts, NOT modules -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="config.js"></script>
+<script>
+// ===== FIREBASE INIT =====
+const firebaseConfig = {
+  apiKey: "AIzaSyAhRkNIidv-ud3fua35NQR-nUTTZkoE37A",
+  authDomain: "cv-genius-ghana.firebaseapp.com",
+  projectId: "cv-genius-ghana",
+  storageBucket: "cv-genius-ghana.firebasestorage.app",
+  messagingSenderId: "6396208691",
+  appId: "1:6396208691:web:1aa1eb5058e2365d376546"
+};
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+// Handle Google redirect result (fires when user returns after mobile Google sign-in)
+auth.getRedirectResult().then(result => {
+  if (result && result.user) {
+    // After a redirect the modal is never open - onAuthStateChanged handles the UI
+    showToast('Welcome! You are signed in.');
+  }
+}).catch(e => {
+  const ignored = ['auth/no-auth-event', 'auth/null-user', 'auth/internal-error'];
+  if (!ignored.includes(e.code)) {
+    showToast(e.message.replace('Firebase: ', ''), true);
+  }
+});
+
+let currentUser = null;
+let selectedFile = null;
+let currentSubmissionId = null;
+let unsubMessages = null;
+
+// ===== AUTH STATE =====
+auth.onAuthStateChanged(user => {
+  currentUser = user;
+  // Hide loading state regardless of auth outcome
+  const loadingEl = document.getElementById('authLoadingState');
+  if (loadingEl) loadingEl.style.display = 'none';
+  if (user) {
+    document.getElementById('signinPrompt').style.display = 'none';
+    document.getElementById('loggedInContent').style.display = 'block';
+    const name = user.displayName || user.email.split('@')[0];
+    const initial = (user.displayName || user.email)[0].toUpperCase();
+    const avatarEl = document.getElementById('userWelcomeAvatar');
+    const nameEl = document.getElementById('userWelcomeName');
+    const emailEl = document.getElementById('userWelcomeEmail');
+    if (avatarEl) avatarEl.textContent = initial;
+    if (nameEl) nameEl.textContent = 'Welcome back, ' + name + '!';
+    if (emailEl) emailEl.textContent = user.email;
+    const nameInput = document.getElementById('submitName');
+    if (nameInput && !nameInput.value) nameInput.value = user.displayName || '';
+    loadSubmissions();
+  } else {
+    document.getElementById('signinPrompt').style.display = 'block';
+    document.getElementById('loggedInContent').style.display = 'none';
+  }
+});
+
+// ===== MODAL =====
+function openSignInModal() {
+  document.getElementById('authModal').classList.add('active');
+  setTimeout(() => document.getElementById('authEmail').focus(), 100);
+}
+function closeAuthModal() {
+  document.getElementById('authModal').classList.remove('active');
+}
+
+// ===== SIGN IN WITH GOOGLE =====
+function signInWithGoogle() {
+  const provider = new firebase.auth.GoogleAuthProvider();
+  // Use redirect on mobile (popup is blocked), popup on desktop
+  const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+  if (isMobile) {
+    auth.signInWithRedirect(provider).catch(e => showToast(e.message.replace('Firebase: ',''), true));
+  } else {
+    auth.signInWithPopup(provider)
+      .then(() => { closeAuthModal(); showToast('Welcome! You are signed in.'); })
+      .catch(e => showToast(e.message.replace('Firebase: ',''), true));
+  }
+}
+
+// ===== SIGN IN WITH EMAIL =====
+function signInEmail() {
+  const email = document.getElementById('authEmail').value.trim();
+  const pass = document.getElementById('authPassword').value;
+  if (!email || !pass) { showToast('Please enter email and password.', true); return; }
+  const btn = document.querySelector('#authModal .btn-primary');
+  const orig = btn ? btn.innerHTML : '';
+  if (btn) { btn.innerHTML = '<span class="spinner"></span> Signing in…'; btn.disabled = true; }
+  auth.signInWithEmailAndPassword(email, pass)
+    .then(() => {
+      if (btn) { btn.innerHTML = orig; btn.disabled = false; }
+      closeAuthModal();
+      showToast('Signed in successfully!');
+    })
+    .catch(e => {
+      if (btn) { btn.innerHTML = orig; btn.disabled = false; }
+      const msg = e.code === 'auth/wrong-password' ? 'Incorrect password.' :
+                  e.code === 'auth/user-not-found' ? 'No account with that email.' :
+                  e.code === 'auth/invalid-credential' ? 'Incorrect email or password.' :
+                  e.code === 'auth/invalid-email' ? 'Invalid email address.' :
+                  'Sign-in failed. Check your details.';
+      showToast(msg, true);
+    });
+}
+
+// ===== CREATE ACCOUNT =====
+function switchToSignUp() {
+  const email = document.getElementById('authEmail').value.trim();
+  const pass = document.getElementById('authPassword').value;
+  if (!email || !pass) { showToast('Enter email and password first.', true); return; }
+  auth.createUserWithEmailAndPassword(email, pass)
+    .then(() => { closeAuthModal(); showToast('Account created! Welcome.'); })
+    .catch(e => {
+      const msg = e.code === 'auth/email-already-in-use' ? 'Email already registered â€” sign in instead.' :
+                  e.code === 'auth/weak-password' ? 'Password must be at least 6 characters.' :
+                  e.message.replace('Firebase: ','');
+      showToast(msg, true);
+    });
+}
+
+// ===== FILE HANDLING =====
+function handleDragOver(e) { e.preventDefault(); document.getElementById('uploadZone').classList.add('dragover'); }
+function handleDragLeave() { document.getElementById('uploadZone').classList.remove('dragover'); }
+function handleDrop(e) { e.preventDefault(); document.getElementById('uploadZone').classList.remove('dragover'); const f = e.dataTransfer.files[0]; if(f) setFile(f); }
+function handleFileSelect(e) { const f = e.target.files[0]; if(f) setFile(f); }
+
+function setFile(file) {
+  const allowed = ['application/pdf','application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+  if (!allowed.includes(file.type) && !file.name.match(/\.(pdf|doc|docx)$/i)) { showToast('Please upload a PDF or Word document.', true); return; }
+  if (file.size > 10 * 1024 * 1024) { showToast('File too large. Max 10MB.', true); return; }
+  selectedFile = file;
+  document.getElementById('uploadFileName').textContent = file.name;
+  document.getElementById('uploadFileSize').textContent = formatSize(file.size);
+  document.getElementById('uploadPreview').classList.add('show');
+  document.getElementById('uploadZone').style.opacity = '0.5';
+  showToast('File ready to upload!');
+}
+
+function removeFile() {
+  selectedFile = null;
+  document.getElementById('uploadPreview').classList.remove('show');
+  document.getElementById('uploadZone').style.opacity = '1';
+  document.getElementById('cvFileInput').value = '';
+}
+
+function formatSize(b) {
+  if (b < 1024) return b + ' B';
+  if (b < 1024*1024) return (b/1024).toFixed(1) + ' KB';
+  return (b/(1024*1024)).toFixed(1) + ' MB';
+}
+
+// ===== FILE TO BASE64 =====
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => resolve(e.target.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+// ===== SUBMIT CV =====
+async function submitCV() {
+  if (!currentUser) { showToast('Please sign in first.', true); return; }
+  const name = document.getElementById('submitName').value.trim();
+  const target = document.getElementById('submitTarget').value;
+  const notes = document.getElementById('submitNotes').value.trim();
+  if (!name) { showToast('Please enter your name.', true); return; }
+  if (!target) { showToast('Please select your target opportunity.', true); return; }
+  if (!selectedFile) { showToast('Please upload your CV file.', true); return; }
+
+  const btn = document.getElementById('submitBtn');
+  btn.innerHTML = '<span class="spinner"></span> Savingâ€¦';
+  btn.disabled = true;
+  document.getElementById('uploadProgress').classList.add('show');
+
+  try {
+    const MAX = 900 * 1024;
+    let fileData = null, fileTooLarge = false;
+    const dataUrl = await fileToBase64(selectedFile);
+    if (selectedFile.size <= MAX) {
+      fileData = dataUrl.split(',')[1];
+    } else {
+      fileTooLarge = true;
+    }
+
+    const pctEl = document.getElementById('progressPct');
+    const fillEl = document.getElementById('progressFill');
+    if (pctEl) pctEl.textContent = '60%';
+    if (fillEl) fillEl.style.width = '60%';
+
+    const docRef = await db.collection('cv_submissions').add({
+      uid: currentUser.uid,
+      userName: name,
+      userEmail: currentUser.email,
+      fileName: selectedFile.name,
+      fileExt: selectedFile.name.split('.').pop().toLowerCase(),
+      fileMimeType: selectedFile.type,
+      fileSize: selectedFile.size,
+      fileData: fileData,
+      fileTooLarge: fileTooLarge,
+      notes: notes,
+      targetOpportunity: target,
+      status: 'pending',
+      aiScanStatus: 'pending',
+      aiScanResult: null,
+      submittedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      reviewedAt: null
+    });
+
+    if (pctEl) pctEl.textContent = '100%';
+    if (fillEl) fillEl.style.width = '100%';
+
+    btn.innerHTML = '<i class="fas fa-check-circle"></i> Submitted!';
+    document.getElementById('uploadProgress').classList.remove('show');
+    showToast(fileTooLarge
+      ? 'CV submitted! File was large â€” reviewer will be notified.'
+      : 'CV submitted! Our team will review it within 24â€“48 hours.');
+
+    setTimeout(() => {
+      btn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit for Review';
+      btn.disabled = false;
+      document.getElementById('submitName').value = '';
+      document.getElementById('submitTarget').value = '';
+      document.getElementById('submitNotes').value = '';
+      removeFile();
+      loadSubmissions();
+    }, 2500);
+
+  } catch(e) {
+    btn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit for Review';
+    btn.disabled = false;
+    document.getElementById('uploadProgress').classList.remove('show');
+    showToast('Submission failed: ' + e.message, true);
+  }
+}
+
+// ===== LOAD SUBMISSIONS =====
+async function loadSubmissions() {
+  if (!currentUser) return;
+  const list = document.getElementById('submissionsList');
+  list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-light);"><div class="spinner" style="border-top-color:var(--primary);margin:0 auto 10px;"></div><p>Loadingâ€¦</p></div>';
+  try {
+    const snap = await db.collection('cv_submissions').where('uid','==',currentUser.uid).get();
+    if (snap.empty) {
+      list.innerHTML = '<div class="empty-state"><div class="empty-icon">ðŸ“‚</div><h3>No submissions yet</h3><p>Submit your CV above to get expert feedback within 24â€“48 hours.</p></div>';
+      return;
+    }
+    const docs = snap.docs.map(d => ({id:d.id,...d.data()}))
+      .sort((a,b) => (b.submittedAt?.toMillis?.() || 0) - (a.submittedAt?.toMillis?.() || 0));
+
+    const statusLabels = {pending:'â³ Awaiting Review',in_review:'ðŸ” Under Review',reviewed:'âœ… Review Ready',completed:'ðŸ† Completed'};
+    const badgeClass = {pending:'badge-pending',in_review:'badge-in_review',reviewed:'badge-reviewed',completed:'badge-completed'};
+    let html = '';
+    docs.forEach(data => {
+      const date = data.submittedAt?.toDate ? data.submittedAt.toDate().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : 'Recently';
+      html += '<div class="status-card ' + data.status + '">' +
+        '<div class="status-header"><div>' +
+        '<div class="status-title"><i class="fas fa-file-alt" style="color:var(--primary);margin-right:6px;"></i>' + (data.fileName||'CV File') + '</div>' +
+        '<div class="status-date">Submitted: ' + date + ' Â· Target: ' + (data.targetOpportunity||'').replace(/_/g,' ') + '</div>' +
+        '</div><span class="status-badge ' + (badgeClass[data.status]||'') + '">' + (statusLabels[data.status]||data.status) + '</span></div>' +
+        (data.notes ? '<p style="font-size:0.83rem;color:var(--text-light);margin-bottom:8px;">' + data.notes.substring(0,120) + '</p>' : '') +
+        '<div class="status-actions">' +
+        (data.status==='reviewed'||data.status==='completed' ? '<button class="btn-primary" style="font-size:0.82rem;padding:9px 16px;" onclick="openReview(\'' + data.id + '\')"><i class="fas fa-star"></i> View Review</button>' : '') +
+        '<button class="btn-outline" style="font-size:0.82rem;padding:9px 14px;" onclick="openMessages(\'' + data.id + '\')"><i class="fas fa-comments"></i> Messages</button>' +
+        '</div></div>';
+    });
+    list.innerHTML = html;
+  } catch(e) {
+    list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--red);"><p>Could not load submissions: ' + e.message + '</p></div>';
+  }
+}
+
+// ===== OPEN REVIEW =====
+async function openReview(submissionId) {
+  document.getElementById('reviewModal').classList.add('active');
+  document.getElementById('reviewModalBody').innerHTML = '<div style="text-align:center;padding:40px;"><div class="spinner" style="border-top-color:var(--primary);margin:0 auto 10px;"></div><p>Loading your reviewâ€¦</p></div>';
+  try {
+    const snap = await db.collection('cv_reviews').doc(submissionId).get();
+    if (!snap.exists) { document.getElementById('reviewModalBody').innerHTML = '<p style="text-align:center;padding:40px;">Review not found.</p>'; return; }
+    const review = snap.data();
+    let html = '';
+    if (review.feedback) {
+      html += '<div style="background:var(--primary-light);border-left:4px solid var(--primary);border-radius:10px;padding:18px 20px;margin-bottom:24px;">' +
+        '<h4 style="font-size:0.85rem;font-weight:700;color:var(--primary);margin-bottom:10px;">Reviewer\'s Feedback</h4>' +
+        '<div style="font-size:0.9rem;color:var(--text);line-height:1.7;white-space:pre-wrap;">' + review.feedback + '</div></div>';
+    }
+    if (review.annotatedImageData) {
+      html += '<div style="margin-bottom:24px;"><h4 style="font-size:0.85rem;font-weight:700;margin-bottom:10px;">Annotated CV</h4>' +
+        '<img src="data:image/png;base64,' + review.annotatedImageData + '" style="max-width:100%;border-radius:10px;border:1px solid var(--border);"/></div>';
+    }
+    if (review.refinedCVData) {
+      const mime = review.refinedCVMime || 'application/pdf';
+      html += '<div style="background:#FFF8E1;border-left:4px solid var(--gold-dark);border-radius:10px;padding:16px 18px;margin-bottom:24px;display:flex;align-items:center;gap:14px;">' +
+        '<i class="fas fa-file-download" style="font-size:1.6rem;color:var(--gold-dark);"></i>' +
+        '<div style="flex:1;"><h4 style="font-size:0.88rem;font-weight:700;color:#7A5000;">Refined CV Available</h4></div>' +
+        '<a href="data:' + mime + ';base64,' + review.refinedCVData + '" download="' + (review.refinedCVName||'Refined_CV.pdf') + '" class="btn-primary" style="font-size:0.82rem;padding:9px 16px;text-decoration:none;"><i class="fas fa-download"></i> Download</a></div>';
+    }
+    if (!html) html = '<p style="text-align:center;color:var(--text-light);padding:20px;">Review details coming soon.</p>';
+    html += '<div style="margin-top:20px;border-top:1px solid var(--border);padding-top:18px;"><button class="btn-outline" onclick="closeReviewModal();openMessages(\'' + submissionId + '\')"><i class="fas fa-comments"></i> Message Reviewer</button></div>';
+    document.getElementById('reviewModalBody').innerHTML = html;
+    db.collection('cv_reviews').doc(submissionId).update({seenByUser:true}).catch(()=>{});
+  } catch(e) {
+    document.getElementById('reviewModalBody').innerHTML = '<p style="color:var(--red);padding:20px;">Error: ' + e.message + '</p>';
+  }
+}
+function closeReviewModal() { document.getElementById('reviewModal').classList.remove('active'); }
+
+// ===== MESSAGES =====
+async function openMessages(submissionId) {
+  currentSubmissionId = submissionId;
+  document.getElementById('messagesModal').classList.add('active');
+  if (unsubMessages) unsubMessages();
+  unsubMessages = db.collection('cv_messages').where('submissionId','==',submissionId)
+    .onSnapshot(snap => {
+      const msgs = snap.docs.map(d=>({id:d.id,...d.data()}))
+        .sort((a,b)=>(a.sentAt?.toMillis?.()|| 0)-(b.sentAt?.toMillis?.()|| 0));
+      const area = document.getElementById('messagesArea');
+      if (!msgs.length) { area.innerHTML = '<p style="text-align:center;color:var(--text-light);font-size:0.83rem;padding:20px;">No messages yet.</p>'; return; }
+      area.innerHTML = msgs.map(m => {
+        const isUser = m.senderRole === 'user';
+        const time = m.sentAt?.toDate ? m.sentAt.toDate().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) : '';
+        return '<div style="display:flex;justify-content:' + (isUser?'flex-end':'flex-start') + ';">' +
+          '<div class="msg-bubble ' + (isUser?'user':'admin') + '"><div>' + m.text + '</div>' +
+          '<div class="msg-meta">' + (isUser?'You':'Reviewer') + ' Â· ' + time + '</div></div></div>';
+      }).join('');
+      area.scrollTop = area.scrollHeight;
+    });
+}
+function closeMessagesModal() {
+  document.getElementById('messagesModal').classList.remove('active');
+  if (unsubMessages) { unsubMessages(); unsubMessages = null; }
+}
+async function sendMsg() {
+  const input = document.getElementById('msgInput');
+  const text = input.value.trim();
+  if (!text || !currentSubmissionId || !currentUser) return;
+  input.value = '';
+  await db.collection('cv_messages').add({
+    submissionId: currentSubmissionId,
+    senderId: currentUser.uid,
+    senderName: currentUser.displayName || currentUser.email,
+    senderRole: 'user',
+    text: text,
+    sentAt: firebase.firestore.FieldValue.serverTimestamp(),
+    uid: currentUser.uid
+  });
+}
+
+// ===== TOAST =====
+let toastT;
+function showToast(msg, isError) {
+  let t = document.querySelector('.toast');
+  if (!t) { t = document.createElement('div'); t.className='toast'; document.body.appendChild(t); }
+  t.textContent = msg;
+  t.className = 'toast' + (isError?' error':'');
+  requestAnimationFrame(() => t.classList.add('show'));
+  clearTimeout(toastT);
+  toastT = setTimeout(() => t.classList.remove('show'), 3500);
+}
+</script>
+</body>
+</html>
