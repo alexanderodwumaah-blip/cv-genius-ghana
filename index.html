@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>CV Genius Ghana</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css?v=20260819" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
@@ -18,6 +18,8 @@
       <span class="logo-icon">⭐</span>
       <span class="logo-text">CV <span class="accent">Genius</span> Ghana</span>
     </div>
+
+    <!-- Desktop nav links -->
     <ul class="nav-links" id="navLinks">
       <li><a href="#home">Home</a></li>
       <li><a href="#how">How It Works</a></li>
@@ -25,19 +27,66 @@
       <li><a href="#build">Build CV</a></li>
       <li><a href="#learn">CV Tips</a></li>
       <li><a href="#samples">Samples</a></li>
-      <li><a href="#" onclick="loadDashboard()"><i class="fas fa-folder-open"></i> My CVs</a></li>
     </ul>
-    <button class="nav-cta" onclick="scrollToSection('refine')">Get Started</button>
-    <button class="hamburger" id="hamburger" onclick="toggleMenu()">
-      <i class="fas fa-bars"></i>
-    </button>
-    <!-- Auth nav elements -->
-    <button class="nav-cta" id="navAuthBtn" onclick="openAuthModal('signin')" style="margin-left:8px;"><i class="fas fa-user"></i> Sign In</button>
-    <div class="nav-user-chip hidden" id="navUserChip">
-      <span class="user-avatar"></span>
-      <span class="user-name"></span>
-      <button class="user-menu-btn" onclick="loadDashboard()" title="My CVs"><i class="fas fa-folder-open"></i></button>
-      <button class="user-menu-btn" onclick="signOutUser()" title="Sign out"><i class="fas fa-sign-out-alt"></i></button>
+
+    <!-- Desktop right side -->
+    <div class="nav-right-desktop">
+      <a href="cv-upload.html" class="nav-expert-link"><i class="fas fa-user-edit"></i> Expert Review</a>
+      <button class="nav-cta" onclick="scrollToSection('refine')">Get Started</button>
+      <!-- Signed-OUT state -->
+      <button class="nav-signin-btn" id="navAuthBtn" onclick="openAuthModal('signin')">
+        <i class="fas fa-user"></i> Sign In
+      </button>
+      <!-- Signed-IN state -->
+      <div class="nav-user-chip hidden" id="navUserChip">
+        <span class="user-avatar" id="userAvatarDesktop"></span>
+        <span class="user-name" id="userNameDesktop"></span>
+        <button class="dashboard-btn" onclick="loadDashboard()">
+          <i class="fas fa-th-large"></i> Dashboard
+        </button>
+        <button class="signout-btn" onclick="signOutUser()" title="Sign out">
+          <i class="fas fa-sign-out-alt"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile right side: avatar/login icon + hamburger -->
+    <div class="nav-right-mobile">
+      <button class="mob-auth-btn" id="mobAuthBtn" onclick="openAuthModal('signin')">
+        <i class="fas fa-user"></i>
+      </button>
+      <div class="mob-user-chip hidden" id="mobUserChip" onclick="loadDashboard()">
+        <span class="mob-avatar" id="mobAvatar"></span>
+      </div>
+      <button class="hamburger" id="hamburger" onclick="toggleMenu()">
+        <i class="fas fa-bars"></i>
+      </button>
+    </div>
+
+  </div>
+
+  <!-- Mobile dropdown menu -->
+  <div class="mobile-menu" id="mobileMenu">
+    <div class="mob-menu-user" id="mobMenuUser" style="display:none;">
+      <span class="mob-menu-avatar" id="mobMenuAvatar"></span>
+      <div>
+        <div class="mob-menu-name" id="mobMenuName"></div>
+        <div class="mob-menu-email" id="mobMenuEmail"></div>
+      </div>
+    </div>
+    <a href="#home" class="mob-link" onclick="closeMobileMenu()">🏠 Home</a>
+    <a href="#how" class="mob-link" onclick="closeMobileMenu()">❓ How It Works</a>
+    <a href="#refine" class="mob-link" onclick="closeMobileMenu()">✨ Refine My CV</a>
+    <a href="#build" class="mob-link" onclick="closeMobileMenu()">📝 Build CV</a>
+    <a href="#learn" class="mob-link" onclick="closeMobileMenu()">📚 CV Tips</a>
+    <a href="#samples" class="mob-link" onclick="closeMobileMenu()">👁 Samples</a>
+    <div class="mob-divider"></div>
+    <a href="#" class="mob-link" onclick="loadDashboard();closeMobileMenu()"><i class="fas fa-th-large"></i> My Dashboard</a>
+    <a href="cv-upload.html" class="mob-link mob-link-gold"><i class="fas fa-user-edit"></i> Expert Review</a>
+    <div class="mob-divider" id="mobSignedInDivider" style="display:none;"></div>
+    <a href="#" class="mob-link mob-link-signout" id="mobSignOutBtn" onclick="signOutUser();closeMobileMenu()" style="display:none;"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
+    <div class="mob-signin-section" id="mobSignInSection">
+      <button class="mob-signin-btn" onclick="openAuthModal('signin');closeMobileMenu()"><i class="fas fa-user"></i> Sign In / Create Account</button>
     </div>
   </div>
 </nav>
@@ -60,9 +109,12 @@
       <button class="btn-secondary" onclick="scrollToSection('build')">
         <i class="fas fa-pen"></i> Build From Scratch
       </button>
+      <a href="cv-upload.html" style="display:inline-flex;align-items:center;gap:8px;background:var(--gold);color:#1a1a2e;border:none;padding:14px 28px;border-radius:var(--radius);font-weight:700;font-size:1rem;cursor:pointer;transition:var(--transition);text-decoration:none;" onmouseover="this.style.background='#e6b800';this.style.transform='translateY(-2px)'" onmouseout="this.style.background='var(--gold)';this.style.transform='none'">
+        <i class="fas fa-user-edit"></i> Get Expert Review
+      </a>
     </div>
     <div class="hero-stats">
-      <div class="stat"><span class="stat-number">10K+</span><span class="stat-label">CVs Refined</span></div>
+      <div class="stat"><span class="stat-number">100+</span><span class="stat-label">CVs Refined</span></div>
       <div class="stat-divider"></div>
       <div class="stat"><span class="stat-number">95%</span><span class="stat-label">Success Rate</span></div>
       <div class="stat-divider"></div>
@@ -274,7 +326,7 @@
         </div>
         <div class="step-actions">
           <button class="btn-outline" onclick="goToStep(2)"><i class="fas fa-arrow-left"></i> Back</button>
-          <button class="btn-primary" onclick="refineCV()"><i class="fas fa-magic"></i> Refine My CV with AI</button>
+          <button class="btn-primary" onclick="refineCV()"><i class="fas fa-magic"></i> Refine My CV</button>
           <button class="btn-outline" onclick="scoreCVFromPaste()" style="margin-left:auto;"><i class="fas fa-chart-bar"></i> Check CV Score</button>
         </div>
       </div>
@@ -289,7 +341,7 @@
           <ul class="improvements-list" id="improvementsList"></ul>
         </div>
         <div class="download-actions">
-          <button class="btn-primary" onclick="downloadRefinedCV()"><i class="fas fa-download"></i> Download as PDF</button>
+          <button id="btnDownloadRefined" class="btn-primary" onclick="downloadRefinedCV()"><i class="fas fa-download"></i> Download as PDF</button>
           <button class="btn-outline" onclick="copyRefinedCV()"><i class="fas fa-copy"></i> Copy Text</button>
           <button class="btn-outline" onclick="generateCoverLetterFromRefine()"><i class="fas fa-envelope"></i> Generate Cover Letter</button>
           <button class="btn-outline" onclick="goToStep(1)"><i class="fas fa-redo"></i> Refine Another</button>
@@ -581,7 +633,7 @@
           </div>
           <div class="step-actions mt-20">
             <button class="btn-outline" onclick="switchTab('awards')"><i class="fas fa-arrow-left"></i> Back</button>
-            <button class="btn-primary" onclick="downloadBuiltCV()"><i class="fas fa-download"></i> Download PDF</button>
+            <button id="btnDownloadBuilt" class="btn-primary" onclick="downloadBuiltCV()"><i class="fas fa-download"></i> Download PDF</button>
             <button class="btn-outline" onclick="copyBuiltCV()"><i class="fas fa-copy"></i> Copy Text</button>
             <button class="btn-outline" onclick="scoreBuiltCV()"><i class="fas fa-chart-bar"></i> CV Score</button>
             <button class="btn-outline" onclick="generateCoverLetterFromBuilder()"><i class="fas fa-envelope"></i> Cover Letter</button>
@@ -815,6 +867,43 @@
   </div>
 </div>
 
+<!-- EXPERT REVIEW SECTION -->
+<section style="background:linear-gradient(135deg,#006b3f 0%,#004d2d 100%);padding:72px 24px;text-align:center;" id="expert-review">
+  <div class="container" style="max-width:680px;">
+    <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);border-radius:100px;padding:6px 18px;font-size:0.82rem;font-weight:700;color:#fff;margin-bottom:20px;letter-spacing:0.03em;">
+      <span>👨‍💼</span> NEW — Expert Human Review
+    </div>
+    <h2 style="font-size:clamp(1.6rem,4vw,2.2rem);font-weight:800;color:#fff;margin-bottom:16px;line-height:1.2;">Want a Real Expert to Review Your CV?</h2>
+    <p style="color:rgba(255,255,255,0.82);font-size:1rem;line-height:1.7;margin-bottom:28px;">Upload your CV and get personalised, detailed feedback from our expert review team within 24–48 hours. AI pre-scans your CV the moment it's received. The reviewer adds annotations, written feedback, and can even upload a refined version — all delivered straight to your dashboard.</p>
+    <div style="display:flex;justify-content:center;gap:16px;flex-wrap:wrap;margin-bottom:32px;">
+      <div style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:10px;padding:14px 20px;text-align:left;min-width:180px;">
+        <div style="font-size:1.3rem;margin-bottom:6px;">🤖</div>
+        <div style="color:#fcd116;font-weight:700;font-size:0.82rem;">AI Pre-Analysis</div>
+        <div style="color:rgba(255,255,255,0.7);font-size:0.78rem;margin-top:3px;">Instant scan on submission</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:10px;padding:14px 20px;text-align:left;min-width:180px;">
+        <div style="font-size:1.3rem;margin-bottom:6px;">✏️</div>
+        <div style="color:#fcd116;font-weight:700;font-size:0.82rem;">Annotated Feedback</div>
+        <div style="color:rgba(255,255,255,0.7);font-size:0.78rem;margin-top:3px;">Comments directly on your CV</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:10px;padding:14px 20px;text-align:left;min-width:180px;">
+        <div style="font-size:1.3rem;margin-bottom:6px;">💬</div>
+        <div style="color:#fcd116;font-weight:700;font-size:0.82rem;">Direct Messaging</div>
+        <div style="color:rgba(255,255,255,0.7);font-size:0.78rem;margin-top:3px;">Ask questions, get answers</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:10px;padding:14px 20px;text-align:left;min-width:180px;">
+        <div style="font-size:1.3rem;margin-bottom:6px;">📁</div>
+        <div style="color:#fcd116;font-weight:700;font-size:0.82rem;">Refined CV Option</div>
+        <div style="color:rgba(255,255,255,0.7);font-size:0.78rem;margin-top:3px;">Expert can rewrite & upload</div>
+      </div>
+    </div>
+    <a href="cv-upload.html" style="display:inline-flex;align-items:center;gap:10px;background:#fcd116;color:#1a1a2e;font-weight:800;font-size:1rem;padding:15px 36px;border-radius:12px;text-decoration:none;box-shadow:0 8px 24px rgba(0,0,0,0.2);transition:all 0.2s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 12px 32px rgba(0,0,0,0.25)'" onmouseout="this.style.transform='none';this.style.boxShadow='0 8px 24px rgba(0,0,0,0.2)'">
+      <i class="fas fa-user-edit"></i> Submit CV for Expert Review
+    </a>
+    <p style="color:rgba(255,255,255,0.5);font-size:0.8rem;margin-top:16px;">Results delivered in 24–48 hours · Sign in required</p>
+  </div>
+</section>
+
 <!-- FOOTER -->
 <footer class="footer">
   <div class="container">
@@ -830,6 +919,7 @@
           <li><a href="#build">Build CV</a></li>
           <li><a href="#learn">CV Tips</a></li>
           <li><a href="#samples">Sample CVs</a></li>
+          <li><a href="cv-upload.html" style="color:var(--gold);">Expert Review ✨</a></li>
         </ul>
       </div>
       <div class="footer-links">
@@ -881,17 +971,29 @@
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
       <div>
         <h3 style="font-size:1.3rem;font-weight:700;color:var(--text);font-family:'Inter',sans-serif;display:flex;align-items:center;gap:10px;">
-          <i class="fas fa-folder-open" style="color:var(--primary);"></i> My Saved CVs
+          <i class="fas fa-th-large" style="color:var(--primary);"></i> My Dashboard
         </h3>
-        <p style="font-size:0.85rem;color:var(--text-light);font-family:'Inter',sans-serif;margin-top:2px;">All your CVs, cover letters and refinements in one place</p>
+        <p id="dashboardSubtitle" style="font-size:0.85rem;color:var(--text-light);font-family:'Inter',sans-serif;margin-top:2px;">Your CVs, cover letters and expert reviews</p>
       </div>
-      <div style="display:flex;gap:10px;">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
         <button class="btn-outline" style="font-size:0.85rem;" onclick="loadDashboard()"><i class="fas fa-sync"></i> Refresh</button>
         <button class="btn-primary" style="font-size:0.85rem;" onclick="closeDashboard();scrollToSection('build')"><i class="fas fa-plus"></i> New CV</button>
+        <a href="cv-upload.html" style="display:inline-flex;align-items:center;gap:7px;background:#fcd116;color:#1a1a2e;font-weight:700;font-size:0.85rem;padding:9px 16px;border-radius:10px;text-decoration:none;border:none;cursor:pointer;"><i class="fas fa-user-edit"></i> Expert Review</a>
       </div>
     </div>
     <div id="dashboardList"></div>
   </div>
+</div>
+
+<!-- EXPERT REVIEW FLOATING BANNER -->
+<div class="expert-review-banner" id="expertReviewBanner" style="display:none;">
+  <div class="banner-icon">👨‍💼</div>
+  <div class="banner-text">
+    <div class="banner-title">Want an Expert to Review Your CV?</div>
+    <div class="banner-sub">Get detailed feedback from our team within 24–48 hrs.</div>
+  </div>
+  <a href="cv-upload.html" class="banner-btn"><i class="fas fa-arrow-right"></i> Get Review</a>
+  <button class="banner-close" onclick="dismissReviewBanner()" title="Dismiss">✕</button>
 </div>
 
 <!-- Print/PDF hidden container -->
@@ -902,8 +1004,157 @@
   <i class="fas fa-chevron-up"></i>
 </button>
 
-<script src="config.js"></script>
-<script src="app.js"></script>
-<script type="module" src="firebase-app.js"></script>
+<script src="config.js?v=20260820"></script>
+<script src="app.js?v=20260820"></script>
+<script type="module" src="firebase-app.js?v=20260820"></script>
+
+<!-- ===== SUBSCRIBE MODAL ===== -->
+<div id="subscribeModal" style="display:none;position:fixed;inset:0;background:rgba(10,10,30,0.75);z-index:9100;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(6px);">
+  <div style="background:#fff;border-radius:22px;padding:0;max-width:440px;width:100%;box-shadow:0 28px 90px rgba(0,0,0,0.28);overflow:hidden;font-family:'Inter',sans-serif;max-height:90vh;overflow-y:auto;">
+
+    <!-- Green header -->
+    <div style="background:linear-gradient(135deg,#006b3f,#004d2d);padding:28px 28px 20px;text-align:center;color:#fff;position:relative;">
+      <button onclick="closeSubscribeModal()" style="position:absolute;top:14px;right:16px;background:rgba(255,255,255,0.15);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:0.9rem;display:flex;align-items:center;justify-content:center;">&#10005;</button>
+      <div style="font-size:2rem;margin-bottom:6px;">&#128081;</div>
+      <h2 style="font-size:1.25rem;font-weight:800;margin-bottom:4px;">Upgrade to Premium</h2>
+      <p style="font-size:0.82rem;opacity:0.85;line-height:1.5;">Unlimited AI CV Refinement &amp; PDF exports for 6 full months</p>
+    </div>
+
+    <!-- Package card -->
+    <div style="padding:20px 24px 0;">
+      <div style="border:2px solid #006b3f;border-radius:14px;padding:16px 18px;background:#f0faf5;display:flex;align-items:center;gap:16px;margin-bottom:18px;">
+        <div style="flex:1;">
+          <div style="font-size:0.72rem;font-weight:700;color:#006b3f;letter-spacing:0.07em;margin-bottom:2px;">6-MONTH PREMIUM PLAN</div>
+          <div style="font-size:1.6rem;font-weight:800;color:#1a1a2e;line-height:1;">GH&#8373;20</div>
+          <div style="font-size:0.78rem;color:#5a5a7a;margin-top:2px;">One-time payment &middot; Valid for 6 months</div>
+        </div>
+        <div style="font-size:0.78rem;color:#1a1a2e;line-height:1.8;">
+          &#10003; Unlimited AI CV Refine<br>
+          &#10003; Unlimited PDF exports<br>
+          &#10003; CV Builder downloads<br>
+          &#10003; Up to 8 exports/day
+        </div>
+      </div>
+
+      <!-- Step 1: MoMo payment instructions -->
+      <div id="subStep1">
+        <div style="background:#fff8e1;border-left:4px solid #fcd116;border-radius:8px;padding:14px 16px;margin-bottom:16px;">
+          <p style="font-size:0.82rem;font-weight:700;color:#7a6000;margin-bottom:8px;"><i class="fas fa-mobile-alt" style="margin-right:6px;"></i>Step 1 &mdash; Send GH&#8373;20 via Mobile Money</p>
+          <div style="background:#fff;border-radius:8px;padding:12px 14px;border:1px solid #f0d060;">
+            <div style="font-size:0.78rem;color:#5a5a7a;margin-bottom:4px;">Send to this number:</div>
+            <div style="font-size:1.4rem;font-weight:800;color:#1a1a2e;letter-spacing:0.05em;">0503561924</div>
+            <div style="font-size:0.8rem;color:#006b3f;font-weight:600;margin-top:2px;">Vf Cash &mdash; Alexander Opoku Dwumaah</div>
+          </div>
+          <a id="subMomoLink" href="#" onclick="openMoMo();return false;" style="display:inline-flex;align-items:center;gap:6px;margin-top:10px;background:#006b3f;color:#fff;border-radius:8px;padding:9px 16px;font-size:0.82rem;font-weight:700;text-decoration:none;">
+            <i class="fas fa-mobile-alt"></i> Open MoMo App to Pay
+          </a>
+        </div>
+
+        <!-- Step 2: Fill details -->
+        <p style="font-size:0.82rem;font-weight:700;color:#1a1a2e;margin-bottom:10px;"><i class="fas fa-user" style="margin-right:6px;color:#006b3f;"></i>Step 2 &mdash; Fill in your details so we can verify</p>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;">
+          <input id="subPayerName" type="text" placeholder="Your full name" style="border:1.5px solid #d0d0e8;border-radius:9px;padding:11px 14px;font-size:0.88rem;font-family:'Inter',sans-serif;outline:none;width:100%;box-sizing:border-box;" onfocus="this.style.borderColor='#006b3f'" onblur="this.style.borderColor='#d0d0e8'"/>
+          <input id="subPayerPhone" type="tel" placeholder="MoMo number you paid from (e.g. 0503561924)" style="border:1.5px solid #d0d0e8;border-radius:9px;padding:11px 14px;font-size:0.88rem;font-family:'Inter',sans-serif;outline:none;width:100%;box-sizing:border-box;" onfocus="this.style.borderColor='#006b3f'" onblur="this.style.borderColor='#d0d0e8'"/>
+        </div>
+        <div id="subError" style="display:none;background:#fff0f0;border:1px solid #ce1126;border-radius:8px;padding:10px 12px;font-size:0.82rem;color:#8b0000;margin-bottom:12px;"></div>
+        <button id="subSubmitBtn" onclick="submitSubscriptionRequest()" style="width:100%;background:linear-gradient(135deg,#006b3f,#004d2d);color:#fff;border:none;border-radius:11px;padding:14px;font-size:0.92rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 16px rgba(0,107,63,0.3);margin-bottom:10px;">
+          <i class="fas fa-paper-plane"></i> I've Made Payment &mdash; Submit Request
+        </button>
+        <p style="font-size:0.72rem;color:#aaa;text-align:center;line-height:1.5;padding-bottom:6px;">Your account will be verified and activated within a few hours. You'll see a confirmation on your next visit.</p>
+      </div>
+
+      <!-- Step confirmed state (shown after successful submit) -->
+      <div id="subStep2" style="display:none;text-align:center;padding:10px 0 24px;">
+        <div style="font-size:3rem;margin-bottom:12px;">&#127881;</div>
+        <h3 style="font-size:1.1rem;font-weight:800;color:#006b3f;margin-bottom:8px;">Request Submitted!</h3>
+        <p style="font-size:0.85rem;color:#5a5a7a;line-height:1.7;max-width:300px;margin:0 auto 16px;">We've received your payment request. Once we verify your MoMo payment, your Premium will be activated &mdash; usually within a few hours.</p>
+        <p style="font-size:0.8rem;color:#5a5a7a;">We'll notify you next time you visit the site. &#128276;</p>
+        <button onclick="closeSubscribeModal()" style="margin-top:18px;background:#006b3f;color:#fff;border:none;border-radius:10px;padding:12px 28px;font-size:0.88rem;font-weight:700;cursor:pointer;">Got it &mdash; Close</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ===== SUBSCRIBE MODAL LOGIC =====
+var _subModalContext = null;
+
+window.openSubscribeModal = function(context) {
+  _subModalContext = context || null;
+  // Reset to step 1
+  document.getElementById('subStep1').style.display = 'block';
+  document.getElementById('subStep2').style.display = 'none';
+  document.getElementById('subError').style.display = 'none';
+  document.getElementById('subPayerName').value = '';
+  document.getElementById('subPayerPhone').value = '';
+  var btn = document.getElementById('subSubmitBtn');
+  btn.innerHTML = '<i class="fas fa-paper-plane"></i> I\'ve Made Payment \u2014 Submit Request';
+  btn.disabled = false;
+  var modal = document.getElementById('subscribeModal');
+  modal.style.display = 'flex';
+  setTimeout(function(){ document.getElementById('subPayerName').focus(); }, 200);
+};
+
+window.closeSubscribeModal = function() {
+  document.getElementById('subscribeModal').style.display = 'none';
+};
+
+// Close on backdrop click
+document.getElementById('subscribeModal').addEventListener('click', function(e) {
+  if (e.target === this) closeSubscribeModal();
+});
+
+// Opens the MoMo dialler — works on mobile, falls back to contact card on desktop
+window.openMoMo = function() {
+  // Try to open the phone dialler with the number pre-filled
+  var tel = 'tel:+233503561924';
+  window.location.href = tel;
+};
+
+window.submitSubscriptionRequest = async function() {
+  var name  = document.getElementById('subPayerName').value.trim();
+  var phone = document.getElementById('subPayerPhone').value.trim();
+  var errEl = document.getElementById('subError');
+  var btn   = document.getElementById('subSubmitBtn');
+
+  errEl.style.display = 'none';
+
+  if (!name) {
+    errEl.textContent = 'Please enter your full name.';
+    errEl.style.display = 'block';
+    document.getElementById('subPayerName').focus();
+    return;
+  }
+  if (!phone) {
+    errEl.textContent = 'Please enter the MoMo number you paid from.';
+    errEl.style.display = 'block';
+    document.getElementById('subPayerPhone').focus();
+    return;
+  }
+
+  // Must be signed in
+  if (!window.checkSubscription) {
+    errEl.textContent = 'Please sign in to your CV Genius account first, then subscribe.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  btn.innerHTML = '<span class="spinner"></span> Submitting\u2026';
+  btn.disabled = true;
+
+  var ok = window.requestSubscription ? await window.requestSubscription(name, phone) : false;
+
+  if (ok) {
+    document.getElementById('subStep1').style.display = 'none';
+    document.getElementById('subStep2').style.display = 'block';
+  } else {
+    btn.innerHTML = '<i class="fas fa-paper-plane"></i> I\'ve Made Payment \u2014 Submit Request';
+    btn.disabled = false;
+    errEl.textContent = 'Submission failed. Make sure you are signed in and try again.';
+    errEl.style.display = 'block';
+  }
+};
+</script>
 </body>
 </html>

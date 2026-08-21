@@ -552,6 +552,23 @@ EXACT HTML STRUCTURE TO USE:
     clearInterval(msgTimer);
     btn.innerHTML = originalBtnText;
     btn.disabled = false;
+
+    // ── PAYWALL CHECK ──────────────────────────────────────────────────────────
+    // Check subscription status AFTER generating output (AI always runs fully).
+    // Non-premium users see a blurred preview and an unlock prompt.
+    const sub = window.checkSubscription ? await window.checkSubscription() : { status: 'none' };
+    if (sub.status === 'active') {
+      // Premium user — show full output, wire up download button normally
+      document.getElementById('refinedOutput').style.webkitMaskImage = '';
+      document.getElementById('refinedOutput').style.maskImage = '';
+      document.getElementById('refinedOutputBlurOverlay')?.remove();
+      document.getElementById('btnDownloadRefined').onclick = downloadRefinedCV;
+      document.getElementById('btnDownloadRefined').innerHTML = '<i class="fas fa-download"></i> Download as PDF';
+    } else {
+      // Free / pending / expired — blur the bottom portion and show upgrade CTA
+      applyRefinePaywall(sub.status);
+    }
+
     goToStep(4);
 
   } catch (err) {
@@ -613,14 +630,104 @@ function buildImprovementsList(refinedHTML, target, includeCL, originalText) {
 }
 
 
+// ===== REFINE PAYWALL OVERLAY =====
+function applyRefinePaywall(subStatus) {
+  const outputEl = document.getElementById('refinedOutput');
+
+  // Blur the bottom ~65% using a CSS mask gradient
+  outputEl.style.webkitMaskImage = 'linear-gradient(to bottom, black 30%, transparent 55%)';
+  outputEl.style.maskImage        = 'linear-gradient(to bottom, black 30%, transparent 55%)';
+  outputEl.style.userSelect       = 'none';
+
+  // Remove any existing overlay first
+  document.getElementById('refinedOutputBlurOverlay')?.remove();
+
+  const statusMsg = subStatus === 'pending'
+    ? `<div style="background:#fff8e1;border:1.5px solid #fcd116;border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:0.83rem;color:#7a6000;display:flex;align-items:center;gap:8px;"><i class="fas fa-clock"></i> <span>Your payment is <strong>being verified</strong>. We'll notify you once your Premium is activated — usually within a few hours.</span></div>`
+    : subStatus === 'expired'
+    ? `<div style="background:#fff0f0;border:1.5px solid #ce1126;border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:0.83rem;color:#8b0000;display:flex;align-items:center;gap:8px;"><i class="fas fa-exclamation-circle"></i> <span>Your Premium subscription has <strong>expired</strong>. Renew for another 6 months to download.</span></div>`
+    : '';
+
+  const overlay = document.createElement('div');
+  overlay.id = 'refinedOutputBlurOverlay';
+  overlay.innerHTML = `
+    <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(to bottom,rgba(255,255,255,0) 0%,rgba(255,255,255,0.97) 30%,#fff 60%);padding:32px 24px 28px;text-align:center;border-radius:0 0 16px 16px;z-index:10;">
+      ${statusMsg}
+      <div style="font-size:1.5rem;margin-bottom:8px;">🔒</div>
+      <h3 style="font-family:'Inter',sans-serif;font-size:1.05rem;font-weight:800;color:#1a1a2e;margin-bottom:6px;">Your refined CV is ready!</h3>
+      <p style="font-family:'Inter',sans-serif;font-size:0.85rem;color:#5a5a7a;margin-bottom:18px;max-width:340px;margin-left:auto;margin-right:auto;line-height:1.6;">Download and export your professionally refined CV with a <strong>Premium subscription</strong> — just <strong>GH₵20 for 6 full months</strong> of unlimited use.</p>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+        <button onclick="window.openSubscribeModal('refine')" style="background:linear-gradient(135deg,#006b3f,#004d2d);color:#fff;border:none;border-radius:10px;padding:13px 26px;font-size:0.9rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;display:inline-flex;align-items:center;gap:8px;box-shadow:0 4px 16px rgba(0,107,63,0.3);">
+          <i class="fas fa-crown"></i> Unlock — GH₵20 / 6 Months
+        </button>
+        <button onclick="checkSubscriptionAndUnlock('refine')" style="background:transparent;color:#5a5a7a;border:1.5px solid #d0d0e8;border-radius:10px;padding:13px 18px;font-size:0.85rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;">
+          <i class="fas fa-sync"></i> I've paid — check again
+        </button>
+      </div>
+      <p style="font-family:'Inter',sans-serif;font-size:0.75rem;color:#aaa;margin-top:12px;">Includes: Unlimited AI CV Refinement · Builder PDF Export · 6 months · Cancel by not renewing</p>
+    </div>`;
+  overlay.style.cssText = 'position:relative;margin-top:-120px;';
+
+  const wrapper = outputEl.parentElement;
+  wrapper.style.position = 'relative';
+  wrapper.appendChild(overlay);
+
+  // Change the download button to the upgrade CTA
+  const dlBtn = document.getElementById('btnDownloadRefined');
+  if (dlBtn) {
+    dlBtn.innerHTML = '<i class="fas fa-crown"></i> Unlock to Download';
+    dlBtn.onclick = () => window.openSubscribeModal('refine');
+    dlBtn.style.background = 'linear-gradient(135deg,#006b3f,#004d2d)';
+  }
+}
+
+// Called when user clicks "I've paid — check again"
+window.checkSubscriptionAndUnlock = async function(context) {
+  window.clearSubCache?.();
+  const sub = window.checkSubscription ? await window.checkSubscription() : { status: 'none' };
+  if (sub.status === 'active') {
+    if (context === 'refine') {
+      const outputEl = document.getElementById('refinedOutput');
+      outputEl.style.webkitMaskImage = '';
+      outputEl.style.maskImage = '';
+      outputEl.style.userSelect = '';
+      document.getElementById('refinedOutputBlurOverlay')?.remove();
+      const dlBtn = document.getElementById('btnDownloadRefined');
+      if (dlBtn) {
+        dlBtn.innerHTML = '<i class="fas fa-download"></i> Download as PDF';
+        dlBtn.onclick = downloadRefinedCV;
+        dlBtn.style.background = '';
+      }
+      showToast('🎉 Premium activated! You can now download your CV.');
+    } else if (context === 'builder') {
+      document.getElementById('builderPaywallOverlay')?.remove();
+      const dlBtn = document.getElementById('btnDownloadBuilt');
+      if (dlBtn) {
+        dlBtn.innerHTML = '<i class="fas fa-download"></i> Download PDF';
+        dlBtn.onclick = downloadBuiltCV;
+        dlBtn.style.background = '';
+      }
+      showToast('🎉 Premium activated! You can now download your CV.');
+    }
+  } else if (sub.status === 'pending') {
+    showToast('Your payment is still being verified. We\'ll activate your account shortly.', true);
+  } else {
+    showToast('No active subscription found. Please subscribe or try again after payment.', true);
+  }
+};
+
 // ===== DOWNLOAD REFINED CV =====
-function downloadRefinedCV() {
+async function downloadRefinedCV() {
+  const sub = window.checkSubscription ? await window.checkSubscription() : { status: 'none' };
+  if (sub.status !== 'active') { window.openSubscribeModal?.('refine'); return; }
+  const allowed = window.recordExport ? await window.recordExport() : true;
+  if (!allowed) return;
+
   const content = document.getElementById('refinedOutput').innerHTML;
   const target = document.querySelector('input[name="target"]:checked')?.value || 'general';
   const role = document.getElementById('specific-role').value.trim();
   const title = `Refined CV${role ? ' – ' + role : ''} (${new Date().toLocaleDateString('en-GB')})`;
   printCV(content, 'Refined_CV');
-  // Auto-save to Firestore if logged in
   if (window.saveCVToFirestore) saveCVToFirestore('refined', title, content, target, role);
 }
 
@@ -854,17 +961,67 @@ function generateCVPreview() {
   showToast('CV preview generated!');
 }
 
-function downloadBuiltCV() {
+async function downloadBuiltCV() {
   const content = document.getElementById('cvPreviewContainer').innerHTML;
   if (!content || content.includes('cv-preview-placeholder')) {
     showToast('Please generate a preview first.', true); return;
   }
+
+  // ── PAYWALL CHECK ──
+  const sub = window.checkSubscription ? await window.checkSubscription() : { status: 'none' };
+  if (sub.status !== 'active') {
+    applyBuilderPaywall(sub.status);
+    return;
+  }
+  const allowed = window.recordExport ? await window.recordExport() : true;
+  if (!allowed) return;
+
   const firstName = document.getElementById('b-firstName').value.trim();
   const lastName = document.getElementById('b-lastName').value.trim();
   const title = `${firstName} ${lastName} CV (${new Date().toLocaleDateString('en-GB')})`;
   printCV(content, `${firstName}_${lastName}_CV`);
-  // Auto-save to Firestore if logged in
   if (window.saveCVToFirestore) saveCVToFirestore('built', title, content, document.getElementById('previewTarget')?.value || 'general', '');
+}
+
+// ===== BUILDER PAYWALL OVERLAY =====
+function applyBuilderPaywall(subStatus) {
+  document.getElementById('builderPaywallOverlay')?.remove();
+
+  const statusMsg = subStatus === 'pending'
+    ? `<div style="background:#fff8e1;border:1.5px solid #fcd116;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:0.82rem;color:#7a6000;"><i class="fas fa-clock" style="margin-right:6px;"></i>Your payment is <strong>being verified</strong>. Usually activated within a few hours.</div>`
+    : subStatus === 'expired'
+    ? `<div style="background:#fff0f0;border:1.5px solid #ce1126;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:0.82rem;color:#8b0000;"><i class="fas fa-exclamation-circle" style="margin-right:6px;"></i>Your subscription has <strong>expired</strong>. Renew for another 6 months.</div>`
+    : '';
+
+  const overlay = document.createElement('div');
+  overlay.id = 'builderPaywallOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(10,10,30,0.72);z-index:9000;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);';
+  overlay.innerHTML = `
+    <div style="background:#fff;border-radius:20px;padding:36px 32px;max-width:420px;width:100%;text-align:center;box-shadow:0 24px 80px rgba(0,0,0,0.25);font-family:'Inter',sans-serif;">
+      <div style="font-size:2.5rem;margin-bottom:12px;">&#128274;</div>
+      <h2 style="font-size:1.2rem;font-weight:800;color:#1a1a2e;margin-bottom:8px;">Your CV is built!</h2>
+      <p style="font-size:0.88rem;color:#5a5a7a;line-height:1.7;margin-bottom:6px;">You can copy the text for free. To <strong>download a print-ready PDF</strong>, upgrade to Premium.</p>
+      ${statusMsg}
+      <div style="background:linear-gradient(135deg,#006b3f,#004d2d);border-radius:14px;padding:18px 20px;margin:18px 0;color:#fff;">
+        <div style="font-size:0.75rem;font-weight:700;letter-spacing:0.08em;opacity:0.8;margin-bottom:4px;">PREMIUM PLAN</div>
+        <div style="font-size:2rem;font-weight:800;margin-bottom:2px;">GH&#8373;20</div>
+        <div style="font-size:0.8rem;opacity:0.85;">for 6 full months &middot; Unlimited use</div>
+        <div style="margin-top:10px;font-size:0.78rem;opacity:0.75;line-height:1.6;">&#10003; Unlimited CV Builder PDF exports<br>&#10003; Unlimited AI CV Refinement downloads<br>&#10003; Daily export cap: 8 CVs/day</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <button onclick="window.openSubscribeModal('builder')" style="background:linear-gradient(135deg,#006b3f,#004d2d);color:#fff;border:none;border-radius:10px;padding:14px;font-size:0.92rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 16px rgba(0,107,63,0.3);">
+          <i class="fas fa-crown"></i> Subscribe &mdash; GH&#8373;20 / 6 Months
+        </button>
+        <button onclick="checkSubscriptionAndUnlock('builder')" style="background:#f0f0f8;color:#5a5a7a;border:none;border-radius:10px;padding:12px;font-size:0.85rem;font-weight:600;cursor:pointer;">
+          <i class="fas fa-sync"></i> I've already paid &mdash; check now
+        </button>
+        <button onclick="document.getElementById('builderPaywallOverlay').remove()" style="background:transparent;color:#aaa;border:none;font-size:0.8rem;cursor:pointer;padding:6px;">
+          Close
+        </button>
+      </div>
+      <p style="font-size:0.72rem;color:#ccc;margin-top:14px;">Payment via MoMo &middot; Verified manually within hours &middot; No auto-renewal</p>
+    </div>`;
+  document.body.appendChild(overlay);
 }
 
 function copyBuiltCV() {

@@ -1,7 +1,7 @@
 // ===== CV GENIUS GHANA — Firebase Auth + Firestore =====
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, signInWithPopup, signInWithRedirect, getRedirectResult, signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, collection, addDoc, getDocs, query, where, orderBy, doc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, getDoc, setDoc, updateDoc, query, where, orderBy, doc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAhRkNIidv-ud3fua35NQR-nUTTZkoE37A",
@@ -264,6 +264,7 @@ window.loadDashboard = async function() {
         <div class="dash-actions">
           <button class="btn-primary" style="font-size:0.8rem;padding:8px 14px;" onclick="viewSavedCV('${docSnap.id}')"><i class="fas fa-eye"></i> View</button>
           <button class="btn-outline" style="font-size:0.8rem;padding:8px 14px;" onclick="downloadSavedCV('${docSnap.id}')"><i class="fas fa-download"></i> Download</button>
+          ${d.type === 'built' ? `<button class="btn-outline" style="font-size:0.8rem;padding:8px 14px;" onclick="editBuiltCV('${docSnap.id}')" title="Edit this CV"><i class="fas fa-pencil-alt"></i> Edit</button>` : ''}
         </div>
       </div>`;
     });
@@ -343,3 +344,246 @@ window.closeAuthModal = function(e, force) {
 };
 
 console.log('%c Firebase connected ✓ ', 'background:#006b3f;color:#fcd116;font-weight:bold;padding:4px 8px;border-radius:4px;');
+
+// ===== SUBSCRIPTION SYSTEM =====
+
+// In-memory cache so we don't hit Firestore on every button press
+window._subCache = null;
+window._subCacheUid = null;
+
+// Check whether the current user has an active subscription.
+// Returns: { status: 'active'|'expired'|'pending'|'none', expiresAt, exportCount, exportCountDate, flagged }
+window.checkSubscription = async function() {
+  if (!currentUser) return { status: 'none' };
+  // Use cached value if same user and fetched within this session
+  if (window._subCache && window._subCacheUid === currentUser.uid) return window._subCache;
+  try {
+    const snap = await getDoc(doc(db, 'subscriptions', currentUser.uid));
+    if (!snap.exists()) {
+      window._subCache = { status: 'none' };
+    } else {
+      const d = snap.data();
+      // Auto-detect expiry
+      let status = d.status || 'none';
+      if (status === 'active' && d.expiresAt?.toDate && d.expiresAt.toDate() < new Date()) {
+        status = 'expired';
+        // Write expiry back silently — don't await to keep UI fast
+        updateDoc(doc(db, 'subscriptions', currentUser.uid), { status: 'expired' }).catch(() => {});
+      }
+      window._subCache = { status, expiresAt: d.expiresAt, exportCount: d.exportCount || 0, exportCountDate: d.exportCountDate || '', flagged: d.flagged || false };
+    }
+    window._subCacheUid = currentUser.uid;
+    return window._subCache;
+  } catch (e) {
+    console.warn('checkSubscription error:', e.message);
+    return { status: 'none' };
+  }
+};
+
+// Invalidate the in-memory cache (call after payment request or approval)
+window.clearSubCache = function() {
+  window._subCache = null;
+  window._subCacheUid = null;
+};
+
+// Submit a subscription payment request.
+// Called when user clicks "I've Made Payment" in the subscribe modal.
+window.requestSubscription = async function(payerName, payerPhone) {
+  if (!currentUser) { showToast('Please sign in first.', true); return false; }
+  try {
+    await setDoc(doc(db, 'subscriptions', currentUser.uid), {
+      uid: currentUser.uid,
+      email: currentUser.email,
+      displayName: currentUser.displayName || payerName || '',
+      payerName: payerName || '',
+      payerPhone: payerPhone || '',
+      status: 'pending',
+      plan: '6months_gh20',
+      requestedAt: serverTimestamp(),
+      approvedAt: null,
+      approvedBy: null,
+      expiresAt: null,
+      exportCount: 0,
+      exportCountDate: '',
+      flagged: false
+    }, { merge: true });
+    window.clearSubCache();
+    return true;
+  } catch (e) {
+    showToast('Could not submit request: ' + e.message, true);
+    return false;
+  }
+};
+
+// Record an export against the daily cap. Returns true if allowed, false if capped.
+// Cap = 8 exports per 24 hours. If exceeded, flags the account in Firestore.
+window.recordExport = async function() {
+  if (!currentUser) return true; // not logged in — allow (no tracking)
+  const DAILY_CAP = 8;
+  const today = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
+  try {
+    const snap = await getDoc(doc(db, 'subscriptions', currentUser.uid));
+    if (!snap.exists()) return true; // no sub doc — free tier, allow
+    const d = snap.data();
+    if (d.status !== 'active') return true; // not active premium — allow (paywall handles this)
+    const sameDay = d.exportCountDate === today;
+    const count = sameDay ? (d.exportCount || 0) : 0;
+    if (count >= DAILY_CAP) {
+      // Flag if not already flagged
+      if (!d.flagged) {
+        await updateDoc(doc(db, 'subscriptions', currentUser.uid), { flagged: true, flaggedAt: serverTimestamp(), flagReason: `Exceeded ${DAILY_CAP} exports/day` });
+      }
+      window.clearSubCache();
+      showToast(`Daily export limit reached (${DAILY_CAP}/day). Try again tomorrow.`, true);
+      return false;
+    }
+    // Increment counter
+    await updateDoc(doc(db, 'subscriptions', currentUser.uid), {
+      exportCount: count + 1,
+      exportCountDate: today
+    });
+    window.clearSubCache();
+    return true;
+  } catch (e) {
+    console.warn('recordExport error:', e.message);
+    return true; // on error, don't block the user
+  }
+};
+
+// ===== EDIT BUILT CV (repopulate builder from saved htmlContent) =====
+window.editBuiltCV = function(id) {
+  const data = window._dashSnap?.[id];
+  if (!data || data.type !== 'built') return;
+  closeDashboard();
+
+  // Small delay to let modal close before manipulating tabs
+  setTimeout(() => {
+    try {
+      const parser = new DOMParser();
+      const cvDoc = parser.parseFromString(data.htmlContent, 'text/html');
+
+      // ── Name ──
+      const nameEl = cvDoc.querySelector('.cv-name');
+      if (nameEl) {
+        const nameParts = (nameEl.textContent || '').trim().split(' ');
+        if (nameParts.length >= 2) {
+          document.getElementById('b-firstName').value = nameParts[0] || '';
+          document.getElementById('b-lastName').value  = nameParts[nameParts.length - 1] || '';
+          if (nameParts.length >= 3) document.getElementById('b-middleName').value = nameParts.slice(1, -1).join(' ');
+        }
+      }
+
+      // ── Contact ──
+      const contactEl = cvDoc.querySelector('.cv-contact');
+      if (contactEl) {
+        const parts = contactEl.textContent.split('|').map(s => s.trim()).filter(Boolean);
+        parts.forEach(p => {
+          if (p.includes('@')) document.getElementById('b-email').value = p;
+          else if (/^\+?\d[\d\s\-()]+$/.test(p)) document.getElementById('b-phone').value = p;
+          else if (p.includes('linkedin')) document.getElementById('b-linkedin').value = p;
+          else if (p.includes('github') || p.includes('portfolio') || p.includes('http')) document.getElementById('b-portfolio').value = p;
+        });
+      }
+
+      // ── Education entries ──
+      const sectionTitles = cvDoc.querySelectorAll('.cv-section-title');
+      let eduSection = null;
+      sectionTitles.forEach(el => { if (el.textContent.trim().toUpperCase().includes('EDUCATION')) eduSection = el; });
+      if (eduSection) {
+        // Collect all edu entry-header pairs up to the next section title
+        const eduHeaders = [];
+        let cur = eduSection.nextElementSibling;
+        while (cur && !cur.classList.contains('cv-section-title')) {
+          if (cur.classList.contains('cv-entry-header')) eduHeaders.push(cur);
+          cur = cur.nextElementSibling;
+        }
+        // Group in pairs (org+loc, then title+date)
+        for (let i = 0; i < eduHeaders.length; i += 2) {
+          const orgRow = eduHeaders[i];
+          const titleRow = eduHeaders[i + 1];
+          const entryIndex = Math.floor(i / 2);
+          // Add entries if needed
+          if (entryIndex > 0) {
+            const existing = document.querySelectorAll('#educationEntries .entry-card');
+            if (entryIndex >= existing.length) addEducationEntry?.();
+          }
+          const entries = document.querySelectorAll('#educationEntries .entry-card');
+          const entry = entries[entryIndex];
+          if (!entry) continue;
+          if (orgRow) {
+            entry.querySelector('.edu-uni').value  = orgRow.querySelector('.cv-entry-org')?.textContent.trim() || '';
+            entry.querySelector('.edu-loc').value  = orgRow.querySelector('.cv-entry-loc')?.textContent.trim() || '';
+          }
+          if (titleRow) {
+            entry.querySelector('.edu-degree').value = titleRow.querySelector('.cv-entry-title')?.textContent.trim() || '';
+            const dateStr = titleRow.querySelector('.cv-entry-date')?.textContent.trim() || '';
+            const dateParts = dateStr.split('–').map(s => s.trim());
+            entry.querySelector('.edu-start').value = dateParts[0] || '';
+            entry.querySelector('.edu-end').value   = dateParts[1] || '';
+          }
+        }
+      }
+
+      // ── Experience entries ──
+      let expSection = null;
+      sectionTitles.forEach(el => { if (el.textContent.trim().toUpperCase().includes('PROFESSIONAL EXPERIENCE')) expSection = el; });
+      if (expSection) {
+        let cur = expSection.nextElementSibling;
+        let expIndex = 0;
+        while (cur && !cur.classList.contains('cv-section-title')) {
+          if (cur.classList.contains('cv-entry-header') && cur.querySelector('.cv-entry-org')) {
+            if (expIndex > 0) {
+              const existing = document.querySelectorAll('#experienceEntries .entry-card');
+              if (expIndex >= existing.length) addExperienceEntry?.();
+            }
+            const entries = document.querySelectorAll('#experienceEntries .entry-card');
+            const entry = entries[expIndex];
+            if (entry) {
+              entry.querySelector('.exp-org').value = cur.querySelector('.cv-entry-org')?.textContent.trim() || '';
+              entry.querySelector('.exp-loc').value = cur.querySelector('.cv-entry-loc')?.textContent.trim() || '';
+              const nextRow = cur.nextElementSibling;
+              if (nextRow?.classList.contains('cv-entry-header')) {
+                entry.querySelector('.exp-title').value = nextRow.querySelector('.cv-entry-title')?.textContent.trim() || '';
+                const dateStr = nextRow.querySelector('.cv-entry-date')?.textContent.trim() || '';
+                const dateParts = dateStr.split('–').map(s => s.trim());
+                entry.querySelector('.exp-start').value = dateParts[0] || '';
+                entry.querySelector('.exp-end').value   = dateParts[1] || '';
+                // bullets
+                const bulletsEl = nextRow.nextElementSibling;
+                if (bulletsEl?.classList.contains('cv-bullets')) {
+                  const bulletLines = Array.from(bulletsEl.querySelectorAll('li')).map(li => '• ' + li.textContent.trim());
+                  const bulletsTA = entry.querySelector('.exp-bullets');
+                  if (bulletsTA) bulletsTA.value = bulletLines.join('\n');
+                }
+              }
+            }
+            expIndex++;
+          }
+          cur = cur.nextElementSibling;
+        }
+      }
+
+      // ── Skills ──
+      const allDivs = cvDoc.querySelectorAll('[style]');
+      allDivs.forEach(div => {
+        const txt = div.textContent || '';
+        if (txt.includes('Technical:')) document.getElementById('b-techSkills').value = txt.replace('Technical:', '').trim();
+        else if (txt.includes('Professional:')) document.getElementById('b-softSkills').value = txt.replace('Professional:', '').trim();
+        else if (txt.includes('Languages:')) document.getElementById('b-languages').value = txt.replace('Languages:', '').trim();
+      });
+
+      // Inject back the saved HTML into the preview container so it's immediately visible
+      document.getElementById('cvPreviewContainer').innerHTML = data.htmlContent;
+
+      // Navigate to the builder preview tab
+      scrollToSection('build');
+      switchTab('preview');
+      showToast('CV loaded for editing — make your changes and click Generate Preview to update.');
+    } catch (e) {
+      console.warn('editBuiltCV parse error:', e);
+      showToast('Could not reload CV fields. You can still edit from the builder tabs.', true);
+      scrollToSection('build');
+      switchTab('personal');
+    }
+  }, 350);
+};

@@ -1,0 +1,1710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Dashboard — CV Genius Ghana</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <style>
+    :root {
+      --primary: #006b3f; --primary-light: #e8f5ee; --primary-dark: #004d2d;
+      --gold: #fcd116; --gold-dark: #e6b800;
+      --red: #ce1126; --red-light: #ffe5e8;
+      --blue: #1565C0; --blue-light: #E3F2FD;
+      --text: #1a1a2e; --text-light: #5a5a7a;
+      --border: #e5e7ef; --bg: #f0f2f8; --white: #ffffff;
+      --radius: 12px; --shadow: 0 4px 16px rgba(0,0,0,0.07);
+      --sidebar-w: 260px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; }
+    /* SIDEBAR */
+    .sidebar { width: var(--sidebar-w); background: var(--primary-dark); color: #fff; display: flex; flex-direction: column; position: fixed; top: 0; left: 0; bottom: 0; z-index: 100; overflow-y: auto; }
+    .sidebar-logo { padding: 22px 20px 16px; border-bottom: 1px solid rgba(255,255,255,0.12); display: flex; align-items: center; gap: 10px; }
+    .sidebar-logo .logo-text { font-size: 1rem; font-weight: 800; color: #fff; }
+    .sidebar-logo .accent { color: var(--gold); }
+    .sidebar-tag { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em; background: var(--gold); color: var(--text); padding: 2px 8px; border-radius: 100px; margin-left: 4px; }
+    .sidebar-nav { flex: 1; padding: 16px 0; }
+    .nav-section-label { font-size: 0.66rem; font-weight: 700; letter-spacing: 0.12em; color: rgba(255,255,255,0.4); padding: 10px 20px 6px; text-transform: uppercase; }
+    .sidebar-link { display: flex; align-items: center; gap: 12px; padding: 11px 20px; color: rgba(255,255,255,0.75); text-decoration: none; font-size: 0.88rem; font-weight: 500; cursor: pointer; border: none; background: none; width: 100%; text-align: left; transition: all 0.15s; border-left: 3px solid transparent; }
+    .sidebar-link:hover { background: rgba(255,255,255,0.08); color: #fff; }
+    .sidebar-link.active { background: rgba(255,255,255,0.12); color: #fff; border-left-color: var(--gold); }
+    .sidebar-link .badge-count { background: var(--red); color: #fff; font-size: 0.68rem; font-weight: 700; padding: 2px 7px; border-radius: 100px; margin-left: auto; }
+    .sidebar-bottom { padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.12); font-size: 0.8rem; color: rgba(255,255,255,0.5); }
+    .sidebar-admin-chip { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .admin-avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--gold); color: var(--text); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.9rem; flex-shrink: 0; }
+    .admin-name { font-size: 0.82rem; font-weight: 600; color: rgba(255,255,255,0.9); }
+    .admin-role { font-size: 0.72rem; color: rgba(255,255,255,0.5); }
+    /* MAIN CONTENT */
+    .main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+    .topbar { background: #fff; border-bottom: 1px solid var(--border); padding: 14px 28px; display: flex; align-items: center; justify-content: space-between; gap: 16px; position: sticky; top: 0; z-index: 50; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+    .topbar-title { font-size: 1.05rem; font-weight: 800; color: var(--text); }
+    .topbar-actions { display: flex; align-items: center; gap: 10px; }
+    .page-content { padding: 28px; flex: 1; }
+    /* CARDS & GRID */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 28px; }
+    .stat-card { background: #fff; border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); border-left: 4px solid var(--border); }
+    .stat-card.green { border-left-color: var(--primary); }
+    .stat-card.blue { border-left-color: var(--blue); }
+    .stat-card.orange { border-left-color: #FF9800; }
+    .stat-card.gold { border-left-color: var(--gold-dark); }
+    .stat-card .stat-label { font-size: 0.75rem; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+    .stat-card .stat-num { font-size: 2rem; font-weight: 800; color: var(--text); line-height: 1; }
+    .stat-card .stat-sub { font-size: 0.75rem; color: var(--text-light); margin-top: 4px; }
+    /* SUBMISSION TABLE */
+    .table-card { background: #fff; border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+    .table-header { padding: 18px 22px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+    .table-header h2 { font-size: 0.95rem; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+    .filter-bar { display: flex; gap: 8px; flex-wrap: wrap; }
+    .filter-btn { padding: 7px 14px; border-radius: 100px; border: 1.5px solid var(--border); background: #fff; font-size: 0.78rem; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; color: var(--text-light); transition: all 0.15s; }
+    .filter-btn.active { border-color: var(--primary); background: var(--primary); color: #fff; }
+    .filter-btn:hover:not(.active) { border-color: var(--primary); color: var(--primary); }
+    .table-scroll { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
+    th { background: #f8fafc; padding: 11px 14px; text-align: left; font-size: 0.72rem; font-weight: 700; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    td { padding: 13px 14px; border-bottom: 1px solid #f0f2f8; vertical-align: middle; }
+    tr:hover td { background: #fafbff; }
+    .name-cell { font-weight: 600; color: var(--text); }
+    .email-cell { color: var(--text-light); font-size: 0.78rem; }
+    .status-pill { display: inline-flex; align-items: center; gap: 5px; padding: 4px 11px; border-radius: 100px; font-size: 0.72rem; font-weight: 700; white-space: nowrap; }
+    .pill-pending { background: #FFF3E0; color: #E65100; }
+    .pill-in_review { background: var(--blue-light); color: var(--blue); }
+    .pill-reviewed { background: var(--primary-light); color: var(--primary); }
+    .pill-completed { background: #FFF8E1; color: #F57F17; }
+    .ai-pill { font-size: 0.7rem; padding: 3px 9px; border-radius: 100px; font-weight: 600; }
+    .ai-done { background: var(--primary-light); color: var(--primary); }
+    .ai-pending { background: #f0f0f8; color: var(--text-light); }
+    .ai-scanning { background: var(--blue-light); color: var(--blue); }
+    .ai-error { background: var(--red-light); color: var(--red); }
+    .action-btns { display: flex; gap: 6px; }
+    .action-btn { padding: 6px 11px; border-radius: 8px; border: 1.5px solid var(--border); background: #fff; font-size: 0.75rem; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; color: var(--text); transition: all 0.15s; white-space: nowrap; }
+    .action-btn:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+    .action-btn.primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .action-btn.primary:hover { background: var(--primary-dark); }
+    .action-btn.danger { border-color: var(--red); color: var(--red); }
+    .action-btn.danger:hover { background: var(--red-light); }
+    /* BTNS */
+    .btn-primary { display: inline-flex; align-items: center; gap: 8px; background: var(--primary); color: #fff; border: none; padding: 11px 22px; border-radius: 10px; font-size: 0.88rem; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.2s; }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-outline { display: inline-flex; align-items: center; gap: 8px; background: transparent; color: var(--primary); border: 1.5px solid var(--primary); padding: 9px 18px; border-radius: 10px; font-size: 0.85rem; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.2s; }
+    .btn-outline:hover { background: var(--primary-light); }
+    .btn-gold { display: inline-flex; align-items: center; gap: 8px; background: var(--gold); color: var(--text); border: none; padding: 11px 22px; border-radius: 10px; font-size: 0.88rem; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.2s; }
+    .btn-gold:hover { background: var(--gold-dark); }
+    /* MODAL */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(10,10,30,0.65); z-index: 500; display: none; align-items: flex-start; justify-content: center; padding: 20px; overflow-y: auto; backdrop-filter: blur(4px); }
+    .modal-overlay.active { display: flex; }
+    .modal-box { background: #fff; border-radius: 16px; width: 100%; position: relative; box-shadow: 0 24px 80px rgba(0,0,0,0.25); margin: auto; }
+    .modal-header { padding: 18px 24px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: #fff; z-index: 2; border-radius: 16px 16px 0 0; }
+    .modal-header h3 { font-size: 1rem; font-weight: 800; display: flex; align-items: center; gap: 10px; }
+    .modal-close { background: #f5f5f5; border: none; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; color: var(--text); transition: background 0.15s; }
+    .modal-close:hover { background: var(--red-light); color: var(--red); }
+    .modal-body { padding: 22px 24px; }
+    .modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; gap: 10px; flex-wrap: wrap; align-items: center; justify-content: flex-end; background: #fafbff; border-radius: 0 0 16px 16px; }
+    /* ANNOTATION CANVAS */
+    .annotation-wrap { position: relative; display: inline-block; max-width: 100%; border: 2px solid var(--border); border-radius: 10px; overflow: hidden; background: #f5f5f5; }
+    #annotationCanvas { display: block; cursor: crosshair; touch-action: none; }
+    .anno-toolbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 10px 14px; background: #fff; border-bottom: 1px solid var(--border); border-radius: 10px 10px 0 0; }
+    .anno-tool-btn { width: 34px; height: 34px; border-radius: 8px; border: 1.5px solid var(--border); background: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; color: var(--text); transition: all 0.15s; }
+    .anno-tool-btn:hover, .anno-tool-btn.active { border-color: var(--primary); background: var(--primary-light); color: var(--primary); }
+    .anno-tool-btn.danger { border-color: var(--red); color: var(--red); }
+    .anno-tool-btn.danger:hover { background: var(--red-light); }
+    .color-swatch { width: 24px; height: 24px; border-radius: 50%; border: 2px solid rgba(0,0,0,0.15); cursor: pointer; transition: transform 0.15s; }
+    .color-swatch.active { border-color: var(--text); transform: scale(1.2); }
+    .anno-divider { width: 1px; height: 28px; background: var(--border); }
+    .anno-size { width: 70px; font-size: 0.8rem; border: 1.5px solid var(--border); border-radius: 6px; padding: 4px 8px; font-family: 'Inter', sans-serif; }
+    /* AI SCAN PANEL */
+    .ai-panel { background: #f8fafc; border-radius: var(--radius); padding: 18px 20px; margin-bottom: 20px; }
+    .ai-score-row { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+    .ai-score-circle { width: 64px; height: 64px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; flex-shrink: 0; }
+    .ai-metric { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; font-size: 0.8rem; gap: 10px; }
+    .ai-metric-bar { flex: 1; height: 6px; background: #e8e8f0; border-radius: 100px; overflow: hidden; }
+    .ai-metric-fill { height: 100%; border-radius: 100px; }
+    .issue-item { display: flex; gap: 10px; padding: 10px 12px; border-radius: 8px; margin-bottom: 7px; font-size: 0.82rem; }
+    .sev-high { background: #fff0f0; border-left: 3px solid var(--red); }
+    .sev-medium { background: #FFF8E1; border-left: 3px solid #FF9800; }
+    .sev-low { background: var(--primary-light); border-left: 3px solid var(--primary); }
+    .sev-badge { font-size: 0.68rem; font-weight: 700; padding: 2px 8px; border-radius: 100px; white-space: nowrap; align-self: flex-start; }
+    .sev-badge.high { background: var(--red-light); color: var(--red); }
+    .sev-badge.medium { background: #FFF3E0; color: #E65100; }
+    .sev-badge.low { background: var(--primary-light); color: var(--primary); }
+    /* MESSAGES */
+    .messages-area { display: flex; flex-direction: column; gap: 10px; max-height: 280px; overflow-y: auto; padding: 4px 2px; }
+    .msg-bubble { max-width: 80%; padding: 11px 15px; border-radius: 16px; font-size: 0.85rem; line-height: 1.5; }
+    .msg-admin { background: var(--primary); color: #fff; align-self: flex-end; border-bottom-right-radius: 4px; }
+    .msg-user { background: #f0f0f8; color: var(--text); align-self: flex-start; border-bottom-left-radius: 4px; }
+    .msg-meta { font-size: 0.7rem; opacity: 0.7; margin-top: 4px; }
+    .msg-row { display: flex; gap: 8px; margin-top: 12px; }
+    .msg-input { flex: 1; border: 1.5px solid var(--border); border-radius: 10px; padding: 9px 14px; font-family: 'Inter', sans-serif; font-size: 0.85rem; }
+    .msg-input:focus { outline: none; border-color: var(--primary); }
+    .msg-send { background: var(--primary); color: #fff; border: none; border-radius: 10px; padding: 9px 14px; cursor: pointer; }
+    .msg-send:hover { background: var(--primary-dark); }
+    /* FORM ELEMENTS */
+    .form-group { margin-bottom: 18px; }
+    .form-group label { display: block; font-size: 0.82rem; font-weight: 600; margin-bottom: 6px; color: var(--text); }
+    .form-input, .form-select, .form-textarea { width: 100%; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 0.88rem; font-family: 'Inter', sans-serif; color: var(--text); background: #fff; }
+    .form-input:focus, .form-select:focus, .form-textarea:focus { outline: none; border-color: var(--primary); }
+    .form-textarea { resize: vertical; line-height: 1.5; }
+    /* MISC */
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--text-light); }
+    .empty-icon { font-size: 2.5rem; margin-bottom: 12px; }
+    .spinner { width: 22px; height: 22px; border: 3px solid rgba(0,107,63,0.2); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--text); color: #fff; padding: 11px 22px; border-radius: 100px; font-size: 0.88rem; font-weight: 600; z-index: 9999; opacity: 0; transition: all 0.35s ease; white-space: nowrap; box-shadow: 0 6px 20px rgba(0,0,0,0.2); }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .toast.error { background: var(--red); }
+    .tabs { display: flex; gap: 0; border-bottom: 2px solid var(--border); margin-bottom: 20px; }
+    .tab { padding: 10px 18px; font-size: 0.85rem; font-weight: 600; color: var(--text-light); cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all 0.15s; }
+    .tab:hover { color: var(--primary); }
+    .tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+    .section-divider { font-size: 0.72rem; font-weight: 700; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.08em; margin: 20px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+    /* ACCESS DENIED */
+    .access-denied { min-height: 100vh; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 16px; text-align: center; padding: 40px; }
+    .access-denied .icon { font-size: 4rem; }
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      20% { transform: translateX(-8px); }
+      40% { transform: translateX(8px); }
+      60% { transform: translateX(-6px); }
+      80% { transform: translateX(6px); }
+    }
+    @media (max-width: 768px) { .sidebar { transform: translateX(-100%); } .main { margin-left: 0; } }
+  </style>
+</head>
+<body>
+<!-- ACCESS DENIED (shown before auth check) -->
+<div id="accessDenied" class="access-denied" style="display:none;">
+  <div class="icon">🔐</div>
+  <h2 style="font-size:1.4rem;font-weight:800;">Admin Access Required</h2>
+  <p style="color:var(--text-light);max-width:340px;line-height:1.6;">This dashboard is restricted. Enter the secret access code to continue.</p>
+  <button class="btn-primary" onclick="showAdminLogin()" style="margin-top:8px;"><i class="fas fa-key"></i> Enter Access Code</button>
+</div>
+
+<!-- LOADING -->
+<div id="loadingScreen" style="min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;color:var(--text-light);font-size:0.9rem;">
+  <div class="spinner" style="width:36px;height:36px;border-width:4px;"></div>
+  <p>Verifying admin access…</p>
+</div>
+
+<!-- ADMIN APP -->
+<div id="adminApp" style="display:none;width:100%;display:none;">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <span style="font-size:1.3rem;">⭐</span>
+    <div>
+      <div class="logo-text">CV <span class="accent">Genius</span> Ghana</div>
+      <div style="font-size:0.65rem;color:rgba(255,255,255,0.45);margin-top:1px;">Admin Dashboard</div>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Main</div>
+    <button class="sidebar-link active" onclick="showPage('dashboard')" id="nav-dashboard"><i class="fas fa-tachometer-alt fa-fw"></i> Dashboard</button>
+    <button class="sidebar-link" onclick="showPage('submissions')" id="nav-submissions"><i class="fas fa-inbox fa-fw"></i> CV Submissions <span class="badge-count" id="pendingBadge" style="display:none;">0</span></button>
+    <div class="nav-section-label">Tools</div>
+    <button class="sidebar-link" onclick="showPage('review')" id="nav-review" style="display:none;"><i class="fas fa-pen-fancy fa-fw"></i> Review Workspace</button>
+    <button class="sidebar-link" onclick="showPage('subscriptions')" id="nav-subscriptions"><i class="fas fa-crown fa-fw"></i> Subscriptions <span class="badge-count" id="subPendingBadge" style="display:none;">0</span></button>
+    <div class="nav-section-label">Account</div>
+    <button class="sidebar-link" onclick="signOutAdmin()"><i class="fas fa-sign-out-alt fa-fw"></i> Sign Out</button>
+  </nav>
+  <div class="sidebar-bottom">
+    <div class="sidebar-admin-chip">
+      <div class="admin-avatar" id="adminAvatar">A</div>
+      <div><div class="admin-name" id="adminName">Admin</div><div class="admin-role">Administrator</div></div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title" id="topbarTitle">Dashboard</div>
+    <div class="topbar-actions">
+      <button class="btn-outline" onclick="location.href='index.html'" style="font-size:0.8rem;padding:8px 14px;"><i class="fas fa-external-link-alt"></i> View Site</button>
+    </div>
+  </div>
+  <div class="page-content" id="pageContent">
+    <!-- Pages rendered here -->
+  </div>
+</div><!-- end .main -->
+</div><!-- end #adminApp -->
+
+<!-- ADMIN LOGIN MODAL — two-step: secret code first, then credentials -->
+<div class="modal-overlay" id="adminLoginModal" style="z-index:600;">
+  <div class="modal-box" style="max-width:400px;">
+
+    <!-- STEP 1: SECRET CODE -->
+    <div id="loginStep1">
+      <div style="text-align:center;padding:36px 28px 28px;">
+        <div style="font-size:2.8rem;margin-bottom:12px;">🔐</div>
+        <h2 style="font-size:1.2rem;font-weight:800;color:var(--text);margin-bottom:6px;">Admin Access</h2>
+        <p style="font-size:0.82rem;color:var(--text-light);margin-bottom:24px;">Enter the secret access code to continue.</p>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <input
+            type="password"
+            id="secretCodeInput"
+            class="form-input"
+            placeholder="Enter secret code"
+            onkeydown="if(event.key==='Enter')checkSecretCode()"
+            autocomplete="off"
+            style="text-align:center;letter-spacing:0.15em;font-size:1rem;"
+          />
+          <div id="secretCodeError" style="display:none;color:var(--red);font-size:0.8rem;font-weight:600;text-align:center;">
+            ❌ Incorrect code. Access denied.
+          </div>
+          <button class="btn-primary" style="width:100%;justify-content:center;" onclick="checkSecretCode()">
+            <i class="fas fa-arrow-right"></i> Continue
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 2: EMAIL + PASSWORD (hidden until code is correct) -->
+    <div id="loginStep2" style="display:none;">
+      <div style="text-align:center;padding:32px 28px 8px;">
+        <div style="font-size:2rem;margin-bottom:8px;">⭐</div>
+        <h2 style="font-size:1.1rem;font-weight:800;color:var(--text);margin-bottom:4px;">Admin Sign In</h2>
+        <p style="font-size:0.8rem;color:var(--text-light);margin-bottom:20px;">Enter your admin credentials to access the dashboard.</p>
+      </div>
+      <div style="padding:0 28px 28px;display:flex;flex-direction:column;gap:12px;">
+        <input type="email" id="adminEmail" class="form-input" placeholder="Admin email address" autocomplete="username"/>
+        <input type="password" id="adminPass" class="form-input" placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doAdminLogin()"/>
+        <div id="loginError" style="display:none;color:var(--red);font-size:0.8rem;font-weight:600;text-align:center;padding:8px;background:var(--red-light);border-radius:8px;"></div>
+        <button class="btn-primary" id="loginBtn" style="width:100%;justify-content:center;" onclick="doAdminLogin()">
+          <i class="fas fa-sign-in-alt"></i> Sign In
+        </button>
+        <button onclick="backToCodeStep()" style="background:none;border:none;color:var(--text-light);font-size:0.8rem;cursor:pointer;font-family:'Inter',sans-serif;margin-top:4px;">
+          ← Back
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- REVIEW WORKSPACE MODAL (full screen) -->
+<div class="modal-overlay" id="reviewWorkspaceModal" style="padding:0;align-items:stretch;justify-content:stretch;">
+  <div class="modal-box" style="max-width:100%;border-radius:0;max-height:100vh;overflow-y:auto;display:flex;flex-direction:column;">
+    <div class="modal-header" style="border-radius:0;">
+      <h3 id="reviewWorkspaceTitle"><i class="fas fa-pen-fancy" style="color:var(--primary);"></i> Review Workspace</h3>
+      <div style="display:flex;gap:8px;">
+        <button class="btn-outline" style="font-size:0.78rem;padding:7px 14px;" id="saveDraftBtn" onclick="saveReviewDraft()"><i class="fas fa-save"></i> Save Draft</button>
+        <button class="btn-gold" style="font-size:0.78rem;padding:7px 14px;" id="pushReviewBtn" onclick="confirmPushReview()"><i class="fas fa-paper-plane"></i> Push to User</button>
+        <button class="modal-close" onclick="closeReviewWorkspace()"><i class="fas fa-times"></i></button>
+      </div>
+    </div>
+    <div class="modal-body" style="flex:1;overflow-y:auto;padding:20px 24px;" id="reviewWorkspaceBody"></div>
+  </div>
+</div>
+
+<!-- MESSAGES MODAL -->
+<div class="modal-overlay" id="messagesModal">
+  <div class="modal-box" style="max-width:560px;">
+    <div class="modal-header">
+      <h3><i class="fas fa-comments" style="color:var(--primary);"></i> Messages — <span id="msgModalTitle">User</span></h3>
+      <button class="modal-close" onclick="closeMsgModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="messages-area" id="adminMsgArea"></div>
+      <div class="msg-row">
+        <input type="text" class="msg-input" id="adminMsgInput" placeholder="Message to user…" onkeydown="if(event.key==='Enter')sendAdminMsg()"/>
+        <button class="msg-send" onclick="sendAdminMsg()"><i class="fas fa-paper-plane"></i></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PUSH CONFIRM MODAL -->
+<div class="modal-overlay" id="pushConfirmModal">
+  <div class="modal-box" style="max-width:420px;">
+    <div class="modal-header"><h3>📤 Push Review to User?</h3><button class="modal-close" onclick="document.getElementById('pushConfirmModal').classList.remove('active')"><i class="fas fa-times"></i></button></div>
+    <div class="modal-body">
+      <p style="font-size:0.9rem;color:var(--text-light);line-height:1.6;">This will send your review feedback (and any annotations or refined CV) to the user's dashboard. They will be able to see it immediately.</p>
+      <div style="display:flex;gap:10px;margin-top:20px;justify-content:flex-end;">
+        <button class="btn-outline" onclick="document.getElementById('pushConfirmModal').classList.remove('active')">Cancel</button>
+        <button class="btn-primary" onclick="executePushReview()"><i class="fas fa-paper-plane"></i> Push Now</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script type="module">
+import {
+  auth, db, isAdmin, onAuthStateChanged,
+  aiScanCV, pushReviewToUser, uploadRefinedCV, fileToBase64,
+  sendMessage, listenMessages,
+  collection, addDoc, getDocs, getDoc, updateDoc, deleteDoc,
+  query, where, doc, serverTimestamp, setDoc
+} from './firebase-review.js';
+
+import {
+  signInWithEmailAndPassword, signOut
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+// ===== STATE =====
+let currentAdmin = null;
+let allSubmissions = [];
+let currentFilter = 'all';
+let activeSubmission = null; // current submission being reviewed
+let annotationCanvas = null;
+let annotCtx = null;
+let drawingTool = 'pen'; // pen | circle | box | comment | eraser
+let drawColor = '#ce1126';
+let drawSize = 3;
+let isDrawing = false;
+let startX = 0, startY = 0;
+let snapshotBeforeDraw = null;
+let unsubMsgs = null;
+let cvPdfFrameLoaded = false;
+
+// ===== AUTH =====
+onAuthStateChanged(auth, async user => {
+  if (!user) {
+    document.getElementById('loadingScreen').style.display = 'none';
+    document.getElementById('accessDenied').style.display = 'flex';
+    return;
+  }
+  const admin = await isAdmin(user.uid);
+  if (!admin) {
+    document.getElementById('loadingScreen').style.display = 'none';
+    document.getElementById('accessDenied').style.display = 'flex';
+    return;
+  }
+  currentAdmin = user;
+  document.getElementById('adminAvatar').textContent = (user.displayName || user.email)[0].toUpperCase();
+  document.getElementById('adminName').textContent = user.displayName || user.email.split('@')[0];
+  document.getElementById('loadingScreen').style.display = 'none';
+  document.getElementById('adminApp').style.display = 'flex';
+  showPage('dashboard');
+  loadAllSubmissions();
+  loadAllSubscriptions();
+});
+
+window.showAdminLogin = () => {
+  // Always reset to step 1 when opening
+  document.getElementById('loginStep1').style.display = 'block';
+  document.getElementById('loginStep2').style.display = 'none';
+  document.getElementById('secretCodeInput').value = '';
+  document.getElementById('secretCodeError').style.display = 'none';
+  document.getElementById('adminLoginModal').classList.add('active');
+  setTimeout(() => document.getElementById('secretCodeInput').focus(), 100);
+};
+
+window.checkSecretCode = () => {
+  const code = document.getElementById('secretCodeInput').value;
+  const errEl = document.getElementById('secretCodeError');
+  if (code === 'cv2026!') {
+    errEl.style.display = 'none';
+    document.getElementById('loginStep1').style.display = 'none';
+    document.getElementById('loginStep2').style.display = 'block';
+    setTimeout(() => document.getElementById('adminEmail').focus(), 100);
+  } else {
+    errEl.style.display = 'block';
+    document.getElementById('secretCodeInput').value = '';
+    document.getElementById('secretCodeInput').focus();
+    // Shake animation
+    const input = document.getElementById('secretCodeInput');
+    input.style.borderColor = 'var(--red)';
+    input.style.animation = 'shake 0.4s ease';
+    setTimeout(() => { input.style.borderColor = ''; input.style.animation = ''; }, 600);
+  }
+};
+
+window.backToCodeStep = () => {
+  document.getElementById('loginStep2').style.display = 'none';
+  document.getElementById('loginStep1').style.display = 'block';
+  document.getElementById('secretCodeInput').value = '';
+  document.getElementById('secretCodeError').style.display = 'none';
+  setTimeout(() => document.getElementById('secretCodeInput').focus(), 100);
+};
+
+window.doAdminLogin = async () => {
+  const email = document.getElementById('adminEmail').value.trim();
+  const pass = document.getElementById('adminPass').value;
+  const errEl = document.getElementById('loginError');
+  const btn = document.getElementById('loginBtn');
+  if (!email || !pass) {
+    errEl.textContent = 'Please enter your email and password.';
+    errEl.style.display = 'block';
+    return;
+  }
+  btn.innerHTML = '<span class="spinner"></span> Signing in…';
+  btn.disabled = true;
+  errEl.style.display = 'none';
+  try {
+    await signInWithEmailAndPassword(auth, email, pass);
+    document.getElementById('adminLoginModal').classList.remove('active');
+  } catch (e) {
+    const msg = e.code === 'auth/wrong-password' ? 'Incorrect password.' :
+                e.code === 'auth/user-not-found' ? 'No account found with that email.' :
+                e.code === 'auth/too-many-requests' ? 'Too many attempts. Try again later.' :
+                'Sign-in failed. Check your credentials.';
+    errEl.textContent = '❌ ' + msg;
+    errEl.style.display = 'block';
+    btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Sign In';
+    btn.disabled = false;
+  }
+};
+
+window.signOutAdmin = async () => {
+  await signOut(auth);
+  location.reload();
+};
+
+// ===== PAGE ROUTING =====
+window.showPage = (page) => {
+  document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+  const navEl = document.getElementById('nav-' + page);
+  if (navEl) navEl.classList.add('active');
+  const titles = { dashboard:'Dashboard', submissions:'CV Submissions', review:'Review Workspace', subscriptions:'Subscriptions' };
+  document.getElementById('topbarTitle').textContent = titles[page] || page;
+  if (page === 'dashboard') renderDashboard();
+  else if (page === 'submissions') renderSubmissions();
+  else if (page === 'subscriptions') renderSubscriptionsPage();
+};
+
+// ===== LOAD ALL SUBMISSIONS =====
+async function loadAllSubmissions() {
+  try {
+    // Simple collection query — no orderBy to avoid composite index requirement
+    const q = query(collection(db, 'cv_submissions'));
+    const snap = await getDocs(q);
+    // Sort client-side by submittedAt descending
+    allSubmissions = snap.docs
+      .map(d => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => {
+        const tA = a.submittedAt?.toMillis ? a.submittedAt.toMillis() : 0;
+        const tB = b.submittedAt?.toMillis ? b.submittedAt.toMillis() : 0;
+        return tB - tA;
+      });
+    // Update pending badge
+    const pendingCount = allSubmissions.filter(s => s.status === 'pending').length;
+    const badge = document.getElementById('pendingBadge');
+    if (pendingCount > 0) { badge.textContent = pendingCount; badge.style.display = 'inline-block'; }
+    else badge.style.display = 'none';
+  } catch (e) { console.error('loadAllSubmissions:', e); }
+}
+
+// ===== DASHBOARD PAGE =====
+function renderDashboard() {
+  const total = allSubmissions.length;
+  const pending = allSubmissions.filter(s => s.status === 'pending').length;
+  const inReview = allSubmissions.filter(s => s.status === 'in_review').length;
+  const reviewed = allSubmissions.filter(s => s.status === 'reviewed' || s.status === 'completed').length;
+  const aiDone = allSubmissions.filter(s => s.aiScanStatus === 'done').length;
+
+  document.getElementById('pageContent').innerHTML = `
+    <div class="stats-grid">
+      <div class="stat-card blue"><div class="stat-label">Total Submissions</div><div class="stat-num">${total}</div><div class="stat-sub">All time</div></div>
+      <div class="stat-card orange"><div class="stat-label">Awaiting Review</div><div class="stat-num">${pending}</div><div class="stat-sub">Need attention</div></div>
+      <div class="stat-card green"><div class="stat-label">Reviewed</div><div class="stat-num">${reviewed}</div><div class="stat-sub">Feedback sent</div></div>
+      <div class="stat-card gold"><div class="stat-label">AI Scanned</div><div class="stat-num">${aiDone}</div><div class="stat-sub">Pre-analysed by AI</div></div>
+    </div>
+    <div class="table-card">
+      <div class="table-header">
+        <h2><i class="fas fa-clock" style="color:#FF9800;"></i> Pending Reviews</h2>
+        <button class="btn-primary" style="font-size:0.8rem;padding:9px 16px;" onclick="showPage('submissions')"><i class="fas fa-inbox"></i> View All</button>
+      </div>
+      ${renderSubmissionsTable(allSubmissions.filter(s => s.status === 'pending').slice(0, 8))}
+    </div>`;
+}
+
+// ===== SUBMISSIONS PAGE =====
+function renderSubmissions() {
+  const filters = ['all','pending','in_review','reviewed','completed'];
+  const counts = {};
+  filters.forEach(f => { counts[f] = f === 'all' ? allSubmissions.length : allSubmissions.filter(s => s.status === f).length; });
+  const filtered = currentFilter === 'all' ? allSubmissions : allSubmissions.filter(s => s.status === currentFilter);
+
+  document.getElementById('pageContent').innerHTML = `
+    <div class="table-card">
+      <div class="table-header">
+        <h2><i class="fas fa-inbox" style="color:var(--primary);"></i> CV Submissions</h2>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button class="btn-outline" style="font-size:0.78rem;padding:7px 14px;" onclick="refreshSubmissions()"><i class="fas fa-sync"></i> Refresh</button>
+        </div>
+      </div>
+      <div style="padding:12px 18px;border-bottom:1px solid var(--border);">
+        <div class="filter-bar">
+          ${filters.map(f => `<button class="filter-btn ${currentFilter===f?'active':''}" onclick="setFilter('${f}')">${f.replace('_',' ').replace(/\b\w/g,c=>c.toUpperCase())} (${counts[f]})</button>`).join('')}
+        </div>
+      </div>
+      ${renderSubmissionsTable(filtered)}
+    </div>`;
+}
+
+function renderSubmissionsTable(subs) {
+  if (!subs.length) return `<div class="empty-state"><div class="empty-icon">📂</div><p>No submissions here.</p></div>`;
+  const pillClass = { pending:'pill-pending', in_review:'pill-in_review', reviewed:'pill-reviewed', completed:'pill-completed' };
+  const pillLabel = { pending:'⏳ Pending', in_review:'🔍 In Review', reviewed:'✅ Reviewed', completed:'🏆 Done' };
+  const aiClass = { pending:'ai-pending', scanning:'ai-scanning', done:'ai-done', error:'ai-error' };
+  const aiLabel = { pending:'Not scanned', scanning:'Scanning…', done:'✓ AI Done', error:'⚠ Error' };
+
+  return `<div class="table-scroll"><table>
+    <thead><tr>
+      <th>User</th><th>File</th><th>Target</th><th>Submitted</th>
+      <th>Status</th><th>AI Scan</th><th>Actions</th>
+    </tr></thead>
+    <tbody>${subs.map(s => {
+      const date = s.submittedAt?.toDate ? s.submittedAt.toDate().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : '—';
+      return `<tr>
+        <td><div class="name-cell">${s.userName||'Unknown'}</div><div class="email-cell">${s.userEmail||''}</div></td>
+        <td><span style="color:var(--primary);font-size:0.8rem;"><i class="fas fa-file-alt" style="margin-right:4px;"></i>${(s.fileName||'file').substring(0,28)}</span></td>
+        <td style="font-size:0.78rem;color:var(--text-light);">${(s.targetOpportunity||'').replace(/_/g,' ')}</td>
+        <td style="font-size:0.78rem;white-space:nowrap;">${date}</td>
+        <td><span class="status-pill ${pillClass[s.status]||''}">${pillLabel[s.status]||s.status}</span></td>
+        <td><span class="ai-pill ${aiClass[s.aiScanStatus]||'ai-pending'}">${aiLabel[s.aiScanStatus]||'—'}</span></td>
+        <td><div class="action-btns">
+          <button class="action-btn primary" onclick="openReviewWorkspace('${s.id}')"><i class="fas fa-pen-fancy"></i> Review</button>
+          ${s.aiScanStatus!=='done'?`<button class="action-btn" onclick="triggerAIScan('${s.id}')"><i class="fas fa-robot"></i> AI Scan</button>`:'<button class="action-btn" onclick="showAIResults(\''+s.id+'\')"><i class="fas fa-chart-bar"></i> AI Results</button>'}
+          <button class="action-btn" onclick="openAdminMsgs('${s.id}','${(s.userName||'User').replace(/'/g,"\\'")}')"><i class="fas fa-comments"></i></button>
+        </div></td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table></div>`;
+}
+
+window.setFilter = (f) => { currentFilter = f; renderSubmissions(); };
+window.refreshSubmissions = async () => { await loadAllSubmissions(); renderSubmissions(); showToast('Refreshed.'); };
+
+// ===== AI SCAN TRIGGER =====
+window.triggerAIScan = async (submissionId) => {
+  const sub = allSubmissions.find(s => s.id === submissionId);
+  if (!sub) return;
+  showToast('AI scan started…');
+  try {
+    await aiScanCV(submissionId, sub.fileData || null, sub.fileMimeType || 'application/pdf', sub.fileName);
+    showToast('AI scan complete!');
+    await loadAllSubmissions();
+    renderSubmissions();
+  } catch (e) { showToast('AI scan error: ' + e.message, true); }
+};
+
+window.showAIResults = async (submissionId) => {
+  const sub = allSubmissions.find(s => s.id === submissionId);
+  if (!sub?.aiScanResult) { showToast('No AI results yet.', true); return; }
+  openReviewWorkspace(submissionId, true); // open workspace focussed on AI tab
+};
+
+// ===== REVIEW WORKSPACE =====
+window.openReviewWorkspace = async (submissionId, focusAI = false) => {
+  const sub = allSubmissions.find(s => s.id === submissionId) || await getDoc(doc(db, 'cv_submissions', submissionId)).then(d => ({id:d.id,...d.data()}));
+  if (!sub) return;
+  activeSubmission = sub;
+
+  // Load existing review if any
+  let existingReview = null;
+  try {
+    const rSnap = await getDoc(doc(db, 'cv_reviews', submissionId));
+    if (rSnap.exists()) existingReview = rSnap.data();
+  } catch {}
+
+  document.getElementById('reviewWorkspaceTitle').innerHTML = `<i class="fas fa-pen-fancy" style="color:var(--primary);"></i> Reviewing: ${sub.userName||'User'} — ${sub.fileName||'CV'}`;
+
+  const ai = sub.aiScanResult;
+  const scoreColor = ai ? (ai.overallScore >= 80 ? '#006b3f' : ai.overallScore >= 60 ? '#2196F3' : ai.overallScore >= 40 ? '#FF9800' : '#ce1126') : '#999';
+
+  document.getElementById('reviewWorkspaceBody').innerHTML = `
+    <div class="tabs">
+      <div class="tab ${!focusAI?'active':''}" onclick="switchReviewTab('overview')">Overview</div>
+      <div class="tab ${focusAI?'active':''}" onclick="switchReviewTab('ai')">🤖 AI Analysis</div>
+      <div class="tab" onclick="switchReviewTab('annotate')">✏️ Annotate CV</div>
+      <div class="tab" onclick="switchReviewTab('feedback')">📝 Feedback</div>
+      <div class="tab" onclick="switchReviewTab('refine')">📁 Upload Refined</div>
+      <div class="tab" onclick="switchReviewTab('messages')">💬 Messages</div>
+    </div>
+
+    <!-- OVERVIEW TAB -->
+    <div class="tab-panel ${!focusAI?'active':''}" id="rt-overview">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+        <div style="background:#f8fafc;border-radius:10px;padding:16px;">
+          <div class="section-divider" style="margin-top:0;">Submission Info</div>
+          <div style="font-size:0.85rem;display:flex;flex-direction:column;gap:7px;">
+            <div><b>Name:</b> ${sub.userName||'—'}</div>
+            <div><b>Email:</b> ${sub.userEmail||'—'}</div>
+            <div><b>Target:</b> ${(sub.targetOpportunity||'').replace(/_/g,' ')}</div>
+            <div><b>Status:</b> ${sub.status}</div>
+            <div><b>AI Scan:</b> ${sub.aiScanStatus}</div>
+          </div>
+        </div>
+        <div style="background:#f8fafc;border-radius:10px;padding:16px;">
+          <div class="section-divider" style="margin-top:0;">User Notes</div>
+          <p style="font-size:0.85rem;color:var(--text-light);line-height:1.6;">${sub.notes||'<em>No notes provided</em>'}</p>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn-primary" style="font-size:0.82rem;padding:9px 16px;" onclick="adminViewCV()"><i class="fas fa-eye"></i> View CV</button>
+        <button class="btn-outline" style="font-size:0.82rem;padding:9px 16px;" onclick="adminDownloadCV()"><i class="fas fa-download"></i> Download CV</button>
+        ${sub.aiScanStatus!=='done'?`<button class="btn-outline" style="font-size:0.82rem;padding:9px 16px;" onclick="triggerAIScanWorkspace()"><i class="fas fa-robot"></i> Run AI Scan</button>`:''}
+      </div>
+      ${sub.aiScanStatus==='done'&&ai?`
+      <div style="margin-top:20px;background:var(--primary-light);border-radius:10px;padding:16px 18px;display:flex;align-items:center;gap:14px;">
+        <div class="ai-score-circle" style="background:${scoreColor};width:56px;height:56px;">
+          <span style="font-size:1.3rem;font-weight:800;">${ai.overallScore}</span>
+          <span style="font-size:0.6rem;opacity:0.8;">/100</span>
+        </div>
+        <div><div style="font-weight:700;color:var(--primary);">AI Score: ${ai.overallGrade}</div>
+        <div style="font-size:0.82rem;color:var(--text-light);margin-top:3px;line-height:1.5;max-width:440px;">${ai.executiveSummary||''}</div></div>
+        <button class="btn-outline" style="font-size:0.78rem;padding:7px 12px;margin-left:auto;" onclick="switchReviewTab('ai')">Full Report →</button>
+      </div>` : (sub.aiScanStatus==='scanning'?'<div style="margin-top:16px;color:#1565C0;font-size:0.85rem;"><i class="fas fa-spinner fa-spin" style="margin-right:6px;"></i>AI scan in progress…</div>':'')}
+    </div>
+
+    <!-- AI ANALYSIS TAB -->
+    <div class="tab-panel ${focusAI?'active':''}" id="rt-ai">
+      ${ai ? renderAIPanel(ai) : `<div class="empty-state"><div class="empty-icon">🤖</div>
+        <h3>No AI Analysis Yet</h3><p>Run the AI scan to get an instant analysis of this CV.</p>
+        <button class="btn-primary" style="margin-top:16px;" onclick="triggerAIScanWorkspace()"><i class="fas fa-robot"></i> Run AI Scan Now</button>
+      </div>`}
+    </div>
+
+    <!-- ANNOTATE TAB -->
+    <div class="tab-panel" id="rt-annotate">
+      <div style="background:#FFF3E0;border-left:4px solid #FF9800;border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:0.83rem;color:#7A3800;">
+        <i class="fas fa-info-circle" style="margin-right:6px;"></i>
+        <b>How to annotate:</b> The CV will load below as an image. Use the toolbar to draw circles, boxes, or freehand marks on it. Add text comment boxes anywhere. When done, click "Save Annotation" to capture it.
+      </div>
+      <div style="margin-bottom:12px;font-size:0.83rem;color:var(--text-light);">
+        <i class="fas fa-info-circle" style="margin-right:4px;"></i>
+        Load the CV using the button below, then draw your annotations on the canvas.
+      </div>
+      <div style="margin-bottom:10px;display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn-outline" style="font-size:0.78rem;padding:7px 12px;" onclick="adminLoadCVToCanvas()"><i class="fas fa-file-import"></i> Load CV onto Canvas</button>
+      </div>
+      <div id="annotationContainer">${buildAnnotationUI()}</div>
+      <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn-primary" style="font-size:0.82rem;padding:9px 16px;" onclick="saveAnnotation()"><i class="fas fa-save"></i> Save Annotation</button>
+        <button class="btn-outline" style="font-size:0.82rem;padding:9px 16px;" onclick="clearAnnotation()"><i class="fas fa-trash"></i> Clear Drawing</button>
+        <label class="btn-outline" style="font-size:0.82rem;padding:9px 16px;cursor:pointer;"><i class="fas fa-upload"></i> Upload Annotated Image <input type="file" accept="image/*" style="display:none;" onchange="handleAnnotationUpload(event)"/></label>
+      </div>
+      ${existingReview?.annotatedImageData ? `<div style="margin-top:14px;"><div style="font-size:0.82rem;font-weight:600;margin-bottom:8px;color:var(--primary);">Current saved annotation:</div><img src="data:image/png;base64,${existingReview.annotatedImageData}" style="max-width:100%;border-radius:8px;border:1px solid var(--border);"/></div>` : ''}
+    </div>
+
+    <!-- FEEDBACK TAB -->
+    <div class="tab-panel" id="rt-feedback">
+      ${ai ? `<div style="background:#f8fafc;border-radius:10px;padding:14px 16px;margin-bottom:16px;">
+        <div style="font-size:0.8rem;font-weight:700;color:var(--primary);margin-bottom:8px;"><i class="fas fa-robot" style="margin-right:6px;"></i>AI Suggestions (click to append to feedback)</div>
+        ${(ai.topRecommendations||[]).map((r,i)=>`<div style="font-size:0.8rem;padding:6px 10px;background:#fff;border-radius:7px;border:1px solid var(--border);cursor:pointer;margin-bottom:5px;transition:all 0.15s;" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'" onclick="appendToFeedback('${r.replace(/'/g,"\\'")}')">
+          <i class="fas fa-plus-circle" style="color:var(--primary);margin-right:5px;font-size:0.75rem;"></i>${r}</div>`).join('')}
+        <button class="btn-outline" style="font-size:0.78rem;padding:7px 12px;margin-top:8px;" onclick="appendAllAIToFeedback()"><i class="fas fa-copy"></i> Append Full AI Summary</button>
+      </div>` : ''}
+      <div class="form-group">
+        <label>Your Expert Feedback to the User <span style="font-weight:400;color:var(--text-light);">(this will appear in their dashboard)</span></label>
+        <textarea class="form-textarea" id="adminFeedback" rows="14" style="font-size:0.88rem;line-height:1.6;" placeholder="Write your detailed feedback here. Be specific, constructive, and actionable. For example:
+
+OVERALL IMPRESSION:
+This is a well-structured CV with clear sections. However, there are several areas that need improvement before it's ready to send.
+
+FORMATTING ISSUES:
+• The date format is inconsistent — some entries use 'June 2024' while others use 'Jun 2024'. Please standardise to 'Jun 2024' throughout.
+• The skills section lists tools irrelevant to the banking role you're targeting.
+
+LANGUAGE & CONTENT:
+• Several bullets start with 'Responsible for...' — replace all instances with strong action verbs (Led, Managed, Developed, etc.)
+• The JPMorgan bullet point lacks quantification. Add the deal size or number of transactions.
+
+RECOMMENDATIONS:
+1. Remove the residential address from the contact section.
+2. Add your LinkedIn URL.
+3. Condense the education section — relevant courses need not be listed twice.
+
+Overall, this CV has strong potential. With the above changes applied, it will be much more competitive.">${existingReview?.feedback||''}</textarea>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn-primary" style="font-size:0.82rem;" onclick="saveReviewDraft()"><i class="fas fa-save"></i> Save Draft</button>
+        <button class="btn-gold" style="font-size:0.82rem;" onclick="confirmPushReview()"><i class="fas fa-paper-plane"></i> Save & Push to User</button>
+      </div>
+    </div>
+
+    <!-- REFINED CV UPLOAD TAB -->
+    <div class="tab-panel" id="rt-refine">
+      <div style="background:var(--primary-light);border-left:4px solid var(--primary);border-radius:10px;padding:14px 16px;margin-bottom:20px;font-size:0.85rem;color:#004d2d;">
+        <i class="fas fa-lightbulb" style="margin-right:6px;"></i>
+        Download the user's CV, refine it manually in Word or any editor, then upload the refined version here. It will be made available to the user in their dashboard.
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;">
+        <button class="btn-outline" style="font-size:0.82rem;padding:9px 16px;" onclick="adminDownloadCV()"><i class="fas fa-download"></i> Download Original CV</button>
+      </div>
+      <div class="form-group">
+        <label>Upload Refined CV</label>
+        <div id="refineDropZone" style="border:2.5px dashed var(--border);border-radius:10px;padding:32px;text-align:center;cursor:pointer;background:#fafbff;transition:all 0.2s;" onclick="document.getElementById('refinedCVInput').click()" ondragover="event.preventDefault();this.style.borderColor='var(--primary)'" ondragleave="this.style.borderColor=''" ondrop="handleRefinedDrop(event)">
+          <i class="fas fa-cloud-upload-alt" style="font-size:2.5rem;color:var(--primary);margin-bottom:10px;display:block;"></i>
+          <p style="font-weight:700;font-size:0.9rem;">Drop refined CV here or click to browse</p>
+          <p style="font-size:0.8rem;color:var(--text-light);margin-top:4px;">PDF or Word, max 10MB</p>
+          <input type="file" id="refinedCVInput" accept=".pdf,.doc,.docx" style="display:none;" onchange="handleRefinedSelect(event)"/>
+        </div>
+        <div id="refinedFilePreview" style="display:none;margin-top:10px;background:#e8f5ee;border-radius:8px;padding:12px 14px;display:none;align-items:center;gap:10px;">
+          <i class="fas fa-file-alt" style="color:var(--primary);font-size:1.4rem;"></i>
+          <div style="flex:1;"><div id="refinedFileName" style="font-weight:600;font-size:0.88rem;"></div><div id="refinedFileSize" style="font-size:0.75rem;color:var(--text-light);"></div></div>
+          <button onclick="clearRefinedFile()" style="background:none;border:none;cursor:pointer;color:var(--red);"><i class="fas fa-times"></i></button>
+        </div>
+        <div id="refineProgress" style="display:none;margin-top:10px;">
+          <div style="display:flex;justify-content:space-between;font-size:0.78rem;font-weight:600;color:var(--primary);margin-bottom:4px;"><span>Uploading…</span><span id="refinePct">0%</span></div>
+          <div style="background:#e8f5ee;border-radius:100px;height:8px;overflow:hidden;"><div id="refineFill" style="height:100%;background:var(--primary);width:0%;transition:width 0.3s;border-radius:100px;"></div></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn-primary" style="font-size:0.82rem;" id="uploadRefinedBtn" onclick="doUploadRefinedCV()"><i class="fas fa-upload"></i> Upload & Attach to Review</button>
+      </div>
+      ${existingReview?.refinedCVData ? `<div style="margin-top:20px;background:#FFF8E1;border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:12px;"><i class="fas fa-check-circle" style="color:var(--gold-dark);font-size:1.3rem;"></i><div style="flex:1;"><div style="font-weight:600;font-size:0.85rem;color:#7A5000;">Refined CV already attached</div><div style="font-size:0.78rem;color:#9A6000;margin-top:2px;">A refined CV has been saved for this review.</div></div></div>` : ''}
+    </div>
+
+    <!-- MESSAGES TAB -->
+    <div class="tab-panel" id="rt-messages">
+      <div id="workspaceMsgArea" class="messages-area" style="max-height:340px;"></div>
+      <div class="msg-row">
+        <input type="text" class="msg-input" id="workspaceMsgInput" placeholder="Ask the user a question or send a message…" onkeydown="if(event.key==='Enter')sendWorkspaceMsg()"/>
+        <button class="msg-send" onclick="sendWorkspaceMsg()"><i class="fas fa-paper-plane"></i></button>
+      </div>
+    </div>`;
+
+  document.getElementById('reviewWorkspaceModal').classList.add('active');
+  // Init annotation canvas
+  setTimeout(() => initAnnotationCanvas(), 300);
+  // Load messages
+  loadWorkspaceMsgs();
+  // Update status to in_review
+  if (activeSubmission.status === 'pending') {
+    updateDoc(doc(db, 'cv_submissions', submissionId), { status: 'in_review' }).catch(()=>{});
+    activeSubmission.status = 'in_review';
+  }
+};
+
+window.switchReviewTab = (tab) => {
+  document.querySelectorAll('#reviewWorkspaceBody .tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('#reviewWorkspaceBody .tab-panel').forEach(p => p.classList.remove('active'));
+  const tabEl = document.querySelector(`#reviewWorkspaceBody .tab[onclick="switchReviewTab('${tab}')"]`);
+  const panelEl = document.getElementById('rt-'+tab);
+  if (tabEl) tabEl.classList.add('active');
+  if (panelEl) panelEl.classList.add('active');
+  if (tab === 'annotate') setTimeout(initAnnotationCanvas, 100);
+  if (tab === 'messages') loadWorkspaceMsgs();
+};
+
+window.closeReviewWorkspace = () => {
+  document.getElementById('reviewWorkspaceModal').classList.remove('active');
+  if (unsubMsgs) { unsubMsgs(); unsubMsgs = null; }
+  activeSubmission = null;
+};
+
+// ===== ADMIN CV VIEW / DOWNLOAD (from base64 stored in Firestore) =====
+window.adminViewCV = () => {
+  if (!activeSubmission?.fileData) { showToast('CV file not available.', true); return; }
+  const mime = activeSubmission.fileMimeType || 'application/pdf';
+  const dataUrl = `data:${mime};base64,${activeSubmission.fileData}`;
+  const win = window.open();
+  win.document.write(`<iframe src="${dataUrl}" width="100%" height="100%" style="border:none;margin:0;position:fixed;inset:0;"></iframe>`);
+  win.document.close();
+};
+
+window.adminDownloadCV = () => {
+  if (!activeSubmission?.fileData) { showToast('CV file not available.', true); return; }
+  const mime = activeSubmission.fileMimeType || 'application/pdf';
+  const dataUrl = `data:${mime};base64,${activeSubmission.fileData}`;
+  const a = document.createElement('a');
+  a.href = dataUrl;
+  a.download = activeSubmission.fileName || 'CV';
+  a.click();
+};
+
+window.adminLoadCVToCanvas = () => {
+  if (!activeSubmission?.fileData) { showToast('No CV file to load. The file may have been too large.', true); return; }
+  const mime = activeSubmission.fileMimeType || '';
+  // Only images can be drawn on canvas directly
+  if (mime.startsWith('image/')) {
+    const img = new Image();
+    img.onload = () => {
+      if (!annotationCanvas) return;
+      const W = annotationCanvas.width, H = annotationCanvas.height;
+      annotCtx.drawImage(img, 0, 0, W, H);
+      saveUndoState();
+      showToast('CV loaded onto canvas — start annotating!');
+    };
+    img.src = `data:${mime};base64,${activeSubmission.fileData}`;
+  } else {
+    showToast('PDF/Word files cannot be drawn directly. Take a screenshot of the CV, then upload it using the "Upload Annotated Image" button.', true);
+    // Open the CV so admin can screenshot it
+    adminViewCV();
+  }
+};
+
+// ===== AI PANEL RENDER =====
+function renderAIPanel(ai) {
+  if (!ai) return '';
+  const scoreColor = ai.overallScore >= 80 ? '#006b3f' : ai.overallScore >= 60 ? '#2196F3' : ai.overallScore >= 40 ? '#FF9800' : '#ce1126';
+  const metrics = [
+    { label:'Formatting', score: ai.formattingAnalysis?.score },
+    { label:'Content Quality', score: ai.contentAnalysis?.score },
+    { label:'Language & Verbs', score: ai.languageAnalysis?.score },
+    { label:'Structure', score: ai.structuralAnalysis?.score },
+    { label:'ATS Compatibility', score: ai.atsCompatibility?.score }
+  ];
+
+  let html = `<div class="ai-panel">
+    <div class="ai-score-row">
+      <div class="ai-score-circle" style="background:${scoreColor};width:72px;height:72px;">
+        <span style="font-size:1.7rem;font-weight:800;">${ai.overallScore}</span>
+        <span style="font-size:0.62rem;opacity:0.8;">/100</span>
+      </div>
+      <div>
+        <div style="font-size:1rem;font-weight:800;color:${scoreColor};">${ai.overallGrade}</div>
+        <div style="font-size:0.83rem;color:var(--text-light);margin-top:4px;max-width:480px;line-height:1.55;">${ai.executiveSummary||''}</div>
+        <div style="margin-top:8px;">
+          <span style="font-size:0.75rem;padding:4px 12px;border-radius:100px;font-weight:700;background:${ai.readyToSend?'var(--primary-light)':'var(--red-light)'};color:${ai.readyToSend?'var(--primary)':'var(--red)'};">
+            ${ai.readyToSend ? '✓ Ready to Send' : '✗ Not Ready to Send'}
+          </span>
+          <span style="font-size:0.78rem;color:var(--text-light);margin-left:8px;">${ai.readyToSendNote||''}</span>
+        </div>
+      </div>
+    </div>`;
+
+  // Score bars
+  html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">`;
+  metrics.forEach(m => {
+    if (m.score == null) return;
+    const c = m.score>=80?'#006b3f':m.score>=60?'#2196F3':m.score>=40?'#FF9800':'#ce1126';
+    html += `<div class="ai-metric"><span style="font-weight:600;color:var(--text);min-width:120px;">${m.label}</span>
+      <div class="ai-metric-bar"><div class="ai-metric-fill" style="width:${m.score}%;background:${c};"></div></div>
+      <span style="font-weight:700;color:${c};min-width:34px;text-align:right;">${m.score}%</span></div>`;
+  });
+  html += `</div>`;
+
+  // Strengths
+  if (ai.strengths?.length) {
+    html += `<div style="margin-bottom:14px;"><div class="section-divider">✅ Strengths</div>
+      <ul style="padding-left:18px;display:flex;flex-direction:column;gap:5px;">
+      ${ai.strengths.map(s=>`<li style="font-size:0.82rem;color:var(--text);">${s}</li>`).join('')}</ul></div>`;
+  }
+
+  // Critical Issues
+  if (ai.criticalIssues?.length) {
+    html += `<div style="margin-bottom:14px;"><div class="section-divider">⚠️ Issues Found</div>`;
+    ai.criticalIssues.forEach(issue => {
+      const sev = (issue.severity||'low').toLowerCase();
+      html += `<div class="issue-item sev-${sev}">
+        <span class="sev-badge ${sev}">${issue.severity}</span>
+        <div><div style="font-weight:600;color:var(--text);margin-bottom:3px;">${issue.category}: ${issue.issue}</div>
+        <div style="color:var(--text-light);">💡 Fix: ${issue.fix}</div></div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  // Typos / weak phrases
+  const typos = ai.languageAnalysis?.typosOrGrammarErrors || [];
+  const weak = ai.languageAnalysis?.weakPhrases || [];
+  if (typos.length || weak.length) {
+    html += `<div style="margin-bottom:14px;"><div class="section-divider">🔤 Language Issues</div>
+      ${typos.length ? `<div style="font-size:0.82rem;margin-bottom:6px;"><b>Typos/Grammar:</b> ${typos.join(' · ')}</div>` : ''}
+      ${weak.length ? `<div style="font-size:0.82rem;"><b>Weak Phrases:</b> ${weak.map(w=>`<span style="background:var(--red-light);color:var(--red);padding:2px 8px;border-radius:5px;margin:2px;display:inline-block;">"${w}"</span>`).join('')}</div>` : ''}
+    </div>`;
+  }
+
+  // Top Recommendations
+  if (ai.topRecommendations?.length) {
+    html += `<div><div class="section-divider">🏆 Top Recommendations</div>
+      <ol style="padding-left:20px;display:flex;flex-direction:column;gap:6px;">
+      ${ai.topRecommendations.map(r=>`<li style="font-size:0.83rem;color:var(--text);line-height:1.5;">${r}</li>`).join('')}</ol>
+      <button class="btn-outline" style="font-size:0.78rem;padding:7px 14px;margin-top:12px;" onclick="switchReviewTab('feedback');appendAllAIToFeedback()">
+        <i class="fas fa-copy"></i> Use AI Summary in Feedback
+      </button></div>`;
+  }
+
+  html += `</div>`;
+  return html;
+}
+
+// ===== FEEDBACK HELPERS =====
+window.appendToFeedback = (text) => {
+  const ta = document.getElementById('adminFeedback');
+  if (!ta) return;
+  ta.value = (ta.value.trim() ? ta.value.trim() + '\n\n' : '') + '• ' + text;
+  ta.focus();
+  showToast('Added to feedback.');
+};
+
+window.appendAllAIToFeedback = () => {
+  const ai = activeSubmission?.aiScanResult;
+  if (!ai) return;
+  const ta = document.getElementById('adminFeedback');
+  if (!ta) return;
+  let text = `AI ANALYSIS SUMMARY (Score: ${ai.overallScore}/100 — ${ai.overallGrade})\n\n`;
+  text += `EXECUTIVE SUMMARY:\n${ai.executiveSummary||''}\n\n`;
+  if (ai.topRecommendations?.length) { text += `TOP RECOMMENDATIONS:\n`; ai.topRecommendations.forEach((r,i)=>{ text+=`${i+1}. ${r}\n`; }); text+='\n'; }
+  if (ai.criticalIssues?.length) { text += `ISSUES IDENTIFIED:\n`; ai.criticalIssues.forEach(issue=>{ text+=`[${issue.severity}] ${issue.category}: ${issue.issue}\n   → Fix: ${issue.fix}\n`; }); text+='\n'; }
+  const weak = ai.languageAnalysis?.weakPhrases||[]; const typos = ai.languageAnalysis?.typosOrGrammarErrors||[];
+  if (weak.length) text += `WEAK PHRASES TO REMOVE:\n${weak.map(w=>`• "${w}"`).join('\n')}\n\n`;
+  if (typos.length) text += `ERRORS FOUND:\n${typos.map(t=>`• ${t}`).join('\n')}\n\n`;
+  ta.value = (ta.value.trim()?ta.value.trim()+'\n\n':'')+text;
+  ta.focus();
+  showToast('AI summary appended to feedback.');
+  switchReviewTab('feedback');
+};
+
+// ===== TRIGGER AI SCAN FROM WORKSPACE =====
+window.triggerAIScanWorkspace = async () => {
+  if (!activeSubmission) return;
+  showToast('Running AI scan…');
+  try {
+    const result = await aiScanCV(
+      activeSubmission.id,
+      activeSubmission.fileData || null,
+      activeSubmission.fileMimeType || 'application/pdf',
+      activeSubmission.fileName
+    );
+    activeSubmission.aiScanResult = result;
+    activeSubmission.aiScanStatus = 'done';
+    // Re-render AI tab
+    document.getElementById('rt-ai').innerHTML = renderAIPanel(result);
+    document.getElementById('rt-overview').innerHTML = document.getElementById('rt-overview').innerHTML; // refresh
+    showToast('AI scan complete!');
+    await loadAllSubmissions();
+  } catch (e) { showToast('AI scan failed: ' + e.message, true); }
+};
+
+// ===== ANNOTATION CANVAS ENGINE =====
+let selectedAnnotationFile = null; // base64 image uploaded by admin
+
+function buildAnnotationUI() {
+  return `
+    <div class="anno-toolbar" id="annoToolbar">
+      <button class="anno-tool-btn active" id="tool-pen" onclick="setTool('pen')" title="Freehand pen"><i class="fas fa-pen"></i></button>
+      <button class="anno-tool-btn" id="tool-circle" onclick="setTool('circle')" title="Draw circle/ellipse"><i class="fas fa-circle" style="font-size:0.7rem;"></i></button>
+      <button class="anno-tool-btn" id="tool-box" onclick="setTool('box')" title="Draw box"><i class="fas fa-square" style="font-size:0.7rem;"></i></button>
+      <button class="anno-tool-btn" id="tool-arrow" onclick="setTool('arrow')" title="Draw arrow"><i class="fas fa-long-arrow-alt-right"></i></button>
+      <button class="anno-tool-btn" id="tool-text" onclick="setTool('text')" title="Add text comment"><i class="fas fa-comment-alt"></i></button>
+      <button class="anno-tool-btn" id="tool-eraser" onclick="setTool('eraser')" title="Eraser"><i class="fas fa-eraser"></i></button>
+      <div class="anno-divider"></div>
+      <div style="display:flex;gap:5px;align-items:center;">
+        <div class="color-swatch active" style="background:#ce1126;" onclick="setColor('#ce1126',this)" data-color="#ce1126"></div>
+        <div class="color-swatch" style="background:#2196F3;" onclick="setColor('#2196F3',this)" data-color="#2196F3"></div>
+        <div class="color-swatch" style="background:#FF9800;" onclick="setColor('#FF9800',this)" data-color="#FF9800"></div>
+        <div class="color-swatch" style="background:#006b3f;" onclick="setColor('#006b3f',this)" data-color="#006b3f"></div>
+        <div class="color-swatch" style="background:#fcd116;border-color:rgba(0,0,0,0.3);" onclick="setColor('#fcd116',this)" data-color="#fcd116"></div>
+        <div class="color-swatch" style="background:#000000;" onclick="setColor('#000000',this)" data-color="#000000"></div>
+      </div>
+      <div class="anno-divider"></div>
+      <label style="font-size:0.75rem;color:var(--text-light);">Size:</label>
+      <input type="range" min="1" max="20" value="3" class="anno-size" id="brushSize" oninput="drawSize=parseInt(this.value)" style="width:80px;"/>
+      <div class="anno-divider"></div>
+      <button class="anno-tool-btn danger" onclick="clearAnnotation()" title="Clear all annotations"><i class="fas fa-trash"></i></button>
+      <button class="anno-tool-btn" onclick="undoAnnotation()" title="Undo last stroke" id="undoBtn"><i class="fas fa-undo"></i></button>
+    </div>
+    <div class="annotation-wrap" id="annotationWrap">
+      <canvas id="annotationCanvas"></canvas>
+    </div>
+    <div id="textCommentBox" style="display:none;position:absolute;z-index:200;">
+      <input type="text" id="textCommentInput" placeholder="Type comment…" style="border:2px solid var(--primary);border-radius:6px;padding:6px 10px;font-family:'Inter',sans-serif;font-size:0.85rem;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,0.15);" onkeydown="if(event.key==='Enter')commitTextComment()"/>
+    </div>`;
+}
+
+let undoStack = [];
+const MAX_UNDO = 20;
+
+function initAnnotationCanvas() {
+  const canvas = document.getElementById('annotationCanvas');
+  const wrap = document.getElementById('annotationWrap');
+  if (!canvas || !wrap) return;
+  annotationCanvas = canvas;
+  annotCtx = canvas.getContext('2d');
+
+  const W = Math.min(wrap.clientWidth || 700, 900);
+  const H = Math.round(W * 1.414); // A4 ratio
+  canvas.width = W; canvas.height = H;
+  canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+
+  // White background with guide text
+  annotCtx.fillStyle = '#f8fafc';
+  annotCtx.fillRect(0, 0, W, H);
+  annotCtx.strokeStyle = '#e5e7ef';
+  annotCtx.strokeRect(2, 2, W-4, H-4);
+  annotCtx.fillStyle = '#aaa';
+  annotCtx.font = '14px Inter, sans-serif';
+  annotCtx.textAlign = 'center';
+  annotCtx.fillText('Click "Load CV onto Canvas" to load the CV,', W/2, H/2 - 20);
+  annotCtx.fillText('or upload a screenshot to annotate directly.', W/2, H/2 + 8);
+  annotCtx.textAlign = 'left';
+  saveUndoState();
+
+  // Events
+  canvas.addEventListener('mousedown', onMouseDown);
+  canvas.addEventListener('mousemove', onMouseMove);
+  canvas.addEventListener('mouseup', onMouseUp);
+  canvas.addEventListener('mouseleave', onMouseUp);
+  canvas.addEventListener('touchstart', e => { e.preventDefault(); onMouseDown(touchToMouse(e)); }, { passive: false });
+  canvas.addEventListener('touchmove', e => { e.preventDefault(); onMouseMove(touchToMouse(e)); }, { passive: false });
+  canvas.addEventListener('touchend', e => { e.preventDefault(); onMouseUp(); }, { passive: false });
+}
+
+function touchToMouse(e) {
+  const t = e.touches[0] || e.changedTouches[0];
+  return { clientX: t.clientX, clientY: t.clientY, preventDefault: () => {} };
+}
+
+function getCanvasPos(e) {
+  const rect = annotationCanvas.getBoundingClientRect();
+  const scaleX = annotationCanvas.width / rect.width;
+  const scaleY = annotationCanvas.height / rect.height;
+  return { x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY };
+}
+
+function onMouseDown(e) {
+  const pos = getCanvasPos(e);
+  if (drawingTool === 'text') {
+    showTextBox(pos.x, pos.y);
+    return;
+  }
+  isDrawing = true;
+  startX = pos.x; startY = pos.y;
+  snapshotBeforeDraw = annotCtx.getImageData(0, 0, annotationCanvas.width, annotationCanvas.height);
+  if (drawingTool === 'pen' || drawingTool === 'eraser') {
+    annotCtx.beginPath();
+    annotCtx.moveTo(startX, startY);
+  }
+}
+
+function onMouseMove(e) {
+  if (!isDrawing) return;
+  const pos = getCanvasPos(e);
+  if (drawingTool === 'pen') {
+    annotCtx.lineWidth = drawSize;
+    annotCtx.lineCap = 'round';
+    annotCtx.lineJoin = 'round';
+    annotCtx.strokeStyle = drawColor;
+    annotCtx.lineTo(pos.x, pos.y);
+    annotCtx.stroke();
+  } else if (drawingTool === 'eraser') {
+    annotCtx.lineWidth = drawSize * 4;
+    annotCtx.lineCap = 'round';
+    annotCtx.strokeStyle = '#fff';
+    annotCtx.lineTo(pos.x, pos.y);
+    annotCtx.stroke();
+  } else {
+    // Restore snapshot, then draw shape preview
+    annotCtx.putImageData(snapshotBeforeDraw, 0, 0);
+    drawShape(startX, startY, pos.x, pos.y);
+  }
+}
+
+function onMouseUp(e) {
+  if (!isDrawing) return;
+  isDrawing = false;
+  if (e && (drawingTool === 'circle' || drawingTool === 'box' || drawingTool === 'arrow')) {
+    const pos = getCanvasPos(e);
+    annotCtx.putImageData(snapshotBeforeDraw, 0, 0);
+    drawShape(startX, startY, pos.x, pos.y);
+  }
+  saveUndoState();
+}
+
+function drawShape(x1, y1, x2, y2) {
+  annotCtx.strokeStyle = drawColor;
+  annotCtx.lineWidth = drawSize;
+  annotCtx.lineCap = 'round';
+  if (drawingTool === 'circle') {
+    const rx = Math.abs(x2-x1)/2, ry = Math.abs(y2-y1)/2;
+    const cx = (x1+x2)/2, cy = (y1+y2)/2;
+    annotCtx.beginPath();
+    annotCtx.ellipse(cx, cy, rx||1, ry||1, 0, 0, Math.PI*2);
+    annotCtx.stroke();
+  } else if (drawingTool === 'box') {
+    annotCtx.beginPath();
+    annotCtx.strokeRect(x1, y1, x2-x1, y2-y1);
+  } else if (drawingTool === 'arrow') {
+    drawArrow(x1, y1, x2, y2);
+  }
+}
+
+function drawArrow(fx, fy, tx, ty) {
+  const angle = Math.atan2(ty-fy, tx-fx);
+  const head = 14 + drawSize * 2;
+  annotCtx.beginPath();
+  annotCtx.moveTo(fx, fy);
+  annotCtx.lineTo(tx, ty);
+  annotCtx.stroke();
+  annotCtx.beginPath();
+  annotCtx.moveTo(tx, ty);
+  annotCtx.lineTo(tx - head*Math.cos(angle-Math.PI/7), ty - head*Math.sin(angle-Math.PI/7));
+  annotCtx.lineTo(tx - head*Math.cos(angle+Math.PI/7), ty - head*Math.sin(angle+Math.PI/7));
+  annotCtx.closePath();
+  annotCtx.fillStyle = drawColor;
+  annotCtx.fill();
+}
+
+function showTextBox(cx, cy) {
+  const box = document.getElementById('textCommentBox');
+  const input = document.getElementById('textCommentInput');
+  const wrap = document.getElementById('annotationWrap');
+  const wrapRect = wrap.getBoundingClientRect();
+  const canvasRect = annotationCanvas.getBoundingClientRect();
+  const scaleX = annotationCanvas.width / canvasRect.width;
+  const scaleY = annotationCanvas.height / canvasRect.height;
+  const screenX = canvasRect.left - wrapRect.left + cx / scaleX;
+  const screenY = canvasRect.top - wrapRect.top + cy / scaleY;
+  box.style.display = 'block';
+  box.style.left = screenX + 'px';
+  box.style.top = screenY + 'px';
+  box.dataset.cx = cx;
+  box.dataset.cy = cy;
+  input.value = '';
+  input.focus();
+}
+
+window.commitTextComment = () => {
+  const box = document.getElementById('textCommentBox');
+  const input = document.getElementById('textCommentInput');
+  const text = input.value.trim();
+  const cx = parseFloat(box.dataset.cx);
+  const cy = parseFloat(box.dataset.cy);
+  if (text && annotCtx) {
+    annotCtx.font = `${Math.max(12, drawSize*3)}px Inter, sans-serif`;
+    annotCtx.fillStyle = drawColor;
+    annotCtx.fillText(text, cx, cy);
+    // Draw pointer dot
+    annotCtx.beginPath();
+    annotCtx.arc(cx-4, cy-4, 4, 0, Math.PI*2);
+    annotCtx.fillStyle = drawColor;
+    annotCtx.fill();
+    saveUndoState();
+  }
+  box.style.display = 'none';
+};
+
+function saveUndoState() {
+  if (!annotCtx || !annotationCanvas) return;
+  undoStack.push(annotCtx.getImageData(0, 0, annotationCanvas.width, annotationCanvas.height));
+  if (undoStack.length > MAX_UNDO) undoStack.shift();
+}
+
+window.undoAnnotation = () => {
+  if (undoStack.length <= 1) { showToast('Nothing to undo.'); return; }
+  undoStack.pop();
+  annotCtx.putImageData(undoStack[undoStack.length-1], 0, 0);
+};
+
+window.clearAnnotation = () => {
+  if (!annotCtx || !annotationCanvas) return;
+  annotCtx.fillStyle = '#f8fafc';
+  annotCtx.fillRect(0, 0, annotationCanvas.width, annotationCanvas.height);
+  undoStack = [];
+  saveUndoState();
+};
+
+window.setTool = (tool) => {
+  drawingTool = tool;
+  document.querySelectorAll('.anno-tool-btn[id^="tool-"]').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById('tool-'+tool);
+  if (btn) btn.classList.add('active');
+  if (annotationCanvas) annotationCanvas.style.cursor = tool === 'eraser' ? 'cell' : tool === 'text' ? 'text' : 'crosshair';
+};
+
+window.setColor = (color, el) => {
+  drawColor = color;
+  document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
+  el.classList.add('active');
+};
+
+window.saveAnnotation = async () => {
+  if (!annotationCanvas || !activeSubmission) return;
+  showToast('Saving annotation…');
+  try {
+    // Get base64 PNG directly from canvas — no Storage needed
+    const dataUrl = annotationCanvas.toDataURL('image/png');
+    const base64 = dataUrl.split(',')[1];
+    await setDoc(doc(db, 'cv_reviews', activeSubmission.id), {
+      submissionId: activeSubmission.id,
+      uid: activeSubmission.uid,
+      adminId: currentAdmin.uid,
+      annotatedImageData: base64,
+      isDraft: true,
+      pushedAt: serverTimestamp(),
+      seenByUser: false
+    }, { merge: true });
+    showToast('Annotation saved!');
+  } catch (e) { showToast('Save failed: ' + e.message, true); }
+};
+
+window.handleAnnotationUpload = (e) => {
+  const file = e.target.files[0];
+  if (!file || !file.type.startsWith('image/')) { showToast('Please upload an image file.', true); return; }
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const img = new Image();
+    img.onload = () => {
+      if (!annotationCanvas) return;
+      const W = annotationCanvas.width, H = annotationCanvas.height;
+      annotCtx.drawImage(img, 0, 0, W, H);
+      saveUndoState();
+      showToast('Image loaded — annotate on top of it!');
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+};
+
+// ===== REFINED CV UPLOAD =====
+let selectedRefinedFile = null;
+
+window.handleRefinedDrop = (e) => {
+  e.preventDefault();
+  document.getElementById('refineDropZone').style.borderColor = '';
+  const f = e.dataTransfer.files[0];
+  if (f) setRefinedFile(f);
+};
+
+window.handleRefinedSelect = (e) => {
+  const f = e.target.files[0];
+  if (f) setRefinedFile(f);
+};
+
+function setRefinedFile(file) {
+  const allowed = ['application/pdf','application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+  if (!allowed.includes(file.type) && !file.name.match(/\.(pdf|doc|docx)$/i)) {
+    showToast('PDF or Word only.', true); return;
+  }
+  if (file.size > 10 * 1024 * 1024) { showToast('File too large. Max 10MB.', true); return; }
+  selectedRefinedFile = file;
+  const prev = document.getElementById('refinedFilePreview');
+  if (prev) {
+    document.getElementById('refinedFileName').textContent = file.name;
+    document.getElementById('refinedFileSize').textContent = (file.size/1024).toFixed(1)+' KB';
+    prev.style.display = 'flex';
+  }
+}
+
+window.clearRefinedFile = () => {
+  selectedRefinedFile = null;
+  const prev = document.getElementById('refinedFilePreview');
+  if (prev) prev.style.display = 'none';
+  const inp = document.getElementById('refinedCVInput');
+  if (inp) inp.value = '';
+};
+
+window.doUploadRefinedCV = async () => {
+  if (!selectedRefinedFile || !activeSubmission) { showToast('Select a file first.', true); return; }
+  const btn = document.getElementById('uploadRefinedBtn');
+  btn.innerHTML = '<span class="spinner"></span> Processing…';
+  btn.disabled = true;
+  document.getElementById('refineProgress').style.display = 'block';
+  try {
+    // Convert to base64 and store in Firestore — no Storage needed
+    await uploadRefinedCV(selectedRefinedFile, activeSubmission.id, pct => {
+      document.getElementById('refinePct').textContent = pct + '%';
+      document.getElementById('refineFill').style.width = pct + '%';
+    });
+    btn.innerHTML = '<i class="fas fa-check"></i> Attached!';
+    document.getElementById('refineProgress').style.display = 'none';
+    showToast('Refined CV attached to review.');
+    clearRefinedFile();
+    setTimeout(() => { btn.innerHTML = '<i class="fas fa-upload"></i> Upload & Attach to Review'; btn.disabled = false; }, 2000);
+  } catch (e) {
+    btn.innerHTML = '<i class="fas fa-upload"></i> Upload & Attach to Review';
+    btn.disabled = false;
+    document.getElementById('refineProgress').style.display = 'none';
+    showToast('Failed: ' + e.message, true);
+  }
+};
+
+// ===== SAVE DRAFT =====
+window.saveReviewDraft = async () => {
+  if (!activeSubmission) return;
+  const feedback = document.getElementById('adminFeedback')?.value.trim() || '';
+  try {
+    await setDoc(doc(db, 'cv_reviews', activeSubmission.id), {
+      submissionId: activeSubmission.id,
+      uid: activeSubmission.uid,
+      adminId: currentAdmin.uid,
+      feedback,
+      isDraft: true,
+      pushedAt: serverTimestamp(),
+      seenByUser: false
+    }, { merge: true });
+    showToast('Draft saved.');
+  } catch (e) { showToast('Save failed: ' + e.message, true); }
+};
+
+// ===== PUSH REVIEW =====
+window.confirmPushReview = () => {
+  document.getElementById('pushConfirmModal').classList.add('active');
+};
+
+window.executePushReview = async () => {
+  document.getElementById('pushConfirmModal').classList.remove('active');
+  if (!activeSubmission) return;
+  const feedback = document.getElementById('adminFeedback')?.value.trim() || '';
+  if (!feedback) { showToast('Please write feedback before pushing.', true); return; }
+  try {
+    // Fetch any annotation/refined CV already saved as base64 in Firestore
+    let annotatedImageData = null, refinedCVData = null, refinedCVName = null, refinedCVMime = null;
+    try {
+      const snap = await getDoc(doc(db, 'cv_reviews', activeSubmission.id));
+      if (snap.exists()) {
+        const r = snap.data();
+        annotatedImageData = r.annotatedImageData || null;
+        refinedCVData = r.refinedCVData || null;
+        refinedCVName = r.refinedCVName || null;
+        refinedCVMime = r.refinedCVMime || null;
+      }
+    } catch {}
+
+    await pushReviewToUser(activeSubmission.id, currentAdmin.uid, {
+      uid: activeSubmission.uid,
+      feedback,
+      annotatedImageData,
+      refinedCVData,
+      refinedCVName,
+      isDraft: false
+    });
+    showToast('Review pushed! The user can now see it in their dashboard.');
+    activeSubmission.status = 'reviewed';
+    await loadAllSubmissions();
+    closeReviewWorkspace();
+    renderSubmissions();
+  } catch (e) { showToast('Push failed: ' + e.message, true); }
+};
+
+// ===== MESSAGES — WORKSPACE =====
+function loadWorkspaceMsgs() {
+  if (!activeSubmission) return;
+  if (unsubMsgs) unsubMsgs();
+  unsubMsgs = listenMessages(activeSubmission.id, msgs => renderWorkspaceMsgs(msgs));
+}
+
+function renderWorkspaceMsgs(msgs) {
+  const area = document.getElementById('workspaceMsgArea');
+  if (!area) return;
+  if (!msgs.length) { area.innerHTML = '<p style="text-align:center;color:var(--text-light);font-size:0.83rem;padding:20px;">No messages yet. Send the user a question below.</p>'; return; }
+  area.innerHTML = msgs.map(m => {
+    const isAdmin = m.senderRole === 'admin';
+    const time = m.sentAt?.toDate ? m.sentAt.toDate().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) : '';
+    return `<div style="display:flex;justify-content:${isAdmin?'flex-end':'flex-start'};">
+      <div class="msg-bubble ${isAdmin?'msg-admin':'msg-user'}">
+        <div>${m.text}</div>
+        <div class="msg-meta">${isAdmin?'You (Admin)':m.senderName||'User'} · ${time}</div>
+      </div></div>`;
+  }).join('');
+  area.scrollTop = area.scrollHeight;
+}
+
+window.sendWorkspaceMsg = async () => {
+  const input = document.getElementById('workspaceMsgInput');
+  const text = input.value.trim();
+  if (!text || !activeSubmission || !currentAdmin) return;
+  input.value = '';
+  try {
+    await sendMessage(activeSubmission.id, currentAdmin.uid, currentAdmin.displayName||currentAdmin.email, 'admin', text);
+  } catch (e) { showToast('Failed: ' + e.message, true); }
+};
+
+// ===== STANDALONE MESSAGES MODAL =====
+window.openAdminMsgs = async (submissionId, userName) => {
+  document.getElementById('msgModalTitle').textContent = userName || 'User';
+  document.getElementById('messagesModal').classList.add('active');
+  const tempSub = allSubmissions.find(s => s.id === submissionId);
+  if (unsubMsgs) unsubMsgs();
+  unsubMsgs = listenMessages(submissionId, msgs => {
+    const area = document.getElementById('adminMsgArea');
+    if (!area) return;
+    if (!msgs.length) { area.innerHTML = '<p style="text-align:center;color:var(--text-light);font-size:0.83rem;padding:20px;">No messages yet.</p>'; return; }
+    area.innerHTML = msgs.map(m => {
+      const isAdm = m.senderRole === 'admin';
+      const time = m.sentAt?.toDate ? m.sentAt.toDate().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) : '';
+      return `<div style="display:flex;justify-content:${isAdm?'flex-end':'flex-start'};">
+        <div class="msg-bubble ${isAdm?'msg-admin':'msg-user'}"><div>${m.text}</div><div class="msg-meta">${isAdm?'You':m.senderName||'User'} · ${time}</div></div></div>`;
+    }).join('');
+    area.scrollTop = area.scrollHeight;
+  });
+  document.getElementById('adminMsgInput').dataset.submissionId = submissionId;
+};
+
+window.closeMsgModal = () => {
+  document.getElementById('messagesModal').classList.remove('active');
+  if (!activeSubmission && unsubMsgs) { unsubMsgs(); unsubMsgs = null; }
+};
+
+window.sendAdminMsg = async () => {
+  const input = document.getElementById('adminMsgInput');
+  const text = input.value.trim();
+  const subId = input.dataset.submissionId;
+  if (!text || !subId || !currentAdmin) return;
+  input.value = '';
+  try {
+    await sendMessage(subId, currentAdmin.uid, currentAdmin.displayName||currentAdmin.email, 'admin', text);
+  } catch (e) { showToast('Failed: ' + e.message, true); }
+};
+
+// ===== TOAST =====
+let toastT;
+window.showToast = (msg, isError=false) => {
+  let t = document.querySelector('.toast');
+  if (!t) { t = document.createElement('div'); t.className='toast'; document.body.appendChild(t); }
+  t.textContent = msg;
+  t.className = `toast${isError?' error':''}`;
+  requestAnimationFrame(() => t.classList.add('show'));
+  clearTimeout(toastT);
+  toastT = setTimeout(() => t.classList.remove('show'), 3500);
+};
+
+// ===== SUBSCRIPTIONS =====
+let allSubscriptions = [];
+
+async function loadAllSubscriptions() {
+  try {
+    const snap = await getDocs(collection(db, 'subscriptions'));
+    allSubscriptions = snap.docs
+      .map(d => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => {
+        // pending first, then by requestedAt desc
+        const statusOrder = { pending: 0, active: 1, expired: 2 };
+        const sa = statusOrder[a.status] ?? 3;
+        const sb = statusOrder[b.status] ?? 3;
+        if (sa !== sb) return sa - sb;
+        const tA = a.requestedAt?.toMillis?.() || 0;
+        const tB = b.requestedAt?.toMillis?.() || 0;
+        return tB - tA;
+      });
+    // Update sidebar badge
+    const pendingCount = allSubscriptions.filter(s => s.status === 'pending').length;
+    const badge = document.getElementById('subPendingBadge');
+    if (badge) {
+      if (pendingCount > 0) { badge.textContent = pendingCount; badge.style.display = 'inline-block'; }
+      else badge.style.display = 'none';
+    }
+  } catch (e) { console.error('loadAllSubscriptions:', e); }
+}
+
+function fmtDate(ts) {
+  if (!ts?.toDate) return '—';
+  return ts.toDate().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+function renderSubscriptionsPage() {
+  const pending  = allSubscriptions.filter(s => s.status === 'pending');
+  const active   = allSubscriptions.filter(s => s.status === 'active');
+  const expired  = allSubscriptions.filter(s => s.status === 'expired');
+  const flagged  = allSubscriptions.filter(s => s.flagged);
+  const total    = allSubscriptions.length;
+
+  document.getElementById('pageContent').innerHTML = `
+    <!-- Stats row -->
+    <div class="stats-grid" style="margin-bottom:24px;">
+      <div class="stat-card orange"><div class="stat-label">Pending Verification</div><div class="stat-num">${pending.length}</div><div class="stat-sub">Awaiting payment check</div></div>
+      <div class="stat-card green"><div class="stat-label">Active Subscribers</div><div class="stat-num">${active.length}</div><div class="stat-sub">Premium access live</div></div>
+      <div class="stat-card blue"><div class="stat-label">Total Requests</div><div class="stat-num">${total}</div><div class="stat-sub">All time</div></div>
+      <div class="stat-card" style="background:#fff3cd;border-left:4px solid #ffc107;"><div class="stat-label" style="color:#856404;">Flagged Accounts</div><div class="stat-num" style="color:#856404;">${flagged.length}</div><div class="stat-sub" style="color:#856404;">Possible account sharing</div></div>
+    </div>
+
+    <!-- Pending requests -->
+    <div class="table-card" style="margin-bottom:24px;">
+      <div class="table-header">
+        <h2 style="color:#e65c00;"><i class="fas fa-clock"></i> Pending Verification (${pending.length})</h2>
+        <button class="btn-outline" style="font-size:0.78rem;padding:7px 14px;" onclick="refreshSubscriptions()"><i class="fas fa-sync"></i> Refresh</button>
+      </div>
+      ${pending.length === 0
+        ? `<div class="empty-state"><div class="empty-icon">&#127881;</div><p>No pending requests — you're all caught up!</p></div>`
+        : `<div class="table-scroll"><table>
+          <thead><tr><th>Name</th><th>Email</th><th>Payer Name</th><th>MoMo Number</th><th>Requested</th><th>Actions</th></tr></thead>
+          <tbody>${pending.map(s => `
+            <tr>
+              <td><div class="name-cell">${s.displayName || s.payerName || '—'}</div></td>
+              <td><div class="email-cell">${s.email || '—'}</div></td>
+              <td><strong>${s.payerName || '—'}</strong></td>
+              <td><span style="font-family:monospace;font-size:0.9rem;color:#006b3f;font-weight:700;">${s.payerPhone || '—'}</span></td>
+              <td style="white-space:nowrap;font-size:0.78rem;color:#5a5a7a;">${fmtDate(s.requestedAt)}</td>
+              <td>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                  <button onclick="approveSubscription('${s.id}')" style="background:#006b3f;color:#fff;border:none;border-radius:7px;padding:7px 14px;font-size:0.78rem;font-weight:700;cursor:pointer;white-space:nowrap;"><i class="fas fa-check"></i> Approve</button>
+                  <button onclick="rejectSubscription('${s.id}')" style="background:#ce1126;color:#fff;border:none;border-radius:7px;padding:7px 12px;font-size:0.78rem;font-weight:700;cursor:pointer;"><i class="fas fa-times"></i> Reject</button>
+                </div>
+              </td>
+            </tr>`).join('')}
+          </tbody>
+        </table></div>`
+      }
+    </div>
+
+    <!-- Active subscribers -->
+    <div class="table-card" style="margin-bottom:24px;">
+      <div class="table-header">
+        <h2 style="color:#006b3f;"><i class="fas fa-crown"></i> Active Subscribers (${active.length})</h2>
+      </div>
+      ${active.length === 0
+        ? `<div class="empty-state"><p>No active subscribers yet.</p></div>`
+        : `<div class="table-scroll"><table>
+          <thead><tr><th>Name / Email</th><th>Payer MoMo</th><th>Approved</th><th>Expires</th><th>Exports Today</th><th>Actions</th></tr></thead>
+          <tbody>${active.map(s => {
+            const expDate = s.expiresAt?.toDate ? s.expiresAt.toDate() : null;
+            const daysLeft = expDate ? Math.ceil((expDate - new Date()) / 86400000) : '—';
+            const expiryStr = expDate ? expDate.toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' }) : '—';
+            const expiryColor = typeof daysLeft === 'number' && daysLeft <= 14 ? '#ce1126' : '#006b3f';
+            return `<tr>
+              <td><div class="name-cell">${s.displayName || '—'}</div><div class="email-cell">${s.email || '—'}</div></td>
+              <td><span style="font-family:monospace;font-size:0.85rem;">${s.payerPhone || '—'}</span></td>
+              <td style="font-size:0.78rem;color:#5a5a7a;white-space:nowrap;">${fmtDate(s.approvedAt)}</td>
+              <td style="font-size:0.82rem;color:${expiryColor};font-weight:700;white-space:nowrap;">${expiryStr}${typeof daysLeft==='number' ? ` <span style="font-weight:400;color:#aaa;">(${daysLeft}d)</span>` : ''}</td>
+              <td style="text-align:center;">
+                <span style="font-weight:700;font-size:0.92rem;color:${(s.exportCount||0) >= 6 ? '#e65c00' : '#1a1a2e'};">${s.exportCount || 0}</span>
+                ${s.flagged ? `<span style="background:#fff3cd;color:#856404;font-size:0.7rem;font-weight:700;padding:2px 6px;border-radius:4px;margin-left:4px;">&#9888; FLAGGED</span>` : ''}
+              </td>
+              <td>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                  <button onclick="revokeSubscription('${s.id}')" style="background:#ce1126;color:#fff;border:none;border-radius:7px;padding:7px 12px;font-size:0.75rem;font-weight:700;cursor:pointer;"><i class="fas fa-ban"></i> Revoke</button>
+                  ${s.flagged ? `<button onclick="clearFlag('${s.id}')" style="background:#856404;color:#fff;border:none;border-radius:7px;padding:7px 10px;font-size:0.75rem;font-weight:700;cursor:pointer;"><i class="fas fa-flag"></i> Clear Flag</button>` : ''}
+                </div>
+              </td>
+            </tr>`;
+          }).join('')}
+          </tbody>
+        </table></div>`
+      }
+    </div>
+
+    <!-- Flagged accounts alert -->
+    ${flagged.length > 0 ? `
+    <div class="table-card" style="border-left:4px solid #ffc107;">
+      <div class="table-header">
+        <h2 style="color:#856404;"><i class="fas fa-exclamation-triangle"></i> Flagged Accounts — Possible Sharing (${flagged.length})</h2>
+      </div>
+      <p style="padding:0 18px 8px;font-size:0.83rem;color:#5a5a7a;">These accounts exported more than 8 CVs in a single day. Review and decide whether to revoke access.</p>
+      <div class="table-scroll"><table>
+        <thead><tr><th>User</th><th>Reason</th><th>Flagged At</th><th>Actions</th></tr></thead>
+        <tbody>${flagged.map(s => `
+          <tr style="background:#fffbf0;">
+            <td><div class="name-cell">${s.displayName || '—'}</div><div class="email-cell">${s.email || '—'}</div></td>
+            <td style="font-size:0.8rem;color:#856404;">${s.flagReason || 'Exceeded daily export cap'}</td>
+            <td style="font-size:0.78rem;color:#5a5a7a;white-space:nowrap;">${fmtDate(s.flaggedAt)}</td>
+            <td>
+              <div style="display:flex;gap:6px;">
+                <button onclick="clearFlag('${s.id}')" style="background:#856404;color:#fff;border:none;border-radius:7px;padding:7px 12px;font-size:0.75rem;font-weight:700;cursor:pointer;"><i class="fas fa-flag"></i> Clear Flag</button>
+                <button onclick="revokeSubscription('${s.id}')" style="background:#ce1126;color:#fff;border:none;border-radius:7px;padding:7px 12px;font-size:0.75rem;font-weight:700;cursor:pointer;"><i class="fas fa-ban"></i> Revoke</button>
+              </div>
+            </td>
+          </tr>`).join('')}
+        </tbody>
+      </table></div>
+    </div>` : ''}
+
+    <!-- Expired subscriptions -->
+    ${expired.length > 0 ? `
+    <div class="table-card" style="margin-top:24px;opacity:0.85;">
+      <div class="table-header">
+        <h2 style="color:#aaa;"><i class="fas fa-history"></i> Expired (${expired.length})</h2>
+      </div>
+      <div class="table-scroll"><table>
+        <thead><tr><th>User</th><th>Email</th><th>Expired</th><th>Actions</th></tr></thead>
+        <tbody>${expired.map(s => `
+          <tr>
+            <td><div class="name-cell">${s.displayName || '—'}</div></td>
+            <td><div class="email-cell">${s.email || '—'}</div></td>
+            <td style="font-size:0.78rem;color:#aaa;">${fmtDate(s.expiresAt)}</td>
+            <td><button onclick="reactivateSubscription('${s.id}')" style="background:#006b3f;color:#fff;border:none;border-radius:7px;padding:7px 12px;font-size:0.75rem;font-weight:700;cursor:pointer;"><i class="fas fa-redo"></i> Reactivate</button></td>
+          </tr>`).join('')}
+        </tbody>
+      </table></div>
+    </div>` : ''}
+  `;
+}
+
+window.refreshSubscriptions = async () => {
+  document.getElementById('pageContent').innerHTML = `<div style="text-align:center;padding:60px;color:#5a5a7a;"><div class="spinner" style="margin:0 auto 12px;width:32px;height:32px;border-width:3px;border-top-color:var(--primary);"></div><p>Loading subscriptions…</p></div>`;
+  await loadAllSubscriptions();
+  renderSubscriptionsPage();
+};
+
+// Approve: set status=active, expiresAt = now + 6 months, mark approvedAt, approvedBy
+window.approveSubscription = async (uid) => {
+  if (!confirm('Approve this subscription? This grants 6 months of Premium access.')) return;
+  try {
+    const now = new Date();
+    const expiresAt = new Date(now);
+    expiresAt.setMonth(expiresAt.getMonth() + 6);
+    await updateDoc(doc(db, 'subscriptions', uid), {
+      status: 'active',
+      approvedAt: serverTimestamp(),
+      approvedBy: currentAdmin.email,
+      expiresAt: expiresAt, // Firestore accepts Date objects
+    });
+    showAdminToast('Subscription approved! User now has 6 months of Premium access.');
+    await loadAllSubscriptions();
+    renderSubscriptionsPage();
+  } catch (e) { showAdminToast('Error: ' + e.message, true); }
+};
+
+// Reject/delete: remove the subscription request entirely
+window.rejectSubscription = async (uid) => {
+  if (!confirm('Reject this request? The document will be deleted.')) return;
+  try {
+    await deleteDoc(doc(db, 'subscriptions', uid));
+    showAdminToast('Subscription request rejected and removed.');
+    await loadAllSubscriptions();
+    renderSubscriptionsPage();
+  } catch (e) { showAdminToast('Error: ' + e.message, true); }
+};
+
+// Revoke active subscription
+window.revokeSubscription = async (uid) => {
+  if (!confirm('Revoke this user\'s Premium access? They will lose access immediately.')) return;
+  try {
+    await updateDoc(doc(db, 'subscriptions', uid), { status: 'expired', revokedAt: serverTimestamp(), revokedBy: currentAdmin.email });
+    showAdminToast('Subscription revoked.');
+    await loadAllSubscriptions();
+    renderSubscriptionsPage();
+  } catch (e) { showAdminToast('Error: ' + e.message, true); }
+};
+
+// Reactivate expired subscription for another 6 months
+window.reactivateSubscription = async (uid) => {
+  if (!confirm('Reactivate this subscription for another 6 months?')) return;
+  try {
+    const expiresAt = new Date();
+    expiresAt.setMonth(expiresAt.getMonth() + 6);
+    await updateDoc(doc(db, 'subscriptions', uid), {
+      status: 'active',
+      expiresAt,
+      approvedAt: serverTimestamp(),
+      approvedBy: currentAdmin.email,
+      exportCount: 0,
+      exportCountDate: '',
+      flagged: false
+    });
+    showAdminToast('Subscription reactivated for 6 months.');
+    await loadAllSubscriptions();
+    renderSubscriptionsPage();
+  } catch (e) { showAdminToast('Error: ' + e.message, true); }
+};
+
+// Clear the sharing flag without revoking
+window.clearFlag = async (uid) => {
+  try {
+    await updateDoc(doc(db, 'subscriptions', uid), { flagged: false, exportCount: 0, exportCountDate: '' });
+    showAdminToast('Flag cleared. Export counter reset.');
+    await loadAllSubscriptions();
+    renderSubscriptionsPage();
+  } catch (e) { showAdminToast('Error: ' + e.message, true); }
+};
+
+// Lightweight toast wrapper for admin (admin already has showToast but let's be safe)
+let _adminToastT;
+function showAdminToast(msg, isError) {
+  let t = document.querySelector('.toast');
+  if (!t) { t = document.createElement('div'); t.className = 'toast'; document.body.appendChild(t); }
+  t.textContent = msg;
+  t.className = `toast${isError ? ' error' : ''}`;
+  requestAnimationFrame(() => t.classList.add('show'));
+  clearTimeout(_adminToastT);
+  _adminToastT = setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// Also update renderDashboard to show subscription pending count in stats
+const _origRenderDashboard = window.renderDashboard || (() => {});
+// (renderDashboard is defined locally — we patch the subscriptions stat card into the existing stats grid via DOM after render)
+// We handle this by adding subscriptions count to the dashboard stats refresh after load.
+
+</script>
+</body>
+</html>
