@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Submit CV for Expert Review â€” CV Genius Ghana</title>
+  <title>Submit CV for Expert Review – CV Genius Ghana</title>
   <link rel="stylesheet" href="style.css"/>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
@@ -221,7 +221,7 @@
 <!-- NAV -->
 <nav class="top-nav">
   <a href="index.html" class="nav-logo">
-    <span class="logo-icon">â­</span>
+    <span class="logo-icon">⭐</span>
     <span>CV <span class="accent">Genius</span> Ghana</span>
   </a>
   <a href="index.html" class="nav-back"><i class="fas fa-arrow-left"></i> Back to Home</a>
@@ -229,11 +229,11 @@
 
 <!-- HERO -->
 <div class="page-hero">
-  <div class="page-hero-badge"><span>ðŸ‘¨â€ðŸ’¼</span> Expert Human Review</div>
+  <div class="page-hero-badge"><span>👨‍💼</span> Expert Human Review</div>
   <h1>Get Your CV Reviewed by an Expert</h1>
-  <p>Upload your CV and receive detailed, professional feedback from our review team within 24â€“48 hours.</p>
+  <p>Upload your CV and receive detailed, professional feedback from our review team within 24–48 hours.</p>
   <div class="hero-features">
-    <div class="hero-feat"><i class="fas fa-clock"></i> 24â€“48 Hour Turnaround</div>
+    <div class="hero-feat"><i class="fas fa-clock"></i> 24–48 Hour Turnaround</div>
     <div class="hero-feat"><i class="fas fa-robot"></i> AI Pre-Analysis Included</div>
     <div class="hero-feat"><i class="fas fa-comments"></i> Direct Messaging with Reviewer</div>
     <div class="hero-feat"><i class="fas fa-file-upload"></i> Refined CV Upload Option</div>
@@ -251,7 +251,7 @@
 
   <!-- SIGN-IN PROMPT - hidden by default, shown only when auth confirms no user -->
   <div class="signin-prompt" id="signinPrompt" style="display:none;">
-    <div class="prompt-icon">ðŸ”</div>
+    <div class="prompt-icon">🔐</div>
     <h3>Sign in to Submit Your CV</h3>
     <p>You need a free account to submit your CV and track your review status.</p>
     <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:8px;">
@@ -260,7 +260,7 @@
     </div>
   </div>
 
-  <!-- LOGGED IN CONTENT â€” hidden by default, shown once auth resolves -->
+  <!-- LOGGED IN CONTENT – hidden by default, shown once auth resolves -->
   <div id="loggedInContent" style="display:none;">
 
     <!-- SIGNED-IN WELCOME BAR -->
@@ -294,7 +294,7 @@
           </div>
           <div class="timeline-step">
             <div class="timeline-left"><div class="timeline-dot dot-active"><i class="fas fa-user-edit"></i></div><div class="timeline-line"></div></div>
-            <div class="timeline-content"><div class="timeline-label">Expert Reviews Your CV (24â€“48 hrs)</div><div class="timeline-desc">Our reviewer opens your CV, adds annotations, writes detailed feedback, and may ask you follow-up questions.</div></div>
+            <div class="timeline-content"><div class="timeline-label">Expert Reviews Your CV (24–48 hrs)</div><div class="timeline-desc">Our reviewer opens your CV, adds annotations, writes detailed feedback, and may ask you follow-up questions.</div></div>
           </div>
           <div class="timeline-step">
             <div class="timeline-left"><div class="timeline-dot dot-pending"><i class="fas fa-paper-plane"></i></div></div>
@@ -314,7 +314,7 @@
 
         <div class="info-box">
           <i class="fas fa-lightbulb" style="flex-shrink:0;margin-top:1px;"></i>
-          <div>Submit your CV along with any relevant context. Our expert reviewer will assess it thoroughly and deliver personalised feedback within 24â€“48 hours.</div>
+          <div>Submit your CV along with any relevant context. Our expert reviewer will assess it thoroughly and deliver personalised feedback within 24–48 hours.</div>
         </div>
 
         <div class="form-group">
@@ -325,7 +325,7 @@
         <div class="form-group">
           <label>Target Opportunity <span class="required">*</span></label>
           <select id="submitTarget" class="form-select">
-            <option value="">â€” Select your target â€”</option>
+            <option value="">– Select your target –</option>
             <option value="corporate_job">Corporate / Industry Job</option>
             <option value="national_service">National Service (Ghana)</option>
             <option value="graduate_programme">Graduate Programme</option>
@@ -344,20 +344,20 @@
           <div class="upload-zone" id="uploadZone" onclick="document.getElementById('cvFileInput').click()" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragleave="handleDragLeave(event)">
             <div class="upload-icon"><i class="fas fa-cloud-upload-alt"></i></div>
             <p class="upload-main">Drag & drop your CV here</p>
-            <p class="upload-sub">PDF, DOCX, or DOC â€” Max 10MB</p>
+            <p class="upload-sub">PDF, DOCX, or DOC – Max 10MB</p>
             <button type="button" class="btn-outline" style="pointer-events:none;"><i class="fas fa-folder-open"></i> Browse Files</button>
             <input type="file" id="cvFileInput" accept=".pdf,.doc,.docx" style="display:none;" onchange="handleFileSelect(event)"/>
           </div>
           <div class="upload-preview" id="uploadPreview">
             <i class="fas fa-file-pdf file-icon-lg"></i>
             <div class="file-details">
-              <div class="file-name" id="uploadFileName">â€”</div>
-              <div class="file-size" id="uploadFileSize">â€”</div>
+              <div class="file-name" id="uploadFileName">–</div>
+              <div class="file-size" id="uploadFileSize">–</div>
             </div>
             <button class="remove-file-btn" onclick="removeFile()" title="Remove file"><i class="fas fa-times"></i></button>
           </div>
           <div class="upload-progress" id="uploadProgress">
-            <div class="progress-label"><span>Uploadingâ€¦</span><span id="progressPct">0%</span></div>
+            <div class="progress-label"><span>Uploading…</span><span id="progressPct">0%</span></div>
             <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progressFill" style="width:0%"></div></div>
           </div>
         </div>
@@ -383,7 +383,7 @@
       </h2>
       <div id="submissionsList">
         <div class="empty-state">
-          <div class="empty-icon">ðŸ“‚</div>
+          <div class="empty-icon">📂</div>
           <h3>No submissions yet</h3>
           <p>Submit your CV above to get started with your expert review.</p>
         </div>
@@ -401,7 +401,7 @@
       <button class="modal-close" onclick="closeReviewModal()"><i class="fas fa-times"></i></button>
     </div>
     <div class="modal-body" id="reviewModalBody">
-      <p style="text-align:center;color:var(--text-light);padding:40px;">Loading reviewâ€¦</p>
+      <p style="text-align:center;color:var(--text-light);padding:40px;">Loading review…</p>
     </div>
   </div>
 </div>
@@ -415,10 +415,10 @@
     </div>
     <div class="modal-body">
       <div class="messages-area" id="messagesArea">
-        <p style="text-align:center;color:var(--text-light);font-size:0.85rem;">Loading messagesâ€¦</p>
+        <p style="text-align:center;color:var(--text-light);font-size:0.85rem;">Loading messages…</p>
       </div>
       <div class="msg-input-row" id="msgInputRow">
-        <input type="text" class="msg-input" id="msgInput" placeholder="Type your messageâ€¦" onkeydown="if(event.key==='Enter')sendMsg()"/>
+        <input type="text" class="msg-input" id="msgInput" placeholder="Type your message…" onkeydown="if(event.key==='Enter')sendMsg()"/>
         <button class="msg-send-btn" onclick="sendMsg()" title="Send"><i class="fas fa-paper-plane"></i></button>
       </div>
     </div>
@@ -429,7 +429,7 @@
 <div class="modal-overlay" id="authModal">
   <div class="modal-box" style="max-width:440px;">
     <div class="modal-header">
-      <h3>â­ Sign In</h3>
+      <h3>⭐ Sign In</h3>
       <button class="modal-close" onclick="closeAuthModal()"><i class="fas fa-times"></i></button>
     </div>
     <div class="modal-body">
@@ -449,7 +449,7 @@
   </div>
 </div>
 
-<!-- Firebase + Auth â€” loaded as regular scripts, NOT modules -->
+<!-- Firebase + Auth – loaded as regular scripts, NOT modules -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -568,7 +568,7 @@ function switchToSignUp() {
   auth.createUserWithEmailAndPassword(email, pass)
     .then(() => { closeAuthModal(); showToast('Account created! Welcome.'); })
     .catch(e => {
-      const msg = e.code === 'auth/email-already-in-use' ? 'Email already registered â€” sign in instead.' :
+      const msg = e.code === 'auth/email-already-in-use' ? 'Email already registered – sign in instead.' :
                   e.code === 'auth/weak-password' ? 'Password must be at least 6 characters.' :
                   e.message.replace('Firebase: ','');
       showToast(msg, true);
@@ -627,7 +627,7 @@ async function submitCV() {
   if (!selectedFile) { showToast('Please upload your CV file.', true); return; }
 
   const btn = document.getElementById('submitBtn');
-  btn.innerHTML = '<span class="spinner"></span> Savingâ€¦';
+  btn.innerHTML = '<span class="spinner"></span> Saving…';
   btn.disabled = true;
   document.getElementById('uploadProgress').classList.add('show');
 
@@ -671,8 +671,8 @@ async function submitCV() {
     btn.innerHTML = '<i class="fas fa-check-circle"></i> Submitted!';
     document.getElementById('uploadProgress').classList.remove('show');
     showToast(fileTooLarge
-      ? 'CV submitted! File was large â€” reviewer will be notified.'
-      : 'CV submitted! Our team will review it within 24â€“48 hours.');
+      ? 'CV submitted! File was large – reviewer will be notified.'
+      : 'CV submitted! Our team will review it within 24–48 hours.');
 
     setTimeout(() => {
       btn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit for Review';
@@ -696,17 +696,17 @@ async function submitCV() {
 async function loadSubmissions() {
   if (!currentUser) return;
   const list = document.getElementById('submissionsList');
-  list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-light);"><div class="spinner" style="border-top-color:var(--primary);margin:0 auto 10px;"></div><p>Loadingâ€¦</p></div>';
+  list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-light);"><div class="spinner" style="border-top-color:var(--primary);margin:0 auto 10px;"></div><p>Loading…</p></div>';
   try {
     const snap = await db.collection('cv_submissions').where('uid','==',currentUser.uid).get();
     if (snap.empty) {
-      list.innerHTML = '<div class="empty-state"><div class="empty-icon">ðŸ“‚</div><h3>No submissions yet</h3><p>Submit your CV above to get expert feedback within 24â€“48 hours.</p></div>';
+      list.innerHTML = '<div class="empty-state"><div class="empty-icon">📂</div><h3>No submissions yet</h3><p>Submit your CV above to get expert feedback within 24–48 hours.</p></div>';
       return;
     }
     const docs = snap.docs.map(d => ({id:d.id,...d.data()}))
       .sort((a,b) => (b.submittedAt?.toMillis?.() || 0) - (a.submittedAt?.toMillis?.() || 0));
 
-    const statusLabels = {pending:'â³ Awaiting Review',in_review:'ðŸ” Under Review',reviewed:'âœ… Review Ready',completed:'ðŸ† Completed'};
+    const statusLabels = {pending:'⏳ Awaiting Review',in_review:'🔍 Under Review',reviewed:'✅ Review Ready',completed:'🏆 Completed'};
     const badgeClass = {pending:'badge-pending',in_review:'badge-in_review',reviewed:'badge-reviewed',completed:'badge-completed'};
     let html = '';
     docs.forEach(data => {
@@ -714,7 +714,7 @@ async function loadSubmissions() {
       html += '<div class="status-card ' + data.status + '">' +
         '<div class="status-header"><div>' +
         '<div class="status-title"><i class="fas fa-file-alt" style="color:var(--primary);margin-right:6px;"></i>' + (data.fileName||'CV File') + '</div>' +
-        '<div class="status-date">Submitted: ' + date + ' Â· Target: ' + (data.targetOpportunity||'').replace(/_/g,' ') + '</div>' +
+        '<div class="status-date">Submitted: ' + date + ' · Target: ' + (data.targetOpportunity||'').replace(/_/g,' ') + '</div>' +
         '</div><span class="status-badge ' + (badgeClass[data.status]||'') + '">' + (statusLabels[data.status]||data.status) + '</span></div>' +
         (data.notes ? '<p style="font-size:0.83rem;color:var(--text-light);margin-bottom:8px;">' + data.notes.substring(0,120) + '</p>' : '') +
         '<div class="status-actions">' +
@@ -731,7 +731,7 @@ async function loadSubmissions() {
 // ===== OPEN REVIEW =====
 async function openReview(submissionId) {
   document.getElementById('reviewModal').classList.add('active');
-  document.getElementById('reviewModalBody').innerHTML = '<div style="text-align:center;padding:40px;"><div class="spinner" style="border-top-color:var(--primary);margin:0 auto 10px;"></div><p>Loading your reviewâ€¦</p></div>';
+  document.getElementById('reviewModalBody').innerHTML = '<div style="text-align:center;padding:40px;"><div class="spinner" style="border-top-color:var(--primary);margin:0 auto 10px;"></div><p>Loading your review…</p></div>';
   try {
     const snap = await db.collection('cv_reviews').doc(submissionId).get();
     if (!snap.exists) { document.getElementById('reviewModalBody').innerHTML = '<p style="text-align:center;padding:40px;">Review not found.</p>'; return; }
@@ -779,7 +779,7 @@ async function openMessages(submissionId) {
         const time = m.sentAt?.toDate ? m.sentAt.toDate().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) : '';
         return '<div style="display:flex;justify-content:' + (isUser?'flex-end':'flex-start') + ';">' +
           '<div class="msg-bubble ' + (isUser?'user':'admin') + '"><div>' + m.text + '</div>' +
-          '<div class="msg-meta">' + (isUser?'You':'Reviewer') + ' Â· ' + time + '</div></div></div>';
+          '<div class="msg-meta">' + (isUser?'You':'Reviewer') + ' · ' + time + '</div></div></div>';
       }).join('');
       area.scrollTop = area.scrollHeight;
     });
