@@ -10,15 +10,42 @@ window.addEventListener('scroll', () => {
     if (window.scrollY > 400) stb.classList.add('visible');
     else stb.classList.remove('visible');
   }
+  // Show Expert Review banner after scrolling past hero
+  showExpertReviewBanner();
 });
+
+// ===== EXPERT REVIEW FLOATING BANNER =====
+let _bannerShown = false;
+function showExpertReviewBanner() {
+  if (_bannerShown) return;
+  if (sessionStorage.getItem('bannerDismissed')) return;
+  if (window.scrollY > 500) {
+    const banner = document.getElementById('expertReviewBanner');
+    if (banner) { banner.style.display = 'flex'; _bannerShown = true; }
+  }
+}
+function dismissReviewBanner() {
+  const banner = document.getElementById('expertReviewBanner');
+  if (banner) banner.style.display = 'none';
+  sessionStorage.setItem('bannerDismissed', '1');
+}
+// expose globally
+window.dismissReviewBanner = dismissReviewBanner;
 
 function scrollToSection(id) {
   document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
 }
 
 function toggleMenu() {
-  document.getElementById('navLinks').classList.toggle('open');
+  const menu = document.getElementById('mobileMenu');
+  if (menu) menu.classList.toggle('open');
 }
+
+function closeMobileMenu() {
+  const menu = document.getElementById('mobileMenu');
+  if (menu) menu.classList.remove('open');
+}
+window.closeMobileMenu = closeMobileMenu;
 
 // ===== STEP NAVIGATION (Refine) =====
 let currentStep = 1;
@@ -99,9 +126,73 @@ function formatFileSize(bytes) {
 }
 
 // ===== GEMINI API CONFIG =====
-// Key is loaded from config.js (not committed to GitHub)
 const GEMINI_API_KEY = window.__GEMINI_KEY__ || '';
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+
+// Model list ordered: best quality first, with free-tier fallbacks.
+// All are confirmed live stable models as of August 2026.
+const GEMINI_MODELS = [
+  'gemini-2.5-flash',       // Best price/performance — primary workhorse
+  'gemini-2.5-pro',         // Highest quality — used when flash quota is hit
+  'gemini-2.5-flash-lite',  // Fastest, highest free quota — reliable fallback
+  'gemini-3.6-flash',       // New-gen Flash — additional fallback
+  'gemini-3.7-flash',       // Latest flagship — last resort
+];
+
+async function callGemini(requestBody) {
+  let lastError = null;
+  for (const model of GEMINI_MODELS) {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`;
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody)
+      });
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        const msg = err.error?.message || `HTTP ${response.status}`;
+        // Skip to next model for: model not found/deprecated OR quota exceeded (429)
+        const shouldFallback =
+          response.status === 404 ||
+          response.status === 429 ||
+          (response.status === 400 && (
+            msg.includes('not found') || msg.includes('not supported') ||
+            msg.includes('no longer available') || msg.includes('deprecated') ||
+            msg.includes('ListModels') || msg.includes('INVALID_ARGUMENT')
+          )) ||
+          msg.includes('quota') || msg.includes('RESOURCE_EXHAUSTED') ||
+          msg.includes('rate limit') || msg.includes('not found') ||
+          msg.includes('not supported') || msg.includes('no longer available') ||
+          msg.includes('deprecated');
+        if (shouldFallback) {
+          console.warn(`Model ${model} unavailable (${response.status}): ${msg.substring(0, 80)} — trying next model…`);
+          lastError = new Error(msg);
+          continue;
+        }
+        throw new Error(msg);
+      }
+      const data = await response.json();
+      // Tag the response with the model that succeeded (useful for debugging)
+      data._modelUsed = model;
+      return data;
+    } catch (e) {
+      const msg = e.message || '';
+      if (msg.includes('not found') || msg.includes('not supported') ||
+          msg.includes('no longer available') || msg.includes('ListModels') ||
+          msg.includes('quota') || msg.includes('RESOURCE_EXHAUSTED') ||
+          msg.includes('rate limit') || msg.includes('deprecated')) {
+        console.warn(`Model ${model} threw: ${msg.substring(0, 80)} — trying next model…`);
+        lastError = e;
+        continue;
+      }
+      throw e;
+    }
+  }
+  throw new Error(
+    'All AI models are currently busy or at capacity. ' +
+    'Please wait 60 seconds and try again — this is a free-tier rate limit, not an error with your CV.'
+  );
+}
 
 // ===== PDF TEXT EXTRACTION =====
 async function extractTextFromFile(file) {
@@ -124,34 +215,133 @@ async function extractTextFromFile(file) {
   });
 }
 
-// ===== REFINE CV ENGINE — POWERED BY GEMINI 2.5 FLASH =====
+// ===== TARGET / TONE / SPELLING LABELS (shared by refineCV + cover letter) =====
+const TARGET_LABELS = {
+  corporate_job:      'a Corporate / Industry Job',
+  national_service:   'a National Service Placement in Ghana',
+  graduate_programme: 'a Competitive Graduate Programme',
+  postgraduate:       'Postgraduate / Graduate School Admission',
+  internship:         'an Internship Application',
+  academia:           'an Academic or Research Position',
+  ngo:                'an NGO / Development Sector Role',
+  banking:            'a Banking & Finance Role',
+  tech:               'a Technology / Engineering Role',
+  cover_letter:       'a Cover Letter',
+  general:            'a General Professional Application'
+};
+
+const TONE_LABELS = {
+  professional: 'professional and formal',
+  academic:     'academic and research-focused',
+  dynamic:      'dynamic, results-driven, and impactful',
+  concise:      'concise and punchy'
+};
+
+// Target-specific coaching tips injected into the prompt so the AI
+// knows exactly what recruiters in each field want to see.
+const TARGET_COACHING = {
+  banking: `
+BANKING-SPECIFIC RULES:
+- Lead with Finance: put financial modelling, CFA, Bloomberg, deal experience, and quantitative results at the top
+- Quantify deal values in GHS or USD: "evaluated loans exceeding GHS 500,000", "managed portfolio of USD 2M+"
+- Highlight analytical tools: Excel (Advanced), Bloomberg Terminal, Refinitiv, Python, SQL
+- Use finance vocabulary: loan appraisal, portfolio management, credit analysis, equity research, financial modelling, DCF, LBO
+- Show commercial awareness: mention market knowledge, regulatory understanding (SEC, BoG, NPRA)
+- For internships: emphasise client exposure, reporting, and any deal work even if minor`,
+
+  tech: `
+TECH-SPECIFIC RULES:
+- Lead with a concise skills section listing exact technologies: languages, frameworks, tools, platforms (e.g. Python, React, Node.js, AWS, Docker)
+- Every project bullet must mention the technology stack used
+- Quantify impact: "reduced load time by 40%", "served 10,000+ monthly active users", "automated 8 hours of manual work per week"
+- GitHub / portfolio link is critical — surface it prominently in contact line
+- Separate "Technical Skills" from "Soft Skills" clearly
+- For student roles: include academic projects, hackathons, open-source contributions`,
+
+  academia: `
+ACADEMIA-SPECIFIC RULES:
+- Academic standing / GPA / class of degree must be prominent — place immediately under each degree
+- List relevant courses that align with the research area
+- Highlight thesis/dissertation title and supervisor if available
+- Publications, conference presentations, and working papers get their own section
+- Research methodology skills (Stata, R, Python, SPSS, NVivo, ATLAS.ti) are critical
+- Scholarships and academic awards carry more weight than extracurriculars here
+- Professional experience is secondary to research experience`,
+
+  national_service: `
+NATIONAL SERVICE-SPECIFIC RULES:
+- Ghana context: this is the NSS placement form — academic credentials are the primary selector
+- Degree class and CGPA must be immediately visible under the degree
+- Relevant internship/work experience shows practical readiness
+- Leadership roles (student associations, community projects) signal character
+- Skills section: Microsoft Office proficiency, communication, teamwork are valued
+- Keep to 1 page — NSS reviewers read hundreds of applications`,
+
+  graduate_programme: `
+GRADUATE PROGRAMME-SPECIFIC RULES:
+- Commercial awareness is critical: show you understand the industry, competitors, market trends
+- Leadership potential: highlight any team-leading, initiative-taking, event-organising roles
+- Internship/work experience is the strongest differentiator — expand these sections
+- Extracurricular depth: quality over quantity — one substantial leadership role beats five minor ones
+- Show numerical impact in every bullet: team sizes, budgets managed, results achieved
+- Most grad schemes are 1-page for students with under 2 years experience`,
+
+  postgraduate: `
+POSTGRADUATE ADMISSION-SPECIFIC RULES:
+- Academic excellence dominates: GPA, class of degree, thesis grade, publications, awards
+- Research experience is paramount — expand on any RA, lab, or field work
+- Statement of research interest (if included) must be precise and scholarly
+- Professional experience should connect to the postgrad research area
+- Referees section: "References available upon request" unless specific referees requested
+- Keep language precise and academic — avoid overly casual phrasing`,
+
+  internship: `
+INTERNSHIP-SPECIFIC RULES:
+- Most internship applicants are students with limited experience — this is expected
+- Lead with strong academic performance (GPA, relevant courses, academic prizes)
+- Any prior work experience — no matter how small — must be maximally expanded
+- Extracurricular leadership and society involvement demonstrate work ethic and initiative
+- Skills section: be specific about software proficiency levels
+- 1 page strictly — no exceptions for internship applications`,
+
+  ngo: `
+NGO/DEVELOPMENT-SPECIFIC RULES:
+- Mission alignment: every bullet should echo commitment to community impact and development goals
+- Quantify beneficiaries: "directly benefiting 1,200+ community members", "reached 500 households"
+- Volunteer and community work carries equal weight to paid roles — expand these
+- Highlight language skills, especially local Ghanaian languages and French (useful for ECOWAS/Africa-wide roles)
+- Relevant certifications: M&E training, project management (Prince2, PMD Pro), USAID compliance
+- Show understanding of the development sector: mention SDGs, theory of change, stakeholder engagement`
+};
+
+// ===== REFINE CV ENGINE =====
 async function refineCV() {
   const targetEl = document.querySelector('input[name="target"]:checked');
   if (!targetEl) { showToast('Please select a target opportunity first.', true); return; }
 
-  const target = targetEl.value;
+  const target    = targetEl.value;
   const specificRole = document.getElementById('specific-role').value.trim();
   const pasteText = document.getElementById('cvPasteText').value.trim();
-  const length = document.getElementById('cvLength').value;
-  const tone = document.getElementById('cvTone').value;
-  const spelling = document.getElementById('spelling').value;
+  const length    = document.getElementById('cvLength').value;
+  const tone      = document.getElementById('cvTone').value;
+  const spelling  = document.getElementById('spelling').value;
   const includeCL = document.getElementById('includeCL').value;
-  const extra = document.getElementById('extraInstructions').value.trim();
+  const extra     = document.getElementById('extraInstructions').value.trim();
 
   if (!uploadedFile && !pasteText) {
     showToast('Please upload a file or paste your CV text first.', true); return;
   }
 
   const btn = document.querySelector('#refine-step-3 .btn-primary');
-  const originalBtnText = '<i class="fas fa-magic"></i> Refine My CV with AI';
+  const originalBtnText = '<i class="fas fa-magic"></i> Refine My CV';
   btn.innerHTML = '<span class="spinner"></span> AI is reading your CV…';
   btn.disabled = true;
 
-  // Show a live progress message so the user knows it's working
   const progressMessages = [
     'AI is reading your CV…',
-    'Analysing your experience…',
-    'Rewriting with stronger language…',
+    'Extracting every detail…',
+    'Rewriting with impact language…',
+    'Quantifying your achievements…',
     'Applying professional formatting…',
     'Polishing the final output…'
   ];
@@ -159,145 +349,205 @@ async function refineCV() {
   const msgTimer = setInterval(() => {
     msgIdx = Math.min(msgIdx + 1, progressMessages.length - 1);
     if (btn.disabled) btn.innerHTML = `<span class="spinner"></span> ${progressMessages[msgIdx]}`;
-  }, 4000);
+  }, 3500);
 
   try {
-    // Build Gemini request
-    const targetLabels = {
-      corporate_job: 'a Corporate / Industry Job',
-      national_service: 'a National Service Placement in Ghana',
-      graduate_programme: 'a Competitive Graduate Programme',
-      postgraduate: 'Postgraduate / Graduate School Admission',
-      internship: 'an Internship Application',
-      academia: 'an Academic or Research Position',
-      ngo: 'an NGO / Development Sector Role',
-      banking: 'a Banking & Finance Role',
-      tech: 'a Technology / Engineering Role',
-      cover_letter: 'a Cover Letter',
-      general: 'a General Professional Application'
-    };
-
-    const toneLabels = {
-      professional: 'professional and formal',
-      academic: 'academic and research-focused',
-      dynamic: 'dynamic, results-driven, and impactful',
-      concise: 'concise and punchy'
-    };
-
     const spellingLabel = spelling === 'british' ? 'British English' : 'American English';
-    const lengthNote = length === '1page' ? 'Keep the CV to 1 page maximum.' :
-                       length === '2page' ? 'The CV may be up to 2 pages.' :
-                       'Choose the appropriate length based on experience (1 page if under 3 years, 2 pages otherwise).';
+    const lengthNote =
+      length === '1page' ? 'STRICTLY 1 page — cut ruthlessly if needed, keep only the strongest content.' :
+      length === '2page' ? 'Up to 2 pages — use the space fully if the experience warrants it.' :
+      'Auto: 1 page for under 3 years total experience; 2 pages for 3+ years. Judge from the CV.';
 
-    const prompt = `You are an expert professional CV writer and career coach with 20+ years of experience in the Ghanaian and international job market. Your task is to take the user's existing CV content and produce a polished, professional, fully refined CV.
+    const targetCoaching = TARGET_COACHING[target] || '';
 
-TARGET OPPORTUNITY: ${targetLabels[target]}${specificRole ? ` — specifically: ${specificRole}` : ''}
-TONE: ${toneLabels[tone] || 'professional and formal'}
-SPELLING: Use ${spellingLabel} throughout
-LENGTH: ${lengthNote}
-${extra ? `SPECIAL INSTRUCTIONS FROM USER: ${extra}` : ''}
+    // ── MASTER PROMPT ──────────────────────────────────────────────────────────
+    const prompt = `You are the world's most accomplished professional CV writer, combining the expertise of a Goldman Sachs recruiter, a McKinsey career coach, and a top-tier headhunter with 30 years of experience in Ghana, the UK, and globally. You have personally reviewed over 50,000 CVs and know exactly — within 6 seconds — which ones get interviews and which get binned.
 
-STRICT CV GUIDELINES TO FOLLOW:
-1. Name: First Name, Middle Name (optional), Last Name — centred, uppercase, large
-2. Contact: professional email, phone with country code (+233), LinkedIn URL — no residential address, no photo
-3. Education: tertiary only — university name, location, degree, academic standing/GPA, relevant courses
-4. Professional Experience: organisation name, location, job title, dates (e.g. Jun 2024 – Aug 2024), then bullet points starting with strong ACTION VERBS (Developed, Led, Built, Executed, Analysed, etc.) — NEVER "Responsible for" or "Was on"
-5. Every bullet point MUST include quantified impact where possible (numbers, percentages, cedis, team sizes, etc.)
-6. Leadership Experience: role, organisation, dates, bullet points with achievements
-7. Skills: only relevant skills — no beginner-level languages
-8. Certifications & Awards: full names, no unexplained acronyms
-9. Exclude: gender, age, date of birth, marital status, nationality, residential address, headshot, references (unless provided)
-10. Date format: consistent abbreviated format (e.g. Jun 2024 — NOT June 2024 or 6/2024)
-11. Use consistent formatting throughout — same bullet style, same bold/normal pattern
-12. PRESERVE ALL CONTENT — every job, internship, education entry, award, and leadership role from the original must appear in the output. Do not drop anything.
+Your job right now: take this person's existing CV and transform it into a flawless, interview-winning document. This is not a light edit. This is a complete professional transformation while keeping every fact from the original exactly as provided.
 
-OUTPUT FORMAT: Return the refined CV as clean HTML using ONLY these CSS classes that already exist in the page:
-- <div class="cv-name">FULL NAME</div>
-- <div class="cv-contact">email | phone | linkedin</div>
-- <div class="cv-section-title">SECTION NAME</div>
-- <div class="cv-entry-header"><span class="cv-entry-org">Org Name</span><span class="cv-entry-loc">Location</span></div>
-- <div class="cv-entry-header"><span class="cv-entry-title">Job Title</span><span class="cv-entry-date">Jun 2024 – Aug 2024</span></div>
-- <ul class="cv-bullets"><li>Achievement bullet</li></ul>
-- <ul class="cv-awards-list"><li>Award or cert item</li></ul>
-- <div style="font-size:10pt;">text for standing, courses, skills</div>
-- <br/> for spacing between entries
+━━━ PARAMETERS ━━━
+TARGET OPPORTUNITY : ${TARGET_LABELS[target] || 'a Professional Position'}${specificRole ? `\nSPECIFIC ROLE / PROGRAMME : ${specificRole}` : ''}
+TONE               : ${TONE_LABELS[tone] || 'professional and formal'}
+SPELLING           : ${spellingLabel} — enforced rigorously on every single word
+PAGE LENGTH        : ${lengthNote}
+${extra ? `\nUSER'S ADDITIONAL INSTRUCTIONS (follow exactly, highest priority):\n${extra}` : ''}
+${targetCoaching}
 
-CRITICAL RULES:
-- Extract EVERY SINGLE piece of information from the CV — do not omit any experience, education, or achievement
-- Improve and enhance the language — make every bullet stronger and more impactful
-- Rewrite weak phrasing professionally without losing the facts
-- Do NOT invent or fabricate any information not present in the original CV
-- Return ONLY the HTML output — no explanations, no markdown code blocks, no preamble, no \`\`\`html wrapper`;
+━━━ PHASE 1 — EXTRACTION (do this first, mentally) ━━━
+Before writing a single word of output, mentally scan the entire CV and catalogue:
+• Full name and ALL contact details (email, phone with country code, LinkedIn URL, portfolio/GitHub)
+• Every education entry: institution, location, exact degree title, start–end dates, GPA/class/standing, relevant courses, thesis title if present
+• Every work experience entry: company name, location, exact job title, department, start–end dates, every bullet/achievement listed
+• Every leadership / extracurricular role: organisation, role title, dates, any achievements
+• Every skill listed: technical, soft, languages (with proficiency)
+• Every certification, award, publication, membership
+• Any additional sections (volunteer work, research, professional bodies, references)
 
-    // Build prompt for file upload (no paste text)
-    const filePrompt = prompt + '\n\nHERE IS THE CV TO REFINE:\n[The CV document is attached below — read it in full and refine every section.]';
-    const textPrompt = prompt + `\n\nHERE IS THE CV TO REFINE:\n${pasteText}`;
+DO NOT skip, drop, merge, or omit ANY entry, no matter how minor it seems. If something is in the original, it MUST appear in your output.
+DO NOT fabricate any fact, figure, date, company name, or achievement that is not in the original.
+
+━━━ PHASE 2 — TRANSFORMATION RULES ━━━
+
+BULLET POINT MASTERY:
+Every single bullet must:
+1. Open with a STRONG past-tense action verb (Led, Built, Delivered, Executed, Analysed, Designed, Developed, Increased, Reduced, Managed, Spearheaded, Negotiated, Launched, Authored, Implemented, Coordinated, Oversaw, Streamlined, Pioneered, Drove, Secured, Generated, Evaluated, Supervised, Mentored, Facilitated, Transformed, Optimised)
+2. State WHAT you did with PRECISION
+3. Show the RESULT or SCALE wherever possible: numbers, %, GHS/USD values, team sizes, time saved, users reached, deals closed
+4. Be a single crisp sentence — no run-ons, no passive voice, no "I"
+
+BANNED PHRASES — never appear in output:
+"Responsible for" | "Was involved in" | "Helped with" | "Worked on" | "Assisted in" | "Participated in" | "Duties included" | "Was on the team" | "Gained experience in" | "Exposure to"
+
+DATES — without exception:
+• Format: "Jun 2024 – Aug 2024" (3-letter month abbreviation, 4-digit year, en-dash with spaces)
+• Current roles: "Oct 2025 – Present"
+• NEVER write: "June 2024", "6/2024", "2024-06", "June–August 2024"
+• Apply this format to EVERY date in the document, including education
+
+STRUCTURE ORDER:
+[Professional Summary — only if present in original or strongly beneficial]
+EDUCATION
+PROFESSIONAL EXPERIENCE  (most recent first within section)
+LEADERSHIP EXPERIENCE    (most recent first within section)
+SKILLS
+CERTIFICATIONS & AWARDS
+[Any other sections from original: Publications, Research, Professional Bodies, Volunteer, References]
+
+SECTION TITLES: ALL CAPS, exactly as shown above.
+
+CONTENT HYGIENE:
+• Remove: home address, date of birth, gender, marital status, nationality, religion, passport number, photo reference
+• Remove: secondary school / high school (unless applying to a programme that explicitly requires it)
+• Keep: ONLY languages at Intermediate level or above
+• References: replace with "References available upon request" as a plain line at the end, only if space allows
+
+━━━ PHASE 3 — HTML OUTPUT FORMAT ━━━
+
+Return ONLY raw HTML using EXACTLY these classes. No markdown. No code fences. No commentary. No preamble. Start your response directly with <div class="cv-name">.
+
+EXACT HTML STRUCTURE TO USE:
+
+<div class="cv-name">FIRSTNAME MIDDLENAME LASTNAME</div>
+<div class="cv-contact">email@example.com | +233 XX XXX XXXX | linkedin.com/in/handle | portfolio-url (omit any that are absent)</div>
+
+[If professional summary exists:]
+<div class="cv-section-title">PROFESSIONAL SUMMARY</div>
+<div style="font-size:10pt;line-height:1.6;margin-bottom:8px;">3–4 sentence summary. Specific, confident, no clichés.</div>
+
+<div class="cv-section-title">EDUCATION</div>
+<div class="cv-entry-header"><span class="cv-entry-org">Full Institution Name</span><span class="cv-entry-loc">City, Country</span></div>
+<div class="cv-entry-header"><span class="cv-entry-title">Degree Title</span><span class="cv-entry-date">Mon YYYY – Mon YYYY</span></div>
+<div style="font-size:10pt;margin-top:2px;">Academic Standing: [class/GPA] | Relevant Courses: [list]</div>
+<br/>
+[repeat cv-entry-header blocks for each additional degree]
+
+<div class="cv-section-title">PROFESSIONAL EXPERIENCE</div>
+<div class="cv-entry-header"><span class="cv-entry-org">Company Name</span><span class="cv-entry-loc">City, Country</span></div>
+<div class="cv-entry-header"><span class="cv-entry-title">Job Title</span><span class="cv-entry-date">Mon YYYY – Mon YYYY</span></div>
+<ul class="cv-bullets">
+<li>Strong action verb + what you did + measurable result.</li>
+<li>Strong action verb + what you did + measurable result.</li>
+</ul>
+<br/>
+[repeat for each role, most recent first]
+
+<div class="cv-section-title">LEADERSHIP EXPERIENCE</div>
+<div class="cv-entry-header"><span class="cv-entry-title">Role Title, Organisation Name</span><span class="cv-entry-date">Mon YYYY – Mon YYYY</span></div>
+<ul class="cv-bullets">
+<li>Strong bullet.</li>
+</ul>
+<br/>
+
+<div class="cv-section-title">SKILLS</div>
+<div style="font-size:10pt;margin-bottom:4px;"><strong>Technical / Hard Skills:</strong> Skill 1, Skill 2, Skill 3</div>
+<div style="font-size:10pt;margin-bottom:4px;"><strong>Professional Skills:</strong> Skill 1, Skill 2</div>
+<div style="font-size:10pt;"><strong>Languages:</strong> English (Fluent), [others at Intermediate+]</div>
+
+<div class="cv-section-title">CERTIFICATIONS & AWARDS</div>
+<ul class="cv-awards-list">
+<li>Full Certification Name, Issuing Body (Year)</li>
+<li>Award Name, Institution (Year)</li>
+</ul>
+
+[Add any other sections from the original CV below, using cv-section-title + appropriate content]`;
+    // ── END MASTER PROMPT ──────────────────────────────────────────────────────
 
     let requestBody;
 
     if (uploadedFile && !pasteText) {
-      // File uploaded — send as inline data + proper file prompt
+      // File upload path — send as base64 multimodal
       const fileData = await extractTextFromFile(uploadedFile);
       if (fileData && fileData.base64) {
-        // PDF or DOCX — send as binary inline data, Gemini reads it natively
+        // Gemini supports PDF and DOCX directly as inline_data
+        // .doc (old binary) may not parse — normalise to a safe MIME
+        const mimeType = (fileData.mimeType === 'application/msword')
+          ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+          : fileData.mimeType;
         requestBody = {
           contents: [{
             parts: [
-              { text: filePrompt },
-              { inline_data: { mime_type: fileData.mimeType, data: fileData.base64 } }
+              { text: prompt + '\n\n[THE CV DOCUMENT IS ATTACHED — read it completely before writing a single word of output]' },
+              { inline_data: { mime_type: mimeType, data: fileData.base64 } }
             ]
           }],
-          generationConfig: { temperature: 0.2, maxOutputTokens: 65536 }
+          generationConfig: { temperature: 0.12, maxOutputTokens: 8192 }
         };
       } else {
-        // TXT file — text was extracted, use as paste text
+        // TXT fallback
         const extracted = fileData?.text || '';
-        const resolvedPrompt = prompt + `\n\nHERE IS THE CV TO REFINE:\n${extracted}`;
         requestBody = {
-          contents: [{ parts: [{ text: resolvedPrompt }] }],
-          generationConfig: { temperature: 0.2, maxOutputTokens: 65536 }
+          contents: [{ parts: [{ text: prompt + `\n\n━━━ CV TO REFINE ━━━\n${extracted}` }] }],
+          generationConfig: { temperature: 0.12, maxOutputTokens: 8192 }
         };
       }
     } else {
-      // Pasted text
+      // Pasted text path
       requestBody = {
-        contents: [{ parts: [{ text: textPrompt }] }],
-        generationConfig: { temperature: 0.2, maxOutputTokens: 65536 }
+        contents: [{ parts: [{ text: prompt + `\n\n━━━ CV TO REFINE ━━━\n${pasteText}` }] }],
+        generationConfig: { temperature: 0.12, maxOutputTokens: 8192 }
       };
     }
 
-    const response = await fetch(GEMINI_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(requestBody)
-    });
+    const response = await callGemini(requestBody);
+    const modelUsed = response._modelUsed || 'gemini';
+    let refinedHTML = response.candidates?.[0]?.content?.parts?.[0]?.text || '';
 
-    if (!response.ok) {
-      const err = await response.json();
-      throw new Error(err.error?.message || `API error ${response.status}`);
+    // Strip any markdown code fences the model might wrap around the output
+    refinedHTML = refinedHTML
+      .replace(/^```html\s*/i, '')
+      .replace(/^```\s*/i, '')
+      .replace(/\s*```\s*$/i, '')
+      .trim();
+
+    // If the model returned a <html> or <body> wrapper, strip it
+    refinedHTML = refinedHTML
+      .replace(/^<!DOCTYPE[^>]*>\s*/i, '')
+      .replace(/^<html[^>]*>\s*<head[^>]*>.*?<\/head>\s*<body[^>]*>/is, '')
+      .replace(/<\/body>\s*<\/html>\s*$/i, '')
+      .trim();
+
+    if (!refinedHTML || refinedHTML.length < 300) {
+      throw new Error('The AI returned an incomplete response. Please try again in a moment.');
     }
 
-    const data = await response.json();
-    let refinedHTML = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-
-    // Strip any markdown code fences Gemini might add
-    refinedHTML = refinedHTML.replace(/^```html\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '').trim();
-
-    if (!refinedHTML || refinedHTML.length < 100) {
-      throw new Error('The AI returned an empty response. Please try again.');
+    // Ensure the output starts cleanly with the name div
+    if (!refinedHTML.startsWith('<div')) {
+      const divIdx = refinedHTML.indexOf('<div');
+      if (divIdx > 0) refinedHTML = refinedHTML.substring(divIdx);
     }
 
     // Add refinement footer
-    refinedHTML += `<br/><div style="text-align:center;font-size:8.5pt;color:#777;border-top:1px solid #ddd;padding-top:8px;margin-top:16px;font-family:'Inter',sans-serif;">
-      ✦ AI-Refined for: <strong>${targetLabels[target]}</strong>${specificRole ? ' — ' + specificRole : ''} &nbsp;·&nbsp; ${spellingLabel} &nbsp;·&nbsp; CV Genius Ghana
-    </div>`;
+    refinedHTML += `
+<br/>
+<div style="text-align:center;font-size:8pt;color:#aaa;border-top:1px solid #e8e8f0;padding-top:10px;margin-top:18px;font-family:'Inter',sans-serif;letter-spacing:0.02em;">
+  ✦ AI-Refined by CV Genius Ghana &nbsp;·&nbsp; ${TARGET_LABELS[target]}${specificRole ? ' — ' + specificRole : ''} &nbsp;·&nbsp; ${spellingLabel}
+</div>`;
 
     document.getElementById('refinedOutput').innerHTML = refinedHTML;
 
-    // Build improvements list from AI output analysis
     const improvements = buildImprovementsList(refinedHTML, target, includeCL, pasteText || '');
-    const impList = document.getElementById('improvementsList');
-    impList.innerHTML = improvements.map(i => `<li>${i}</li>`).join('');
+    document.getElementById('improvementsList').innerHTML =
+      improvements.map(i => `<li>${i}</li>`).join('');
 
     clearInterval(msgTimer);
     btn.innerHTML = originalBtnText;
@@ -308,8 +558,20 @@ CRITICAL RULES:
     clearInterval(msgTimer);
     btn.innerHTML = originalBtnText;
     btn.disabled = false;
-    showToast(`Error: ${err.message}`, true);
-    console.error('Gemini refine error:', err);
+
+    // Give a clear, non-technical error message
+    let userMsg = err.message || 'Something went wrong.';
+    if (userMsg.includes('quota') || userMsg.includes('rate limit') ||
+        userMsg.includes('RESOURCE_EXHAUSTED') || userMsg.includes('busy') ||
+        userMsg.includes('capacity')) {
+      userMsg = 'The AI is at capacity right now. Please wait 30–60 seconds and tap "Refine My CV" again.';
+    } else if (userMsg.includes('incomplete') || userMsg.includes('empty')) {
+      userMsg = 'The AI returned an incomplete result. Please try again.';
+    } else if (userMsg.includes('network') || userMsg.includes('fetch') || userMsg.includes('Failed to fetch')) {
+      userMsg = 'Network error — please check your internet connection and try again.';
+    }
+    showToast(userMsg, true);
+    console.error('refineCV error:', err);
   }
 }
 
@@ -954,81 +1216,114 @@ function closeScoreModal(e, force) {
 
 // ===== COVER LETTER GENERATOR =====
 
+// ===== COVER LETTER GENERATOR =====
+
 // OpenAI config — key loaded from config.js
 const OPENAI_API_KEY = window.__OPENAI_KEY__ || '';
 const OPENAI_URL = 'https://api.openai.com/v1/chat/completions';
 
 async function generateCoverLetterAI(name, contact, target, role, cvText) {
-  if (!OPENAI_API_KEY || OPENAI_API_KEY === 'PASTE_NEW_KEY_HERE') return null;
-
-  const targetLabels = {
-    corporate_job: 'a Corporate / Industry Job',
-    national_service: 'a National Service Placement in Ghana',
-    graduate_programme: 'a Competitive Graduate Programme',
-    postgraduate: 'Postgraduate / Graduate School Admission',
-    internship: 'an Internship Application',
-    academia: 'an Academic or Research Position',
-    ngo: 'an NGO / Development Sector Role',
-    banking: 'a Banking & Finance Role',
-    tech: 'a Technology / Engineering Role',
-    cover_letter: 'a Cover Letter',
-    general: 'a General Professional Application'
-  };
-
   const today = new Date();
-  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const months = ['January','February','March','April','May','June','July','August',
+                  'September','October','November','December'];
   const dateStr = `${today.getDate()} ${months[today.getMonth()]} ${today.getFullYear()}`;
 
-  const prompt = `You are an expert professional CV writer and career coach specialising in the Ghanaian and international job market. Write a compelling, personalised cover letter based on the CV content provided.
+  // Auto-detect name from CV text if not provided by caller
+  if (!name && cvText) {
+    const lines = cvText.split('\n').filter(l => l.trim());
+    for (const line of lines.slice(0, 5)) {
+      if (line.length < 60 && /^[A-Z][A-Z\s\-'.]+$/.test(line.trim())) {
+        name = line.trim(); break;
+      }
+      if (line.length < 60 && /^[A-Z][a-z]+ [A-Z]/.test(line.trim())) {
+        name = line.trim(); break;
+      }
+    }
+  }
+  name = name || 'Applicant';
 
-TARGET OPPORTUNITY: ${targetLabels[target] || 'a Professional Position'}${role ? ` — specifically: ${role}` : ''}
-APPLICANT NAME: ${name || 'Detect from CV'}
-DATE: ${dateStr}
+  const targetLabel = TARGET_LABELS[target] || 'a Professional Position';
 
-COVER LETTER REQUIREMENTS:
-1. Format: Business letter format — Date, Salutation, RE: line, 3–4 body paragraphs, Closing
-2. Salutation: Use "Dear [appropriate title based on target]," (e.g. "Dear Hiring Manager," / "Dear Graduate Recruitment Team," / "Dear Admissions Committee,")
-3. Opening paragraph: Strong, engaging hook that immediately signals why the candidate is exceptional — avoid generic "I am writing to apply…" openers
-4. Second paragraph: Highlight 2–3 specific achievements pulled directly from the CV with real figures and context — make this concrete and impactful
-5. Third paragraph: Connect the candidate's background to the specific opportunity/organisation — show genuine interest and fit
-6. Closing paragraph: Confident call to action — express availability for interview, thank the reader, sign off professionally
-7. Tone: Professional, confident, and tailored to the target opportunity type
-8. Length: 250–350 words maximum — concise and punchy, not padded
-9. Spelling: British English
-10. Closing: "Yours faithfully," then the applicant's name on a new line
+  const prompt = `You are a master cover letter writer with 20+ years of experience coaching candidates into top firms in Ghana, the UK, and globally. You write letters that get read — not skimmed — and that make recruiters pick up the phone.
 
-IMPORTANT:
-- Extract real achievements and experiences from the CV below — do not fabricate anything
-- The letter should feel genuinely tailored, not generic
-- Use specific numbers, figures, and role titles from the CV
-- Do NOT include "Attached: CV" or "Enc:" lines
+Write a compelling, highly personalised cover letter for this applicant. Every sentence must earn its place.
 
-CV CONTENT:
-${cvText || '[No CV text provided — write a strong general letter using the name and target provided]'}
+━━━ PARAMETERS ━━━
+APPLICANT NAME  : ${name}
+TARGET          : ${targetLabel}${role ? ` — specifically: ${role}` : ''}
+DATE            : ${dateStr}
 
-Return ONLY the cover letter text — no explanations, no preamble, no markdown formatting.`;
+━━━ LETTER REQUIREMENTS ━━━
+FORMAT:
+${dateStr}
 
-  const response = await fetch(OPENAI_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${OPENAI_API_KEY}`
-    },
-    body: JSON.stringify({
-      model: 'gpt-4o',
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0.4,
-      max_tokens: 600
-    })
-  });
+Dear [appropriate salutation for the target — e.g. "Dear Hiring Manager," / "Dear Graduate Recruitment Team," / "Dear Admissions Committee,"],
 
-  if (!response.ok) {
-    const err = await response.json();
-    throw new Error(err.error?.message || `OpenAI error ${response.status}`);
+RE: Application for [target — be specific if role is provided]
+
+[Opening paragraph — DO NOT start with "I am writing to apply". Open with a strong hook: a specific achievement, a compelling statement about your fit, or a direct expression of value you bring. 2–3 sentences.]
+
+[Second paragraph — draw 2–3 of the strongest, most specific achievements from the CV below. Include real figures, values, or outcomes. Show commercial awareness or domain expertise relevant to the target. 3–4 sentences.]
+
+[Third paragraph — connect the applicant's background directly to the target opportunity. Show you understand what they are looking for and why this person is the answer. Be specific, not generic. 2–3 sentences.]
+
+[Closing paragraph — confident, forward-looking call to action. Thank the reader. Express enthusiasm. 2 sentences.]
+
+Yours faithfully,
+${name}
+
+RULES:
+- British English spelling throughout
+- 280–360 words total — not a word more
+- Zero clichés: no "hardworking", no "team player", no "passionate about", no "I believe I would be a great fit"
+- Every claim must be grounded in something from the CV below
+- Professional but warm — not stiff or robotic
+
+━━━ APPLICANT CV CONTENT ━━━
+${cvText || '[No CV text provided — write the strongest possible general letter for the target]'}
+
+Return ONLY the formatted cover letter text. No preamble, no notes, no markdown.`;
+
+  // 1. Try OpenAI GPT-4o first (best quality)
+  if (OPENAI_API_KEY && OPENAI_API_KEY.startsWith('sk-')) {
+    try {
+      const response = await fetch(OPENAI_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${OPENAI_API_KEY}`
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o',
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.45,
+          max_tokens: 750
+        })
+      });
+      if (response.ok) {
+        const data = await response.json();
+        const text = data.choices?.[0]?.message?.content?.trim();
+        if (text && text.length > 100) return text;
+      }
+      // Non-200 (quota, billing, etc.) — fall through silently to Gemini
+      console.warn('OpenAI returned non-OK:', response.status, '— falling back to Gemini');
+    } catch (e) {
+      console.warn('OpenAI request failed, using Gemini:', e.message);
+    }
   }
 
-  const data = await response.json();
-  return data.choices?.[0]?.message?.content?.trim() || null;
+  // 2. Gemini fallback — callGemini() already handles quota fallback across models
+  try {
+    const geminiData = await callGemini({
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: { temperature: 0.45, maxOutputTokens: 800 }
+    });
+    const text = geminiData.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+    return text || null;
+  } catch (e) {
+    console.warn('Gemini cover letter also failed:', e.message);
+    return null;
+  }
 }
 
 function generateCoverLetterFromRefine() {
@@ -1063,7 +1358,7 @@ async function showCoverLetter(name, contact, target, role, cvText) {
   // Show spinner inside the modal content area
   contentEl.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;gap:16px;color:#5a5a7a;font-family:'Inter',sans-serif;">
     <div class="spinner" style="width:40px;height:40px;border-width:4px;border-top-color:var(--primary);"></div>
-    <p style="font-size:0.95rem;">GPT-4o is writing your cover letter…</p>
+    <p style="font-size:0.95rem;">AI is writing your cover letter…</p>
   </div>`;
 
   try {
@@ -1072,12 +1367,19 @@ async function showCoverLetter(name, contact, target, role, cvText) {
       contentEl.textContent = aiLetter;
       return;
     }
+    // AI returned empty — show template with a note
+    showToast('AI was unavailable — showing a template version. Try again in a moment.', true);
   } catch (err) {
-    console.warn('OpenAI cover letter failed, falling back to template:', err.message);
-    showToast('AI generation failed — showing template version.', true);
+    const isQuota = err.message?.includes('quota') || err.message?.includes('capacity') ||
+                    err.message?.includes('rate limit') || err.message?.includes('busy');
+    const msg = isQuota
+      ? 'AI is busy right now — showing a template version. Try again in 30 seconds.'
+      : 'AI generation failed — showing a template version.';
+    console.warn('Cover letter AI error:', err.message);
+    showToast(msg, true);
   }
 
-  // Fallback: static template
+  // Fallback: static template (clearly labelled so user knows it's a starting point)
   const cl = buildCoverLetter(name, contact, target, role, cvText);
   contentEl.textContent = cl;
 }
@@ -1154,7 +1456,7 @@ ${name}`;
 function downloadCoverLetter() {
   const contentEl = document.getElementById('coverLetterContent');
   const text = contentEl.textContent;
-  if (!text || text.includes('GPT-4o is writing')) {
+  if (!text || text.includes('AI is writing your cover letter')) {
     showToast('Please wait for the cover letter to finish generating.', true); return;
   }
   const printWin = window.open('', '_blank', 'width=800,height=900');
@@ -1171,7 +1473,7 @@ function downloadCoverLetter() {
 function copyCoverLetter() {
   const contentEl = document.getElementById('coverLetterContent');
   const text = contentEl.textContent;
-  if (!text || text.includes('GPT-4o is writing')) {
+  if (!text || text.includes('AI is writing your cover letter')) {
     showToast('Please wait for the cover letter to finish generating.', true); return;
   }
   navigator.clipboard.writeText(text).then(() => showToast('Cover letter copied to clipboard!'));
