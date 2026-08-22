@@ -735,7 +735,7 @@ async function downloadRefinedCV() {
   const target = document.querySelector('input[name="target"]:checked')?.value || 'general';
   const role = document.getElementById('specific-role').value.trim();
   const title = `Refined CV${role ? ' – ' + role : ''} (${new Date().toLocaleDateString('en-GB')})`;
-  printCV(content, 'Refined_CV');
+  await printCV(content, 'Refined_CV');
   if (window.saveCVToFirestore) saveCVToFirestore('refined', title, content, target, role);
 }
 
@@ -744,28 +744,130 @@ function copyRefinedCV() {
   navigator.clipboard.writeText(text).then(() => showToast('CV copied to clipboard!'));
 }
 
-// ===== PRINT/PDF =====
-function printCV(htmlContent, filename) {
-  const printWin = window.open('', '_blank', 'width=800,height=900');
-  printWin.document.write(`<!DOCTYPE html><html><head>
-    <title>${filename}</title>
+// ===== PDF GENERATION (jsPDF + html2canvas — no browser print dialog) =====
+// Renders CV HTML into a hidden offscreen container, captures it with html2canvas
+// at 2× resolution for sharp text, then embeds into an A4 jsPDF document.
+// Zero browser chrome: no date/time headers, no URL footers, no page numbers.
+
+async function printCV(htmlContent, filename) {
+  // Show a non-blocking loading toast while we render
+  showToast('Generating PDF…');
+
+  // ── 1. Build an offscreen render container ───────────────────────────────
+  // A4 at 96 dpi ≈ 794px wide. We render at exactly this width so the PDF
+  // is 1:1 with the on-screen preview.
+  const RENDER_WIDTH = 794; // px — matches A4 at 96 dpi
+
+  const wrapper = document.createElement('div');
+  wrapper.id = '_cv_pdf_render';
+  wrapper.style.cssText = [
+    'position:fixed',
+    'left:-9999px',
+    'top:0',
+    `width:${RENDER_WIDTH}px`,
+    'background:#fff',
+    'padding:56px 56px',          // 2 cm margin each side
+    'box-sizing:border-box',
+    'font-family:"Times New Roman",Times,serif',
+    'font-size:10.5pt',
+    'line-height:1.35',
+    'color:#000',
+    'z-index:-1',
+  ].join(';');
+
+  // Inject scoped CV styles so the classes render correctly outside the
+  // main stylesheet's container constraints
+  wrapper.innerHTML = `
     <style>
-      body { font-family: 'Times New Roman', serif; font-size: 11pt; margin: 2cm; color: #000; line-height: 1.5; }
-      .cv-name { text-align: center; font-size: 22pt; font-weight: bold; text-transform: uppercase; margin-bottom: 4px; }
-      .cv-contact { text-align: center; font-size: 10pt; margin-bottom: 16px; }
-      .cv-section-title { font-size: 11pt; font-weight: bold; text-transform: uppercase; border-bottom: 1.5px solid #000; margin: 14px 0 8px; padding-bottom: 2px; letter-spacing: 0.05em; }
-      .cv-entry-header { display: flex; justify-content: space-between; align-items: baseline; }
-      .cv-entry-org { font-weight: bold; }
-      .cv-entry-title { font-weight: bold; font-size: 10pt; }
-      .cv-entry-date { font-size: 10pt; }
-      .cv-bullets { margin: 4px 0 0 18px; }
-      .cv-bullets li { margin-bottom: 3px; font-size: 10pt; }
-      .cv-awards-list { list-style: disc; margin-left: 18px; }
-      .cv-awards-list li { font-size: 10pt; margin-bottom: 3px; }
+      #_cv_pdf_render .cv-name          { text-align:center; font-size:20pt; font-weight:bold; text-transform:uppercase; margin-bottom:3px; line-height:1.2; }
+      #_cv_pdf_render .cv-contact       { text-align:center; font-size:10pt; margin-bottom:10px; line-height:1.35; }
+      #_cv_pdf_render .cv-section-title { font-size:10.5pt; font-weight:bold; text-transform:uppercase; border-bottom:1.5px solid #000; margin:10px 0 4px; padding-bottom:2px; letter-spacing:0.04em; }
+      #_cv_pdf_render .cv-entry-header  { display:flex; justify-content:space-between; align-items:baseline; line-height:1.35; }
+      #_cv_pdf_render .cv-entry-org     { font-weight:bold; font-size:10pt; }
+      #_cv_pdf_render .cv-entry-loc     { font-size:10pt; font-style:italic; }
+      #_cv_pdf_render .cv-entry-title   { font-weight:bold; font-size:10pt; }
+      #_cv_pdf_render .cv-entry-date    { font-size:10pt; }
+      #_cv_pdf_render .cv-bullets       { margin:2px 0 0 16px; padding:0; list-style:disc; }
+      #_cv_pdf_render .cv-bullets li    { margin-bottom:2px; font-size:10pt; line-height:1.35; }
+      #_cv_pdf_render .cv-awards-list   { list-style:disc; margin-left:16px; padding:0; }
+      #_cv_pdf_render .cv-awards-list li{ font-size:10pt; margin-bottom:2px; line-height:1.35; }
+      /* strip the AI-refine footer watermark from the PDF */
+      #_cv_pdf_render [style*="text-align:center"][style*="8pt"] { display:none !important; }
     </style>
-  </head><body>${htmlContent}</body></html>`);
-  printWin.document.close();
-  setTimeout(() => { printWin.print(); }, 600);
+    <div id="_cv_pdf_content">${htmlContent}</div>`;
+
+  document.body.appendChild(wrapper);
+
+  // Give the browser one frame to paint before we capture
+  await new Promise(r => setTimeout(r, 80));
+
+  try {
+    // ── 2. Capture with html2canvas at 2× scale for sharp text ──────────────
+    const canvas = await html2canvas(wrapper, {
+      scale: 2,                  // retina-quality capture
+      useCORS: true,
+      allowTaint: false,
+      backgroundColor: '#ffffff',
+      width: RENDER_WIDTH,
+      windowWidth: RENDER_WIDTH,
+      logging: false,
+    });
+
+    // ── 3. Slice canvas into A4 pages ────────────────────────────────────────
+    // A4 dimensions in mm: 210 × 297
+    // At 96 dpi, 1 mm ≈ 3.7795 px. At scale=2, 1 mm ≈ 7.559 px on canvas.
+    const { jsPDF } = window.jspdf;
+    const A4_W_MM  = 210;
+    const A4_H_MM  = 297;
+    const MARGIN_MM = 0;         // margins are already baked into the wrapper padding
+
+    // How many rendered pixels equal one A4 page height?
+    // canvas width in px = RENDER_WIDTH * scale = 1588 px → 210 mm
+    // so 1 px = 210 / 1588 mm  →  A4 height in px = 297 * (1588 / 210)
+    const canvasW     = canvas.width;                         // 1588 px
+    const mmPerPx     = A4_W_MM / canvasW;                    // mm per canvas pixel
+    const pageH_px    = Math.floor(A4_H_MM / mmPerPx);       // canvas px per A4 page
+    const totalH_px   = canvas.height;
+    const pageCount   = Math.ceil(totalH_px / pageH_px);
+
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4',
+      compress: true,
+    });
+
+    for (let page = 0; page < pageCount; page++) {
+      if (page > 0) doc.addPage();
+
+      // Slice this page's strip from the full canvas
+      const srcY      = page * pageH_px;
+      const sliceH_px = Math.min(pageH_px, totalH_px - srcY);
+
+      const pageCanvas = document.createElement('canvas');
+      pageCanvas.width  = canvasW;
+      pageCanvas.height = pageH_px;                // always full page height (padded with white)
+      const ctx = pageCanvas.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvasW, pageH_px);
+      ctx.drawImage(canvas, 0, srcY, canvasW, sliceH_px, 0, 0, canvasW, sliceH_px);
+
+      const imgData = pageCanvas.toDataURL('image/jpeg', 0.97);
+      doc.addImage(imgData, 'JPEG', MARGIN_MM, MARGIN_MM, A4_W_MM, A4_H_MM);
+    }
+
+    // ── 4. Save the file ─────────────────────────────────────────────────────
+    const safeFilename = (filename || 'CV').replace(/[^a-zA-Z0-9_\-\s]/g, '_');
+    doc.save(safeFilename + '.pdf');
+    showToast('PDF downloaded!');
+
+  } catch (err) {
+    console.error('PDF generation error:', err);
+    showToast('PDF generation failed — please try again.', true);
+  } finally {
+    // Always clean up the offscreen element
+    document.body.removeChild(wrapper);
+  }
 }
 
 // ===== BUILDER TAB NAVIGATION =====
@@ -987,7 +1089,7 @@ async function downloadBuiltCV() {
   const firstName = document.getElementById('b-firstName').value.trim();
   const lastName = document.getElementById('b-lastName').value.trim();
   const title = `${firstName} ${lastName} CV (${new Date().toLocaleDateString('en-GB')})`;
-  printCV(content, `${firstName}_${lastName}_CV`);
+  await printCV(content, `${firstName}_${lastName}_CV`);
   if (window.saveCVToFirestore) saveCVToFirestore('built', title, content, document.getElementById('previewTarget')?.value || 'general', '');
 }
 
@@ -1205,11 +1307,11 @@ function showSample(key) {
   document.getElementById('sampleModal').dataset.currentKey = key;
 }
 
-function downloadSampleCV() {
+async function downloadSampleCV() {
   const content = document.getElementById('modalContent').innerHTML;
   const key = document.getElementById('sampleModal').dataset.currentKey || 'sample';
   const names = { veronica: 'Veronica_Mensah_CV', engineering: 'Alexander_Opoku_CV', national_service: 'National_Service_Sample_CV', postgrad: 'Postgraduate_Sample_CV' };
-  printCV(content, names[key] || 'Sample_CV');
+  await printCV(content, names[key] || 'Sample_CV');
 }
 
 function useSampleAsTemplate() {
@@ -1618,18 +1720,15 @@ Yours faithfully,
 ${name}`;
 }
 
-function downloadCoverLetter() {
+async function downloadCoverLetter() {
   const contentEl = document.getElementById('coverLetterContent');
   const text = contentEl.textContent;
   if (!text || text.includes('AI is writing your cover letter')) {
     showToast('Please wait for the cover letter to finish generating.', true); return;
   }
-  const printWin = window.open('', '_blank', 'width=800,height=900');
-  printWin.document.write(`<!DOCTYPE html><html><head><title>Cover Letter</title>
-    <style>body{font-family:'Times New Roman',serif;font-size:12pt;margin:2.5cm;color:#000;line-height:1.8;}p{margin-bottom:12pt;}</style>
-    </head><body><pre style="font-family:'Times New Roman',serif;font-size:12pt;white-space:pre-wrap;line-height:1.8;">${text}</pre></body></html>`);
-  printWin.document.close();
-  setTimeout(() => { printWin.print(); }, 500);
+  // Wrap plain text in HTML with CL formatting, then reuse printCV
+  const html = `<div style="font-family:'Times New Roman',serif;font-size:12pt;line-height:1.8;white-space:pre-wrap;color:#000;">${text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`;
+  await printCV(html, 'Cover_Letter');
   // Auto-save to Firestore if logged in
   const htmlContent = `<pre style="font-family:'Times New Roman',serif;font-size:11pt;line-height:1.8;white-space:pre-wrap;">${text}</pre>`;
   if (window.saveCVToFirestore) saveCVToFirestore('cover_letter', `Cover Letter (${new Date().toLocaleDateString('en-GB')})`, htmlContent, '', '');
