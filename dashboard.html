@@ -1992,11 +1992,15 @@ function renderSubscriptionsPage() {
       ${pending.length === 0
         ? `<div class="empty-state"><div class="empty-icon">&#127881;</div><p>No pending requests — you're all caught up!</p></div>`
         : `<div class="table-scroll"><table>
-          <thead><tr><th>Name</th><th>Email</th><th>Payer Name</th><th>MoMo Number</th><th>Requested</th><th>Actions</th></tr></thead>
-          <tbody>${pending.map(s => `
+          <thead><tr><th>Name</th><th>Email</th><th>Plan</th><th>Payer Name</th><th>MoMo Number</th><th>Requested</th><th>Actions</th></tr></thead>
+          <tbody>${pending.map(s => {
+            const planLabels = { all_gh35:'🌟 All Features — GH₵35', refine_gh20:'✨ Smart CV Refine — GH₵20', review_gh20:'👨‍💼 Expert Review — GH₵20', builder_gh20:'🏗️ CV Builder — GH₵20', '6months_gh20':'✨ Smart CV Refine — GH₵20' };
+            const planBadge = planLabels[s.plan] || s.planLabel || s.plan || '—';
+            return `
             <tr>
               <td><div class="name-cell">${s.displayName || s.payerName || '—'}</div></td>
               <td><div class="email-cell">${s.email || '—'}</div></td>
+              <td><span style="font-size:0.78rem;font-weight:700;color:#004d2d;background:#e8f5ee;padding:3px 8px;border-radius:20px;white-space:nowrap;">${planBadge}</span></td>
               <td><strong>${s.payerName || '—'}</strong></td>
               <td><span style="font-family:monospace;font-size:0.9rem;color:#006b3f;font-weight:700;">${s.payerPhone || '—'}</span></td>
               <td style="white-space:nowrap;font-size:0.78rem;color:#5a5a7a;">${fmtDate(s.requestedAt)}</td>
@@ -2006,7 +2010,7 @@ function renderSubscriptionsPage() {
                   <button onclick="rejectSubscription('${s.id}')" style="background:#ce1126;color:#fff;border:none;border-radius:7px;padding:7px 12px;font-size:0.78rem;font-weight:700;cursor:pointer;"><i class="fas fa-times"></i> Reject</button>
                 </div>
               </td>
-            </tr>`).join('')}
+            </tr>`;}).join('')}
           </tbody>
         </table></div>`
       }
@@ -2111,9 +2115,10 @@ window.approveSubscription = async (uid) => {
       status: 'active',
       approvedAt: serverTimestamp(),
       approvedBy: currentAdmin.email,
-      expiresAt: expiresAt, // Firestore accepts Date objects
+      expiresAt: expiresAt,
+      wasJustActivated: true,   // triggers in-app notification for the user
     });
-    showAdminToast('Subscription approved! User now has 6 months of Premium access.');
+    showAdminToast('✅ Subscription approved! User will see a 🎉 notification on their next visit.');
     await loadAllSubscriptions();
     renderSubscriptionsPage();
   } catch (e) { showAdminToast('Error: ' + e.message, true); }
@@ -2154,9 +2159,10 @@ window.reactivateSubscription = async (uid) => {
       approvedBy: currentAdmin.email,
       exportCount: 0,
       exportCountDate: '',
-      flagged: false
+      flagged: false,
+      wasJustActivated: true,   // triggers in-app notification for the user
     });
-    showAdminToast('Subscription reactivated for 6 months.');
+    showAdminToast('✅ Subscription reactivated! User will see a 🎉 notification on their next visit.');
     await loadAllSubscriptions();
     renderSubscriptionsPage();
   } catch (e) { showAdminToast('Error: ' + e.message, true); }

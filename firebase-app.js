@@ -219,8 +219,43 @@ window.loadDashboard = async function() {
     return;
   }
   document.getElementById('dashboardModal').classList.add('active');
+  // Always start on the CVs tab
+  openDashboardTab('cvs');
   const list = document.getElementById('dashboardList');
   list.innerHTML = `<div style="text-align:center;padding:40px;color:#5a5a7a;font-family:'Inter',sans-serif;"><div class="spinner" style="border-top-color:var(--primary);margin:0 auto 12px;width:32px;height:32px;border-width:3px;"></div><p>Loading your CVs...</p></div>`;
+
+  // ===== SUBSCRIPTION STATUS NOTIFICATION =====
+  try {
+    const sub = await window.checkSubscription();
+    const subBar = document.getElementById('subStatusBar');
+    if (subBar) subBar.remove();
+    if (sub.status === 'active') {
+      const expiry = sub.expiresAt?.toDate ? sub.expiresAt.toDate().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : '';
+      const planLabel = sub.planLabel || sub.plan || 'Premium';
+      const bar = document.createElement('div');
+      bar.id = 'subStatusBar';
+      bar.style.cssText = 'background:linear-gradient(135deg,#e8f5ee,#f0faf5);border:1.5px solid #006b3f;border-radius:12px;padding:14px 18px;margin-bottom:18px;display:flex;align-items:center;gap:14px;font-family:"Inter",sans-serif;flex-wrap:wrap;';
+      bar.innerHTML = `
+        <div style="font-size:1.5rem;">👑</div>
+        <div style="flex:1;min-width:180px;">
+          <div style="color:#004d2d;font-weight:700;font-size:0.88rem;">Premium Active — ${planLabel}</div>
+          <div style="color:#5a7a6a;font-size:0.78rem;margin-top:1px;">${expiry ? `Valid until ${expiry}` : 'Active subscription'}</div>
+        </div>
+        <button onclick="openDashboardTab('subscription')" style="background:#006b3f;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:0.78rem;font-weight:700;cursor:pointer;white-space:nowrap;">Manage Plan</button>`;
+      list.before(bar);
+    } else if (sub.status === 'pending') {
+      const bar = document.createElement('div');
+      bar.id = 'subStatusBar';
+      bar.style.cssText = 'background:#fffbea;border:1.5px solid #fcd116;border-radius:12px;padding:14px 18px;margin-bottom:18px;display:flex;align-items:center;gap:14px;font-family:"Inter",sans-serif;flex-wrap:wrap;';
+      bar.innerHTML = `
+        <div style="font-size:1.5rem;">⏳</div>
+        <div style="flex:1;min-width:180px;">
+          <div style="color:#7a6000;font-weight:700;font-size:0.88rem;">Payment Under Verification</div>
+          <div style="color:#9a8020;font-size:0.78rem;margin-top:1px;">We received your request. Activation usually takes a few hours.</div>
+        </div>`;
+      list.before(bar);
+    }
+  } catch(e) { /* silent */ }
 
   // ===== EXPERT REVIEW NOTIFICATIONS =====
   // Remove any stale notification bar from previous open
@@ -351,6 +386,8 @@ window.deleteCV = async function(id) {
 window.closeDashboard = function() {
   document.getElementById('dashboardModal').classList.remove('active');
   document.getElementById('reviewNotifBar')?.remove();
+  document.getElementById('subStatusBar')?.remove();
+  document.getElementById('subActivationBanner')?.remove();
 };
 
 // ===== AUTH MODAL =====
@@ -379,49 +416,102 @@ console.log('%c Firebase connected ✓ ', 'background:#006b3f;color:#fcd116;font
 
 // ===== SUBSCRIPTION SYSTEM =====
 
+// Plan definitions
+const PLANS = {
+  'all_gh35':     { label: 'All Features',   features: ['refine','review','builder'], price: 35 },
+  'refine_gh20':  { label: 'Smart CV Refine',features: ['refine'],                   price: 20 },
+  'review_gh20':  { label: 'Expert Review',  features: ['review'],                   price: 20 },
+  'builder_gh20': { label: 'CV Builder',     features: ['builder'],                  price: 20 },
+};
+
 // In-memory cache so we don't hit Firestore on every button press
 window._subCache = null;
 window._subCacheUid = null;
 
 // Check whether the current user has an active subscription.
-// Returns: { status: 'active'|'expired'|'pending'|'none', expiresAt, exportCount, exportCountDate, flagged }
-window.checkSubscription = async function() {
-  if (!currentUser) return { status: 'none' };
-  // Use cached value if same user and fetched within this session
-  if (window._subCache && window._subCacheUid === currentUser.uid) return window._subCache;
+// Returns: { status, features:[], plan, expiresAt, exportCount, exportCountDate, flagged }
+window.checkSubscription = async function(featureNeeded) {
+  if (!currentUser) return { status: 'none', features: [] };
+  if (window._subCache && window._subCacheUid === currentUser.uid) {
+    const c = window._subCache;
+    if (featureNeeded && c.status === 'active') {
+      return { ...c, status: (c.features||[]).includes(featureNeeded) ? 'active' : 'none' };
+    }
+    return c;
+  }
   try {
     const snap = await getDoc(doc(db, 'subscriptions', currentUser.uid));
     if (!snap.exists()) {
-      window._subCache = { status: 'none' };
+      window._subCache = { status: 'none', features: [] };
     } else {
       const d = snap.data();
-      // Auto-detect expiry
       let status = d.status || 'none';
+      // Auto-detect expiry
       if (status === 'active' && d.expiresAt?.toDate && d.expiresAt.toDate() < new Date()) {
         status = 'expired';
-        // Write expiry back silently — don't await to keep UI fast
         updateDoc(doc(db, 'subscriptions', currentUser.uid), { status: 'expired' }).catch(() => {});
       }
-      window._subCache = { status, expiresAt: d.expiresAt, exportCount: d.exportCount || 0, exportCountDate: d.exportCountDate || '', flagged: d.flagged || false };
+      // Derive features from plan field
+      const planKey = d.plan || '';
+      const features = PLANS[planKey]?.features || (planKey === '6months_gh20' ? ['refine','builder'] : []);
+      window._subCache = {
+        status, features, plan: planKey,
+        expiresAt: d.expiresAt,
+        exportCount: d.exportCount || 0,
+        exportCountDate: d.exportCountDate || '',
+        flagged: d.flagged || false,
+        wasJustActivated: d.wasJustActivated || false
+      };
     }
     window._subCacheUid = currentUser.uid;
-    return window._subCache;
+    // Check for just-activated notification
+    if (window._subCache.wasJustActivated) {
+      _showActivationNotification(window._subCache);
+      // Clear the flag in Firestore silently
+      updateDoc(doc(db, 'subscriptions', currentUser.uid), { wasJustActivated: false }).catch(() => {});
+    }
+    const c = window._subCache;
+    if (featureNeeded && c.status === 'active') {
+      return { ...c, status: (c.features||[]).includes(featureNeeded) ? 'active' : 'none' };
+    }
+    return c;
   } catch (e) {
     console.warn('checkSubscription error:', e.message);
-    return { status: 'none' };
+    return { status: 'none', features: [] };
   }
 };
 
-// Invalidate the in-memory cache (call after payment request or approval)
+function _showActivationNotification(sub) {
+  const planLabel = PLANS[sub.plan]?.label || 'Premium';
+  const expiry = sub.expiresAt?.toDate ? sub.expiresAt.toDate().toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' }) : '6 months';
+  showToast(`🎉 Your ${planLabel} subscription is now ACTIVE! Valid until ${expiry}.`);
+  // Also show banner in dashboard if it's open
+  const list = document.getElementById('dashboardList');
+  if (list) {
+    const banner = document.createElement('div');
+    banner.id = 'subActivationBanner';
+    banner.style.cssText = 'background:linear-gradient(135deg,#006b3f,#004d2d);border-radius:12px;padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;gap:14px;font-family:"Inter",sans-serif;animation:fadeInUp 0.4s ease;';
+    banner.innerHTML = `
+      <div style="font-size:1.8rem;">🎉</div>
+      <div style="flex:1;">
+        <div style="color:#fcd116;font-weight:700;font-size:0.9rem;">Premium Activated — ${planLabel}!</div>
+        <div style="color:rgba(255,255,255,0.85);font-size:0.8rem;margin-top:2px;">Your subscription is active and valid until ${expiry}. Go ahead and use all your premium features!</div>
+      </div>
+      <button onclick="this.parentElement.remove()" style="background:rgba(255,255,255,0.15);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:0.85rem;flex-shrink:0;">✕</button>`;
+    list.before(banner);
+  }
+}
+
+// Invalidate the in-memory cache
 window.clearSubCache = function() {
   window._subCache = null;
   window._subCacheUid = null;
 };
 
-// Submit a subscription payment request.
-// Called when user clicks "I've Made Payment" in the subscribe modal.
-window.requestSubscription = async function(payerName, payerPhone) {
+// Submit a subscription payment request for a specific plan.
+window.requestSubscription = async function(payerName, payerPhone, planKey) {
   if (!currentUser) { showToast('Please sign in first.', true); return false; }
+  const plan = PLANS[planKey] || PLANS['refine_gh20'];
   try {
     await setDoc(doc(db, 'subscriptions', currentUser.uid), {
       uid: currentUser.uid,
@@ -430,14 +520,17 @@ window.requestSubscription = async function(payerName, payerPhone) {
       payerName: payerName || '',
       payerPhone: payerPhone || '',
       status: 'pending',
-      plan: '6months_gh20',
+      plan: planKey || 'refine_gh20',
+      planLabel: plan.label,
+      planPrice: plan.price,
       requestedAt: serverTimestamp(),
       approvedAt: null,
       approvedBy: null,
       expiresAt: null,
       exportCount: 0,
       exportCountDate: '',
-      flagged: false
+      flagged: false,
+      wasJustActivated: false
     }, { merge: true });
     window.clearSubCache();
     return true;

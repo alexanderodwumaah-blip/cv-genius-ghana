@@ -970,9 +970,9 @@
 
 <!-- DASHBOARD MODAL -->
 <div class="modal-overlay" id="dashboardModal" onclick="if(event.target===this)closeDashboard()">
-  <div class="modal-box" style="max-width:900px;max-height:92vh;">
+  <div class="modal-box" style="max-width:920px;max-height:92vh;">
     <button class="modal-close" onclick="closeDashboard()"><i class="fas fa-times"></i></button>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px;">
       <div>
         <h3 style="font-size:1.3rem;font-weight:700;color:var(--text);font-family:'Inter',sans-serif;display:flex;align-items:center;gap:10px;">
           <i class="fas fa-th-large" style="color:var(--primary);"></i> My Dashboard
@@ -985,7 +985,22 @@
         <a href="cv-upload.html" style="display:inline-flex;align-items:center;gap:7px;background:#fcd116;color:#1a1a2e;font-weight:700;font-size:0.85rem;padding:9px 16px;border-radius:10px;text-decoration:none;border:none;cursor:pointer;"><i class="fas fa-user-edit"></i> Expert Review</a>
       </div>
     </div>
-    <div id="dashboardList"></div>
+
+    <!-- Dashboard Tabs -->
+    <div style="display:flex;gap:4px;margin-bottom:20px;border-bottom:2px solid var(--border);padding-bottom:0;">
+      <button id="dtab-cvs" onclick="openDashboardTab('cvs')" style="background:none;border:none;padding:10px 18px;font-size:0.88rem;font-weight:700;color:var(--primary);border-bottom:2.5px solid var(--primary);margin-bottom:-2px;cursor:pointer;font-family:'Inter',sans-serif;">📄 My CVs</button>
+      <button id="dtab-subscription" onclick="openDashboardTab('subscription')" style="background:none;border:none;padding:10px 18px;font-size:0.88rem;font-weight:600;color:var(--text-light);border-bottom:2.5px solid transparent;margin-bottom:-2px;cursor:pointer;font-family:'Inter',sans-serif;">👑 Subscription</button>
+    </div>
+
+    <!-- Tab: My CVs -->
+    <div id="dpanel-cvs">
+      <div id="dashboardList"></div>
+    </div>
+
+    <!-- Tab: Subscription -->
+    <div id="dpanel-subscription" style="display:none;">
+      <div id="subDashPanel"></div>
+    </div>
   </div>
 </div>
 
@@ -1014,69 +1029,139 @@
 
 <!-- ===== SUBSCRIBE MODAL ===== -->
 <div id="subscribeModal" style="display:none;position:fixed;inset:0;background:rgba(10,10,30,0.75);z-index:9100;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(6px);">
-  <div style="background:#fff;border-radius:22px;padding:0;max-width:440px;width:100%;box-shadow:0 28px 90px rgba(0,0,0,0.28);overflow:hidden;font-family:'Inter',sans-serif;max-height:90vh;overflow-y:auto;">
+  <div style="background:#fff;border-radius:22px;padding:0;max-width:480px;width:100%;box-shadow:0 28px 90px rgba(0,0,0,0.28);overflow:hidden;font-family:'Inter',sans-serif;max-height:92vh;overflow-y:auto;">
 
-    <!-- Green header -->
-    <div style="background:linear-gradient(135deg,#006b3f,#004d2d);padding:28px 28px 20px;text-align:center;color:#fff;position:relative;">
+    <!-- Header -->
+    <div style="background:linear-gradient(135deg,#006b3f,#004d2d);padding:24px 24px 18px;text-align:center;color:#fff;position:relative;">
       <button onclick="closeSubscribeModal()" style="position:absolute;top:14px;right:16px;background:rgba(255,255,255,0.15);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:0.9rem;display:flex;align-items:center;justify-content:center;">&#10005;</button>
-      <div style="font-size:2rem;margin-bottom:6px;">&#128081;</div>
-      <h2 style="font-size:1.25rem;font-weight:800;margin-bottom:4px;">Upgrade to Premium</h2>
-      <p style="font-size:0.82rem;opacity:0.85;line-height:1.5;">Unlimited Smart CV Refinement &amp; PDF exports for 6 full months</p>
+      <div style="font-size:2rem;margin-bottom:6px;">👑</div>
+      <h2 style="font-size:1.2rem;font-weight:800;margin-bottom:4px;">Upgrade to Premium</h2>
+      <p style="font-size:0.8rem;opacity:0.85;line-height:1.5;">Choose a plan — all valid for 6 months from activation</p>
     </div>
 
-    <!-- Package card -->
-    <div style="padding:20px 24px 0;">
-      <div style="border:2px solid #006b3f;border-radius:14px;padding:16px 18px;background:#f0faf5;display:flex;align-items:center;gap:16px;margin-bottom:18px;">
-        <div style="flex:1;">
-          <div style="font-size:0.72rem;font-weight:700;color:#006b3f;letter-spacing:0.07em;margin-bottom:2px;">6-MONTH PREMIUM PLAN</div>
-          <div style="font-size:1.6rem;font-weight:800;color:#1a1a2e;line-height:1;">GH&#8373;20</div>
-          <div style="font-size:0.78rem;color:#5a5a7a;margin-top:2px;">One-time payment &middot; Valid for 6 months</div>
-        </div>
-        <div style="font-size:0.78rem;color:#1a1a2e;line-height:1.8;">
-          &#10003; Unlimited Smart CV Refine<br>
-          &#10003; Unlimited PDF exports<br>
-          &#10003; CV Builder downloads<br>
-          &#10003; Up to 8 exports/day
-        </div>
+    <div style="padding:20px 22px 0;">
+
+      <!-- Plan selector -->
+      <div id="subPlanSelector">
+        <p style="font-size:0.82rem;font-weight:700;color:#1a1a2e;margin-bottom:12px;">Select your plan:</p>
+
+        <!-- All-in plan -->
+        <label style="display:block;cursor:pointer;margin-bottom:10px;">
+          <input type="radio" name="subPlan" value="all_gh35" style="display:none;" onchange="onSubPlanChange(this)"/>
+          <div class="sub-plan-card" id="planCard_all_gh35" style="border:2px solid var(--border);border-radius:14px;padding:14px 16px;transition:all 0.2s;background:#fff;">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <div style="font-size:1.4rem;">🌟</div>
+              <div style="flex:1;">
+                <div style="font-weight:800;font-size:0.92rem;color:#1a1a2e;">All Features — Best Value</div>
+                <div style="font-size:0.78rem;color:#5a5a7a;margin-top:2px;">Smart CV Refine + Expert Review + CV Builder</div>
+              </div>
+              <div style="text-align:right;flex-shrink:0;">
+                <div style="font-size:1.4rem;font-weight:800;color:#006b3f;line-height:1;">GH₵35</div>
+                <div style="font-size:0.7rem;color:#5a5a7a;">6 months</div>
+              </div>
+            </div>
+            <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+              <span style="background:#e8f5ee;color:#004d2d;font-size:0.72rem;font-weight:700;padding:3px 10px;border-radius:20px;">✓ Smart CV Refine</span>
+              <span style="background:#e8f5ee;color:#004d2d;font-size:0.72rem;font-weight:700;padding:3px 10px;border-radius:20px;">✓ Expert Review Upload</span>
+              <span style="background:#e8f5ee;color:#004d2d;font-size:0.72rem;font-weight:700;padding:3px 10px;border-radius:20px;">✓ CV Builder Downloads</span>
+              <span style="background:#fff8e1;color:#7a6000;font-size:0.72rem;font-weight:700;padding:3px 10px;border-radius:20px;">✓ Up to 8 exports/day</span>
+            </div>
+          </div>
+        </label>
+
+        <p style="font-size:0.78rem;color:#5a5a7a;text-align:center;margin:6px 0 10px;">— or choose a single feature —</p>
+
+        <!-- Single: Smart CV Refine -->
+        <label style="display:block;cursor:pointer;margin-bottom:10px;">
+          <input type="radio" name="subPlan" value="refine_gh20" style="display:none;" onchange="onSubPlanChange(this)"/>
+          <div class="sub-plan-card" id="planCard_refine_gh20" style="border:2px solid var(--border);border-radius:14px;padding:14px 16px;transition:all 0.2s;background:#fff;">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <div style="font-size:1.4rem;">✨</div>
+              <div style="flex:1;">
+                <div style="font-weight:800;font-size:0.9rem;color:#1a1a2e;">Smart CV Refine</div>
+                <div style="font-size:0.78rem;color:#5a5a7a;margin-top:2px;">Unlimited AI-powered CV refinement + PDF exports</div>
+              </div>
+              <div style="text-align:right;flex-shrink:0;">
+                <div style="font-size:1.4rem;font-weight:800;color:#006b3f;line-height:1;">GH₵20</div>
+                <div style="font-size:0.7rem;color:#5a5a7a;">6 months</div>
+              </div>
+            </div>
+          </div>
+        </label>
+
+        <!-- Single: Expert Review -->
+        <label style="display:block;cursor:pointer;margin-bottom:10px;">
+          <input type="radio" name="subPlan" value="review_gh20" style="display:none;" onchange="onSubPlanChange(this)"/>
+          <div class="sub-plan-card" id="planCard_review_gh20" style="border:2px solid var(--border);border-radius:14px;padding:14px 16px;transition:all 0.2s;background:#fff;">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <div style="font-size:1.4rem;">👨‍💼</div>
+              <div style="flex:1;">
+                <div style="font-weight:800;font-size:0.9rem;color:#1a1a2e;">Expert CV Review</div>
+                <div style="font-size:0.78rem;color:#5a5a7a;margin-top:2px;">Submit your CV for expert human feedback</div>
+              </div>
+              <div style="text-align:right;flex-shrink:0;">
+                <div style="font-size:1.4rem;font-weight:800;color:#006b3f;line-height:1;">GH₵20</div>
+                <div style="font-size:0.7rem;color:#5a5a7a;">6 months</div>
+              </div>
+            </div>
+          </div>
+        </label>
+
+        <!-- Single: CV Builder -->
+        <label style="display:block;cursor:pointer;margin-bottom:16px;">
+          <input type="radio" name="subPlan" value="builder_gh20" style="display:none;" onchange="onSubPlanChange(this)"/>
+          <div class="sub-plan-card" id="planCard_builder_gh20" style="border:2px solid var(--border);border-radius:14px;padding:14px 16px;transition:all 0.2s;background:#fff;">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <div style="font-size:1.4rem;">🏗️</div>
+              <div style="flex:1;">
+                <div style="font-weight:800;font-size:0.9rem;color:#1a1a2e;">CV Builder</div>
+                <div style="font-size:0.78rem;color:#5a5a7a;margin-top:2px;">Build & download unlimited CVs from scratch</div>
+              </div>
+              <div style="text-align:right;flex-shrink:0;">
+                <div style="font-size:1.4rem;font-weight:800;color:#006b3f;line-height:1;">GH₵20</div>
+                <div style="font-size:0.7rem;color:#5a5a7a;">6 months</div>
+              </div>
+            </div>
+          </div>
+        </label>
       </div>
 
-      <!-- Step 1: MoMo payment instructions -->
+      <!-- Step 1: MoMo payment -->
       <div id="subStep1">
-        <div style="background:#fff8e1;border-left:4px solid #fcd116;border-radius:8px;padding:14px 16px;margin-bottom:16px;">
-          <p style="font-size:0.82rem;font-weight:700;color:#7a6000;margin-bottom:8px;"><i class="fas fa-mobile-alt" style="margin-right:6px;"></i>Step 1 &mdash; Send GH&#8373;20 via Mobile Money</p>
-          <div style="background:#fff;border-radius:8px;padding:12px 14px;border:1px solid #f0d060;">
-            <div style="font-size:0.78rem;color:#5a5a7a;margin-bottom:4px;">Send to this number:</div>
+        <div style="background:#fff8e1;border-left:4px solid #fcd116;border-radius:8px;padding:14px 16px;margin-bottom:14px;">
+          <p style="font-size:0.82rem;font-weight:700;color:#7a6000;margin-bottom:8px;"><i class="fas fa-mobile-alt" style="margin-right:6px;"></i>Step 1 — Send payment via Mobile Money</p>
+          <div id="subAmountDisplay" style="background:#fff;border-radius:8px;padding:12px 14px;border:1px solid #f0d060;margin-bottom:10px;">
+            <div style="font-size:0.78rem;color:#5a5a7a;margin-bottom:2px;">Send to this number:</div>
             <div style="font-size:1.4rem;font-weight:800;color:#1a1a2e;letter-spacing:0.05em;">0503561924</div>
-            <div style="font-size:0.8rem;color:#006b3f;font-weight:600;margin-top:2px;">Vf Cash &mdash; Alexander Opoku Dwumaah</div>
+            <div style="font-size:0.8rem;color:#006b3f;font-weight:600;margin-top:2px;">Vf Cash — Alexander Opoku Dwumaah</div>
+            <div id="subAmountLabel" style="font-size:0.88rem;font-weight:800;color:#ce1126;margin-top:6px;">← Select a plan above first</div>
           </div>
-          <a id="subMomoLink" href="#" onclick="openMoMo();return false;" style="display:inline-flex;align-items:center;gap:6px;margin-top:10px;background:#006b3f;color:#fff;border-radius:8px;padding:9px 16px;font-size:0.82rem;font-weight:700;text-decoration:none;">
+          <a id="subMomoLink" href="#" onclick="openMoMo();return false;" style="display:inline-flex;align-items:center;gap:6px;background:#006b3f;color:#fff;border-radius:8px;padding:9px 16px;font-size:0.82rem;font-weight:700;text-decoration:none;">
             <i class="fas fa-mobile-alt"></i> Open MoMo App to Pay
           </a>
         </div>
 
-        <!-- Step 2: Fill details -->
-        <p style="font-size:0.82rem;font-weight:700;color:#1a1a2e;margin-bottom:10px;"><i class="fas fa-user" style="margin-right:6px;color:#006b3f;"></i>Step 2 &mdash; Fill in your details so we can verify</p>
+        <p style="font-size:0.82rem;font-weight:700;color:#1a1a2e;margin-bottom:10px;"><i class="fas fa-user" style="margin-right:6px;color:#006b3f;"></i>Step 2 — Fill in your details so we can verify</p>
         <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;">
           <input id="subPayerName" type="text" placeholder="Your full name" style="border:1.5px solid #d0d0e8;border-radius:9px;padding:11px 14px;font-size:0.88rem;font-family:'Inter',sans-serif;outline:none;width:100%;box-sizing:border-box;" onfocus="this.style.borderColor='#006b3f'" onblur="this.style.borderColor='#d0d0e8'"/>
           <input id="subPayerPhone" type="tel" placeholder="MoMo number you paid from (e.g. 0503561924)" style="border:1.5px solid #d0d0e8;border-radius:9px;padding:11px 14px;font-size:0.88rem;font-family:'Inter',sans-serif;outline:none;width:100%;box-sizing:border-box;" onfocus="this.style.borderColor='#006b3f'" onblur="this.style.borderColor='#d0d0e8'"/>
         </div>
         <div id="subError" style="display:none;background:#fff0f0;border:1px solid #ce1126;border-radius:8px;padding:10px 12px;font-size:0.82rem;color:#8b0000;margin-bottom:12px;"></div>
         <button id="subSubmitBtn" onclick="submitSubscriptionRequest()" style="width:100%;background:linear-gradient(135deg,#006b3f,#004d2d);color:#fff;border:none;border-radius:11px;padding:14px;font-size:0.92rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 16px rgba(0,107,63,0.3);margin-bottom:10px;">
-          <i class="fas fa-paper-plane"></i> I've Made Payment &mdash; Submit Request
+          <i class="fas fa-paper-plane"></i> I've Made Payment — Submit Request
         </button>
         <p style="font-size:0.72rem;color:#aaa;text-align:center;line-height:1.5;padding-bottom:6px;">Your account will be verified and activated within a few hours. You'll see a confirmation on your next visit.</p>
       </div>
 
-      <!-- Step confirmed state (shown after successful submit) -->
+      <!-- Success state -->
       <div id="subStep2" style="display:none;text-align:center;padding:10px 0 24px;">
-        <div style="font-size:3rem;margin-bottom:12px;">&#127881;</div>
+        <div style="font-size:3rem;margin-bottom:12px;">🎉</div>
         <h3 style="font-size:1.1rem;font-weight:800;color:#006b3f;margin-bottom:8px;">Request Submitted!</h3>
-        <p style="font-size:0.85rem;color:#5a5a7a;line-height:1.7;max-width:300px;margin:0 auto 16px;">We've received your payment request. Once we verify your MoMo payment, your Premium will be activated &mdash; usually within a few hours.</p>
-        <p style="font-size:0.8rem;color:#5a5a7a;">We'll notify you next time you visit the site. &#128276;</p>
-        <button onclick="closeSubscribeModal()" style="margin-top:18px;background:#006b3f;color:#fff;border:none;border-radius:10px;padding:12px 28px;font-size:0.88rem;font-weight:700;cursor:pointer;">Got it &mdash; Close</button>
+        <p style="font-size:0.85rem;color:#5a5a7a;line-height:1.7;max-width:300px;margin:0 auto 16px;">We've received your payment request. Once we verify your MoMo payment, your Premium will be activated — usually within a few hours.</p>
+        <p style="font-size:0.8rem;color:#5a5a7a;">We'll notify you next time you open your dashboard. 🔔</p>
+        <button onclick="closeSubscribeModal()" style="margin-top:18px;background:#006b3f;color:#fff;border:none;border-radius:10px;padding:12px 28px;font-size:0.88rem;font-weight:700;cursor:pointer;">Got it — Close</button>
       </div>
     </div>
-
   </div>
 </div>
 
@@ -1111,19 +1196,189 @@ document.getElementById('subscribeModal').addEventListener('click', function(e) 
 
 // Opens the MoMo dialler — works on mobile, falls back to contact card on desktop
 window.openMoMo = function() {
-  // Try to open the phone dialler with the number pre-filled
   var tel = 'tel:+233503561924';
   window.location.href = tel;
 };
 
+// ===== DASHBOARD TAB SWITCHING =====
+window.openDashboardTab = async function(tab) {
+  ['cvs','subscription'].forEach(t => {
+    document.getElementById('dpanel-' + t).style.display = t === tab ? 'block' : 'none';
+    const btn = document.getElementById('dtab-' + t);
+    if (btn) {
+      btn.style.color = t === tab ? 'var(--primary)' : 'var(--text-light)';
+      btn.style.fontWeight = t === tab ? '700' : '600';
+      btn.style.borderBottom = t === tab ? '2.5px solid var(--primary)' : '2.5px solid transparent';
+    }
+  });
+  if (tab === 'subscription') await loadSubscriptionPanel();
+};
+
+async function loadSubscriptionPanel() {
+  const panel = document.getElementById('subDashPanel');
+  if (!panel) return;
+  panel.innerHTML = `<div style="text-align:center;padding:32px;color:#5a5a7a;font-family:'Inter',sans-serif;"><div class="spinner" style="border-top-color:var(--primary);margin:0 auto 12px;width:28px;height:28px;border-width:3px;"></div><p style="font-size:0.85rem;">Loading subscription info...</p></div>`;
+
+  const sub = window.checkSubscription ? await window.checkSubscription() : { status: 'none', features: [] };
+  const planLabels = { all_gh35:'All Features', refine_gh20:'Smart CV Refine', review_gh20:'Expert CV Review', builder_gh20:'CV Builder', '6months_gh20':'Smart CV Refine' };
+  const featureIcons = { refine:'✨ Smart CV Refine', review:'👨‍💼 Expert CV Review', builder:'🏗️ CV Builder Downloads' };
+
+  if (sub.status === 'active') {
+    const expiry = sub.expiresAt?.toDate ? sub.expiresAt.toDate().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}) : 'N/A';
+    const planLabel = planLabels[sub.plan] || sub.planLabel || 'Premium';
+    const features = sub.features || [];
+    panel.innerHTML = `
+      <div style="background:linear-gradient(135deg,#e8f5ee,#f0faf5);border:1.5px solid #006b3f;border-radius:16px;padding:22px 24px;margin-bottom:20px;font-family:'Inter',sans-serif;">
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px;">
+          <div style="font-size:2rem;">👑</div>
+          <div>
+            <div style="font-size:1rem;font-weight:800;color:#004d2d;">Premium Active — ${planLabel}</div>
+            <div style="font-size:0.8rem;color:#5a7a6a;margin-top:2px;">Valid until <strong>${expiry}</strong></div>
+          </div>
+          <div style="margin-left:auto;background:#006b3f;color:#fff;font-size:0.72rem;font-weight:800;padding:4px 12px;border-radius:20px;text-transform:uppercase;letter-spacing:0.06em;">Active</div>
+        </div>
+        <div style="font-size:0.82rem;font-weight:700;color:#004d2d;margin-bottom:8px;">Your plan includes:</div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          ${features.map(f => `<div style="display:flex;align-items:center;gap:8px;font-size:0.84rem;color:#1a1a2e;"><span style="color:#006b3f;font-weight:700;">✓</span> ${featureIcons[f] || f}</div>`).join('')}
+        </div>
+      </div>
+      <p style="font-size:0.8rem;color:#5a5a7a;text-align:center;font-family:'Inter',sans-serif;margin-bottom:16px;">Need a different plan? Subscribe again after your current one expires.</p>`;
+  } else if (sub.status === 'pending') {
+    panel.innerHTML = `
+      <div style="background:#fffbea;border:1.5px solid #fcd116;border-radius:16px;padding:22px 24px;margin-bottom:20px;font-family:'Inter',sans-serif;text-align:center;">
+        <div style="font-size:2.5rem;margin-bottom:10px;">⏳</div>
+        <div style="font-weight:800;color:#7a6000;font-size:0.95rem;margin-bottom:6px;">Payment Under Verification</div>
+        <div style="font-size:0.82rem;color:#9a8020;line-height:1.6;">We've received your payment request for <strong>${planLabels[sub.plan] || sub.planLabel || 'your plan'}</strong>.<br/>Activation usually happens within a few hours. Check back soon!</div>
+      </div>
+      <p style="font-size:0.8rem;color:#5a5a7a;text-align:center;font-family:'Inter',sans-serif;">Once approved, you'll see a 🎉 notification here and in a popup.</p>`;
+  } else {
+    // Not subscribed — show plan picker
+    panel.innerHTML = `
+      <div style="font-family:'Inter',sans-serif;">
+        <div style="text-align:center;margin-bottom:20px;">
+          <div style="font-size:2.5rem;margin-bottom:8px;">🚀</div>
+          <div style="font-weight:800;font-size:1rem;color:#1a1a2e;margin-bottom:4px;">Unlock Premium Features</div>
+          <div style="font-size:0.82rem;color:#5a5a7a;line-height:1.6;">Choose a plan below and get instant access for 6 months after your payment is verified.</div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:20px;">
+          <!-- All-in -->
+          <div style="border:2px solid #006b3f;border-radius:14px;padding:16px;background:#f0faf5;position:relative;">
+            <div style="position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:#fcd116;color:#1a1a2e;font-size:0.7rem;font-weight:800;padding:3px 12px;border-radius:20px;white-space:nowrap;">BEST VALUE</div>
+            <div style="display:flex;align-items:center;gap:12px;">
+              <div style="font-size:1.5rem;">🌟</div>
+              <div style="flex:1;">
+                <div style="font-weight:800;color:#1a1a2e;font-size:0.92rem;">All Features</div>
+                <div style="font-size:0.78rem;color:#5a5a7a;">Refine + Review + Builder · 6 months</div>
+              </div>
+              <div style="font-size:1.5rem;font-weight:800;color:#006b3f;">GH₵35</div>
+            </div>
+            <button onclick="openSubscribeModal('all_gh35')" style="margin-top:12px;width:100%;background:#006b3f;color:#fff;border:none;border-radius:9px;padding:11px;font-size:0.88rem;font-weight:700;cursor:pointer;">Get All Features →</button>
+          </div>
+
+          <!-- Individual plans row -->
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;">
+            <div style="border:1.5px solid var(--border);border-radius:12px;padding:14px;background:#fff;text-align:center;">
+              <div style="font-size:1.3rem;margin-bottom:4px;">✨</div>
+              <div style="font-weight:700;font-size:0.85rem;color:#1a1a2e;margin-bottom:2px;">Smart CV Refine</div>
+              <div style="font-size:0.72rem;color:#5a5a7a;margin-bottom:10px;">Unlimited CV refinement + PDF</div>
+              <div style="font-size:1.2rem;font-weight:800;color:#006b3f;margin-bottom:10px;">GH₵20</div>
+              <button onclick="openSubscribeModal('refine_gh20')" style="width:100%;background:var(--primary-light);color:#006b3f;border:1.5px solid #006b3f;border-radius:8px;padding:8px;font-size:0.8rem;font-weight:700;cursor:pointer;">Subscribe</button>
+            </div>
+            <div style="border:1.5px solid var(--border);border-radius:12px;padding:14px;background:#fff;text-align:center;">
+              <div style="font-size:1.3rem;margin-bottom:4px;">👨‍💼</div>
+              <div style="font-weight:700;font-size:0.85rem;color:#1a1a2e;margin-bottom:2px;">Expert Review</div>
+              <div style="font-size:0.72rem;color:#5a5a7a;margin-bottom:10px;">Human expert feedback on your CV</div>
+              <div style="font-size:1.2rem;font-weight:800;color:#006b3f;margin-bottom:10px;">GH₵20</div>
+              <button onclick="openSubscribeModal('review_gh20')" style="width:100%;background:var(--primary-light);color:#006b3f;border:1.5px solid #006b3f;border-radius:8px;padding:8px;font-size:0.8rem;font-weight:700;cursor:pointer;">Subscribe</button>
+            </div>
+            <div style="border:1.5px solid var(--border);border-radius:12px;padding:14px;background:#fff;text-align:center;">
+              <div style="font-size:1.3rem;margin-bottom:4px;">🏗️</div>
+              <div style="font-weight:700;font-size:0.85rem;color:#1a1a2e;margin-bottom:2px;">CV Builder</div>
+              <div style="font-size:0.72rem;color:#5a5a7a;margin-bottom:10px;">Build & download unlimited CVs</div>
+              <div style="font-size:1.2rem;font-weight:800;color:#006b3f;margin-bottom:10px;">GH₵20</div>
+              <button onclick="openSubscribeModal('builder_gh20')" style="width:100%;background:var(--primary-light);color:#006b3f;border:1.5px solid #006b3f;border-radius:8px;padding:8px;font-size:0.8rem;font-weight:700;cursor:pointer;">Subscribe</button>
+            </div>
+          </div>
+        </div>
+        <p style="font-size:0.75rem;color:#aaa;text-align:center;line-height:1.5;">All plans valid for 6 months from activation. Payment via Mobile Money.</p>
+      </div>`;
+  }
+}
+
+// ===== PLAN SELECTOR IN SUBSCRIBE MODAL =====
+window.onSubPlanChange = function(radio) {
+  // Highlight selected card
+  document.querySelectorAll('.sub-plan-card').forEach(c => {
+    c.style.borderColor = 'var(--border)';
+    c.style.background = '#fff';
+  });
+  const card = document.getElementById('planCard_' + radio.value);
+  if (card) { card.style.borderColor = '#006b3f'; card.style.background = '#f0faf5'; }
+
+  // Update amount display
+  const prices = { all_gh35:'GH₵35', refine_gh20:'GH₵20', review_gh20:'GH₵20', builder_gh20:'GH₵20' };
+  const planNames = { all_gh35:'All Features', refine_gh20:'Smart CV Refine', review_gh20:'Expert Review', builder_gh20:'CV Builder' };
+  const lbl = document.getElementById('subAmountLabel');
+  if (lbl) lbl.textContent = `Send ${prices[radio.value]} for ${planNames[radio.value]}`;
+  // Store selected plan
+  window._selectedSubPlan = radio.value;
+};
+
+// ===== SUBSCRIBE MODAL LOGIC =====
+var _subModalContext = null;
+
+window.openSubscribeModal = function(planKey) {
+  _subModalContext = planKey || null;
+  // Reset to step 1
+  document.getElementById('subStep1').style.display = 'block';
+  document.getElementById('subStep2').style.display = 'none';
+  document.getElementById('subError').style.display = 'none';
+  document.getElementById('subPayerName').value = '';
+  document.getElementById('subPayerPhone').value = '';
+  var btn = document.getElementById('subSubmitBtn');
+  btn.innerHTML = '<i class="fas fa-paper-plane"></i> I\'ve Made Payment \u2014 Submit Request';
+  btn.disabled = false;
+
+  // Pre-select plan if passed
+  if (planKey) {
+    const radio = document.querySelector(`input[name="subPlan"][value="${planKey}"]`);
+    if (radio) { radio.checked = true; window.onSubPlanChange(radio); }
+  } else {
+    // reset plan selection
+    document.querySelectorAll('.sub-plan-card').forEach(c => { c.style.borderColor = 'var(--border)'; c.style.background = '#fff'; });
+    const lbl = document.getElementById('subAmountLabel');
+    if (lbl) lbl.textContent = '← Select a plan above first';
+    window._selectedSubPlan = null;
+  }
+
+  var modal = document.getElementById('subscribeModal');
+  modal.style.display = 'flex';
+  setTimeout(function(){ document.getElementById('subPayerName').focus(); }, 200);
+};
+
+window.closeSubscribeModal = function() {
+  document.getElementById('subscribeModal').style.display = 'none';
+};
+
+document.getElementById('subscribeModal').addEventListener('click', function(e) {
+  if (e.target === this) closeSubscribeModal();
+});
+
 window.submitSubscriptionRequest = async function() {
   var name  = document.getElementById('subPayerName').value.trim();
   var phone = document.getElementById('subPayerPhone').value.trim();
+  var plan  = window._selectedSubPlan || _subModalContext || 'refine_gh20';
   var errEl = document.getElementById('subError');
   var btn   = document.getElementById('subSubmitBtn');
 
   errEl.style.display = 'none';
 
+  if (!plan) {
+    errEl.textContent = 'Please select a plan above first.';
+    errEl.style.display = 'block';
+    return;
+  }
   if (!name) {
     errEl.textContent = 'Please enter your full name.';
     errEl.style.display = 'block';
@@ -1136,8 +1391,6 @@ window.submitSubscriptionRequest = async function() {
     document.getElementById('subPayerPhone').focus();
     return;
   }
-
-  // Must be signed in
   if (!window.checkSubscription) {
     errEl.textContent = 'Please sign in to your CV Genius account first, then subscribe.';
     errEl.style.display = 'block';
@@ -1147,10 +1400,11 @@ window.submitSubscriptionRequest = async function() {
   btn.innerHTML = '<span class="spinner"></span> Submitting\u2026';
   btn.disabled = true;
 
-  var ok = window.requestSubscription ? await window.requestSubscription(name, phone) : false;
+  var ok = window.requestSubscription ? await window.requestSubscription(name, phone, plan) : false;
 
   if (ok) {
     document.getElementById('subStep1').style.display = 'none';
+    document.getElementById('subPlanSelector').style.display = 'none';
     document.getElementById('subStep2').style.display = 'block';
   } else {
     btn.innerHTML = '<i class="fas fa-paper-plane"></i> I\'ve Made Payment \u2014 Submit Request';
