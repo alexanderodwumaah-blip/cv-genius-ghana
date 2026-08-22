@@ -955,8 +955,12 @@
     <div class="or-divider"><span>or</span></div>
     <div style="display:flex;flex-direction:column;gap:12px;margin-top:16px;">
       <input type="email" id="authEmail" class="form-input" placeholder="Email address"/>
-      <input type="password" id="authPassword" class="form-input" placeholder="Password (min. 6 characters)"/>
+      <input type="password" id="authPassword" class="form-input" placeholder="Password (min. 6 characters)" onkeydown="if(event.key==='Enter')signInEmail()"/>
       <button id="authSubmitBtn" class="btn-primary" style="width:100%;justify-content:center;" onclick="signInEmail()">Sign In</button>
+      <div id="authMsg" style="display:none;font-size:0.82rem;font-weight:600;text-align:center;padding:8px 12px;border-radius:8px;"></div>
+      <button onclick="userForgotPassword()" style="background:none;border:none;color:var(--primary);font-size:0.82rem;cursor:pointer;font-family:'Inter',sans-serif;text-decoration:underline;margin-top:-4px;">
+        Forgot password?
+      </button>
     </div>
     <p id="authToggleText" style="text-align:center;font-size:0.85rem;color:var(--text-light);margin-top:16px;font-family:'Inter',sans-serif;">
       New here? <a href="#" onclick="switchAuthMode('signup')" style="color:var(--primary);font-weight:600;">Create an account</a>

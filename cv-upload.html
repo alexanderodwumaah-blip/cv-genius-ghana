@@ -439,8 +439,12 @@
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;"><div style="flex:1;height:1px;background:var(--border);"></div><span style="color:var(--text-light);font-size:0.8rem;">or</span><div style="flex:1;height:1px;background:var(--border);"></div></div>
       <div style="display:flex;flex-direction:column;gap:12px;">
         <input type="email" id="authEmail" class="form-input" placeholder="Email address"/>
-        <input type="password" id="authPassword" class="form-input" placeholder="Password"/>
+        <input type="password" id="authPassword" class="form-input" placeholder="Password" onkeydown="if(event.key==='Enter')signInEmail()"/>
         <button class="btn-primary" style="width:100%;justify-content:center;" onclick="signInEmail()">Sign In</button>
+        <div id="uploadAuthMsg" style="display:none;font-size:0.82rem;font-weight:600;text-align:center;padding:8px 12px;border-radius:8px;"></div>
+        <button onclick="uploadForgotPassword()" style="background:none;border:none;color:var(--primary);font-size:0.82rem;cursor:pointer;font-family:'Inter',sans-serif;text-decoration:underline;margin-top:-4px;">
+          Forgot password?
+        </button>
       </div>
       <p style="text-align:center;font-size:0.82rem;color:var(--text-light);margin-top:14px;">
         New here? <a href="#" onclick="switchToSignUp()" style="color:var(--primary);font-weight:600;">Create account</a>
@@ -533,6 +537,33 @@ function signInWithGoogle() {
       .then(() => { closeAuthModal(); showToast('Welcome! You are signed in.'); })
       .catch(e => showToast(e.message.replace('Firebase: ',''), true));
   }
+}
+
+// ===== FORGOT PASSWORD =====
+function uploadForgotPassword() {
+  const email = document.getElementById('authEmail').value.trim();
+  const msgEl = document.getElementById('uploadAuthMsg');
+  if (!email) {
+    msgEl.style.background = '#fff0f0'; msgEl.style.color = '#ce1126';
+    msgEl.textContent = 'Enter your email address above first.';
+    msgEl.style.display = 'block';
+    document.getElementById('authEmail').focus();
+    return;
+  }
+  auth.sendPasswordResetEmail(email)
+    .then(() => {
+      msgEl.style.background = '#e8f5ee'; msgEl.style.color = '#006b3f';
+      msgEl.textContent = '✅ Password reset email sent! Check your inbox.';
+      msgEl.style.display = 'block';
+    })
+    .catch(e => {
+      const msg = e.code === 'auth/user-not-found' ? 'No account found with that email address.' :
+                  e.code === 'auth/invalid-email' ? 'Invalid email address.' :
+                  'Could not send reset email. Please try again.';
+      msgEl.style.background = '#fff0f0'; msgEl.style.color = '#ce1126';
+      msgEl.textContent = '❌ ' + msg;
+      msgEl.style.display = 'block';
+    });
 }
 
 // ===== SIGN IN WITH EMAIL =====

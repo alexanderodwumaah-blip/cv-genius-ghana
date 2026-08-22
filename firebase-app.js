@@ -1,6 +1,6 @@
 // ===== CV GENIUS GHANA — Firebase Auth + Firestore =====
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, signInWithPopup, signInWithRedirect, getRedirectResult, signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getAuth, signInWithPopup, signInWithRedirect, getRedirectResult, signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, signOut, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore, collection, addDoc, getDocs, getDoc, setDoc, updateDoc, query, where, orderBy, doc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -160,6 +160,38 @@ window.signInEmail = async function() {
 window.signOutUser = async function() {
   await signOut(auth);
   showToast('Signed out successfully.');
+};
+
+// ===== FORGOT PASSWORD =====
+window.userForgotPassword = async function() {
+  const email = document.getElementById('authEmail').value.trim();
+  const msgEl = document.getElementById('authMsg');
+  if (!email) {
+    if (msgEl) {
+      msgEl.style.background = '#fff0f0'; msgEl.style.color = 'var(--red)';
+      msgEl.textContent = 'Enter your email address above first.';
+      msgEl.style.display = 'block';
+    } else { showToast('Enter your email address first.', true); }
+    document.getElementById('authEmail').focus();
+    return;
+  }
+  try {
+    await sendPasswordResetEmail(auth, email);
+    if (msgEl) {
+      msgEl.style.background = '#e8f5ee'; msgEl.style.color = 'var(--primary, #006b3f)';
+      msgEl.textContent = '✅ Password reset email sent! Check your inbox.';
+      msgEl.style.display = 'block';
+    } else { showToast('Password reset email sent! Check your inbox.'); }
+  } catch (e) {
+    const msg = e.code === 'auth/user-not-found' ? 'No account found with that email address.' :
+                e.code === 'auth/invalid-email' ? 'Invalid email address.' :
+                'Could not send reset email. Please try again.';
+    if (msgEl) {
+      msgEl.style.background = '#fff0f0'; msgEl.style.color = 'var(--red)';
+      msgEl.textContent = '❌ ' + msg;
+      msgEl.style.display = 'block';
+    } else { showToast(msg, true); }
+  }
 };
 
 // ===== SAVE CV TO FIRESTORE =====
