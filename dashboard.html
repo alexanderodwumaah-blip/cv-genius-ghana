@@ -522,12 +522,21 @@ onAuthStateChanged(auth, async user => {
     document.getElementById('accessDenied').style.display = 'flex';
     return;
   }
+  // Show loading while we check admin status — don't flash accessDenied prematurely
+  document.getElementById('loadingScreen').style.display = 'flex';
+  document.getElementById('accessDenied').style.display = 'none';
+  document.getElementById('adminApp').style.display = 'none';
+
   const admin = await isAdmin(user.uid);
   if (!admin) {
     document.getElementById('loadingScreen').style.display = 'none';
     document.getElementById('accessDenied').style.display = 'flex';
+    // Close any open login modal too
+    document.getElementById('adminLoginModal')?.classList.remove('active');
     return;
   }
+  // Admin confirmed — close modal and show dashboard
+  document.getElementById('adminLoginModal')?.classList.remove('active');
   currentAdmin = user;
   document.getElementById('adminAvatar').textContent = (user.displayName || user.email)[0].toUpperCase();
   document.getElementById('adminName').textContent = user.displayName || user.email.split('@')[0];
