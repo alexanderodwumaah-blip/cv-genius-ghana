@@ -1,5 +1,6 @@
 {
   "hosting": {
+    "site": "cv-genius-ghana",
     "public": ".",
     "ignore": [
       "firebase.json",
@@ -7,26 +8,38 @@
       ".gitignore",
       "README.md",
       "firestore.rules",
+      "storage.rules",
       "firestore.indexes.json",
       ".git/**",
       ".vscode/**"
     ],
-    "rewrites": [
-      {
-        "source": "**",
-        "destination": "/index.html"
-      }
-    ],
     "headers": [
       {
-        "source": "**/*.@(js|css)",
+        "source": "**/*.js",
         "headers": [
-          { "key": "Cache-Control", "value": "max-age=86400" }
+          { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
+          { "key": "Pragma", "value": "no-cache" }
+        ]
+      },
+      {
+        "source": "**/*.html",
+        "headers": [
+          { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
+          { "key": "Pragma", "value": "no-cache" }
+        ]
+      },
+      {
+        "source": "**/*.css",
+        "headers": [
+          { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
         ]
       }
     ]
   },
   "firestore": {
     "rules": "firestore.rules"
+  },
+  "storage": {
+    "rules": "storage.rules"
   }
 }
