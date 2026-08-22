@@ -137,7 +137,13 @@ async function submitCVForReview(uid, userName, userEmail, file, notes, targetOp
 async function aiScanCV(submissionId, fileData, fileMimeType, fileName) {
   await updateDoc(doc(db, 'cv_submissions', submissionId), { aiScanStatus: 'scanning' });
 
+  const currentYear = new Date().getFullYear(); // e.g. 2026
+
   const prompt = `You are an expert professional CV reviewer with 20+ years of experience in recruitment and career coaching for the Ghanaian and international job market.
+
+IMPORTANT DATE CONTEXT: The current year is ${currentYear}. Dates up to and including ${currentYear} are NOT future dates — they are valid past or present dates. A candidate who completed an internship in OCT 2025 – DEC 2025 did so in the past relative to today (${currentYear}). Do NOT flag any date in ${currentYear - 1} or ${currentYear} as a "future" or "incorrect" date — these are recent, legitimate dates. Only flag dates clearly beyond ${currentYear} as future/incorrect.
+
+PAGE LENGTH POLICY: A CV may be 1, 2, or up to 3 pages. Do NOT flag a CV as "too long" solely because it exceeds 1 page. A 2-page CV is perfectly appropriate for candidates with 2+ years of experience, multiple internships, or rich academic backgrounds. A 3-page CV is acceptable if all content is highly relevant and substantive. Only flag length as an issue if the CV contains genuinely unnecessary filler, repetition, or irrelevant content that should be cut. Assess relevance of content first — if everything on the CV is relevant, the length is justified.
 
 Analyse this CV thoroughly and return a JSON object with this EXACT structure (no markdown, valid JSON only):
 
@@ -149,10 +155,10 @@ Analyse this CV thoroughly and return a JSON object with this EXACT structure (n
   "criticalIssues": [
     {"severity":"<High|Medium|Low>","category":"<Formatting|Content|Language|Structure|ATS|Other>","issue":"<problem>","fix":"<fix>"}
   ],
-  "formattingAnalysis": {"score":<0-100>,"fontConsistency":"<obs>","spacing":"<obs>","sectionStructure":"<obs>","lengthAssessment":"<obs>","issues":["<issue>"]},
+  "formattingAnalysis": {"score":<0-100>,"fontConsistency":"<obs>","spacing":"<obs>","sectionStructure":"<obs>","lengthAssessment":"<obs — note: 1-3 pages is acceptable if content is relevant>","issues":["<issue>"]},
   "contentAnalysis": {"score":<0-100>,"contactInfo":"<assessment>","educationSection":"<assessment>","experienceSection":"<assessment>","skillsSection":"<assessment>","achievementsQuality":"<assessment>","quantification":"<assessment>"},
   "languageAnalysis": {"score":<0-100>,"actionVerbUsage":"<assessment>","typosOrGrammarErrors":["<error>"],"spellingConsistency":"<British|American|Mixed>","weakPhrases":["<phrase>"],"toneAndProfessionalism":"<assessment>"},
-  "structuralAnalysis": {"score":<0-100>,"sectionOrder":"<assessment>","missingSections":["<section>"],"unnecessarySections":["<section>"],"cvLength":"<too short|appropriate|too long>"},
+  "structuralAnalysis": {"score":<0-100>,"sectionOrder":"<assessment>","missingSections":["<section>"],"unnecessarySections":["<section>"],"cvLength":"<too short|appropriate|too long — only flag too long if filler/irrelevant content exists>"},
   "atsCompatibility": {"score":<0-100>,"assessment":"<ATS friendly?>","issues":["<issue>"]},
   "topRecommendations": ["<rec 1>","<rec 2>","<rec 3>","<rec 4>","<rec 5>"],
   "readyToSend": <true|false>,
@@ -204,7 +210,7 @@ Analyse this CV thoroughly and return a JSON object with this EXACT structure (n
 
 // ===== PUSH REVIEW TO USER =====
 async function pushReviewToUser(submissionId, adminId, reviewData) {
-  const { uid, feedback, annotatedImageData, refinedCVData, refinedCVName, isDraft } = reviewData;
+  const { uid, feedback, annotatedImageData, refinedCVData, refinedCVName, adminRefinedHTML, isDraft } = reviewData;
 
   await setDoc(doc(db, 'cv_reviews', submissionId), {
     submissionId,
@@ -214,6 +220,7 @@ async function pushReviewToUser(submissionId, adminId, reviewData) {
     annotatedImageData: annotatedImageData || null,   // base64 PNG
     refinedCVData: refinedCVData || null,             // base64 of refined CV file
     refinedCVName: refinedCVName || null,
+    adminRefinedHTML: adminRefinedHTML || null,       // AI-rewritten CV HTML (admin refine tab)
     isDraft: isDraft || false,
     pushedAt: serverTimestamp(),
     seenByUser: false

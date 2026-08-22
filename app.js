@@ -356,7 +356,7 @@ async function refineCV() {
     const lengthNote =
       length === '1page' ? 'STRICTLY 1 page — cut ruthlessly if needed, keep only the strongest content.' :
       length === '2page' ? 'Up to 2 pages — use the space fully if the experience warrants it.' :
-      'Auto: 1 page for under 3 years total experience; 2 pages for 3+ years. Judge from the CV.';
+      'Auto: use as many pages as needed to represent ALL relevant content faithfully (typically 1–2 pages for students/early career; up to 3 pages for candidates with rich, relevant experience). Never truncate substantive, relevant content just to fit a page limit. If in doubt, include it — relevance is more important than brevity.';
 
     const targetCoaching = TARGET_COACHING[target] || '';
 
