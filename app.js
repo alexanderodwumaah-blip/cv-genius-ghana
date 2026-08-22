@@ -425,51 +425,59 @@ CONTENT HYGIENE:
 
 Return ONLY raw HTML using EXACTLY these classes. No markdown. No code fences. No commentary. No preamble. Start your response directly with <div class="cv-name">.
 
+CRITICAL SPACING RULES — follow exactly like the Veronica Mensah sample CV:
+• Between sections: use <div style="margin-top:10px;"></div> — NOT <br/> tags which cause excessive gaps
+• Bullet lists: margin-top:3px, no extra padding, li margin-bottom:2px max
+• Between roles within same section: margin-top:8px only
+• Line-height on all text: 1.35 maximum — never 1.6 or higher
+• Font size: 10pt throughout body, 10.5pt max — name is larger
+• Keep everything compact and tight — a well-packed CV like Veronica's sample
+
 EXACT HTML STRUCTURE TO USE:
 
 <div class="cv-name">FIRSTNAME MIDDLENAME LASTNAME</div>
-<div class="cv-contact">email@example.com | +233 XX XXX XXXX | linkedin.com/in/handle | portfolio-url (omit any that are absent)</div>
+<div class="cv-contact">email@example.com | +233 XX XXX XXXX | linkedin.com/in/handle (omit any absent)</div>
 
-[If professional summary exists:]
+[If professional summary exists or is strongly beneficial:]
 <div class="cv-section-title">PROFESSIONAL SUMMARY</div>
-<div style="font-size:10pt;line-height:1.6;margin-bottom:8px;">3–4 sentence summary. Specific, confident, no clichés.</div>
+<div style="font-size:10pt;line-height:1.35;margin-bottom:6px;">3–4 sentence summary. Specific, confident, no clichés.</div>
 
 <div class="cv-section-title">EDUCATION</div>
 <div class="cv-entry-header"><span class="cv-entry-org">Full Institution Name</span><span class="cv-entry-loc">City, Country</span></div>
 <div class="cv-entry-header"><span class="cv-entry-title">Degree Title</span><span class="cv-entry-date">Mon YYYY – Mon YYYY</span></div>
-<div style="font-size:10pt;margin-top:2px;">Academic Standing: [class/GPA] | Relevant Courses: [list]</div>
-<br/>
-[repeat cv-entry-header blocks for each additional degree]
+<div style="font-size:10pt;margin-top:1px;margin-bottom:6px;line-height:1.35;">Academic Standing: [class/GPA] | Relevant Courses: [list]</div>
+[repeat cv-entry-header blocks for each additional degree, with margin-top:6px between entries]
 
 <div class="cv-section-title">PROFESSIONAL EXPERIENCE</div>
 <div class="cv-entry-header"><span class="cv-entry-org">Company Name</span><span class="cv-entry-loc">City, Country</span></div>
 <div class="cv-entry-header"><span class="cv-entry-title">Job Title</span><span class="cv-entry-date">Mon YYYY – Mon YYYY</span></div>
-<ul class="cv-bullets">
-<li>Strong action verb + what you did + measurable result.</li>
-<li>Strong action verb + what you did + measurable result.</li>
+<ul class="cv-bullets" style="margin-top:3px;margin-bottom:0;">
+<li style="margin-bottom:2px;">Strong action verb + what you did + measurable result.</li>
+<li style="margin-bottom:2px;">Strong action verb + what you did + measurable result.</li>
 </ul>
-<br/>
-[repeat for each role, most recent first]
+<div style="margin-top:8px;"></div>
+[repeat for each role, most recent first — use div margin-top:8px between roles, NOT br tags]
 
 <div class="cv-section-title">LEADERSHIP EXPERIENCE</div>
 <div class="cv-entry-header"><span class="cv-entry-title">Role Title, Organisation Name</span><span class="cv-entry-date">Mon YYYY – Mon YYYY</span></div>
-<ul class="cv-bullets">
-<li>Strong bullet.</li>
+<ul class="cv-bullets" style="margin-top:3px;margin-bottom:0;">
+<li style="margin-bottom:2px;">Strong bullet.</li>
 </ul>
-<br/>
+<div style="margin-top:6px;"></div>
+[repeat for each role — if a leadership role has NO bullet (just title + dates), list it as a single cv-entry-header line with no ul]
 
 <div class="cv-section-title">SKILLS</div>
-<div style="font-size:10pt;margin-bottom:4px;"><strong>Technical / Hard Skills:</strong> Skill 1, Skill 2, Skill 3</div>
-<div style="font-size:10pt;margin-bottom:4px;"><strong>Professional Skills:</strong> Skill 1, Skill 2</div>
-<div style="font-size:10pt;"><strong>Languages:</strong> English (Fluent), [others at Intermediate+]</div>
+<div style="font-size:10pt;margin-bottom:3px;line-height:1.35;"><strong>Technical:</strong> Skill 1, Skill 2, Skill 3</div>
+<div style="font-size:10pt;margin-bottom:3px;line-height:1.35;"><strong>Professional:</strong> Skill 1, Skill 2</div>
+<div style="font-size:10pt;line-height:1.35;"><strong>Languages:</strong> English (Fluent), [others at Intermediate+]</div>
 
 <div class="cv-section-title">CERTIFICATIONS & AWARDS</div>
-<ul class="cv-awards-list">
-<li>Full Certification Name, Issuing Body (Year)</li>
-<li>Award Name, Institution (Year)</li>
+<ul class="cv-awards-list" style="margin-top:3px;">
+<li style="margin-bottom:2px;">Full Certification Name, Issuing Body (Year)</li>
+<li style="margin-bottom:2px;">Award Name, Institution (Year)</li>
 </ul>
 
-[Add any other sections from the original CV below, using cv-section-title + appropriate content]`;
+[Add any other sections from the original CV — Volunteer, Research, Projects, Professional Bodies, etc. — using cv-section-title + appropriate tight content. Never omit a section that exists in the original.]`;
     // ── END MASTER PROMPT ──────────────────────────────────────────────────────
 
     let requestBody;
@@ -634,9 +642,9 @@ function buildImprovementsList(refinedHTML, target, includeCL, originalText) {
 function applyRefinePaywall(subStatus) {
   const outputEl = document.getElementById('refinedOutput');
 
-  // Blur the bottom ~65% using a CSS mask gradient
-  outputEl.style.webkitMaskImage = 'linear-gradient(to bottom, black 30%, transparent 55%)';
-  outputEl.style.maskImage        = 'linear-gradient(to bottom, black 30%, transparent 55%)';
+  // Blur the bottom ~80% using a CSS mask gradient — only top 20% visible as teaser
+  outputEl.style.webkitMaskImage = 'linear-gradient(to bottom, black 18%, transparent 32%)';
+  outputEl.style.maskImage        = 'linear-gradient(to bottom, black 18%, transparent 32%)';
   outputEl.style.userSelect       = 'none';
 
   // Remove any existing overlay first

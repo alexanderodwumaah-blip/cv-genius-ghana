@@ -1754,53 +1754,77 @@ window.doAdminRefineCV = async () => {
 
   const prompt = `You are the world's most accomplished professional CV writer with 30 years of experience placing candidates into top firms globally and in Ghana. You have been given a CV to professionally rewrite, along with specific feedback from an expert admin reviewer.
 
-Your task: transform this CV into a flawless, interview-winning document that incorporates ALL of the admin's feedback and fixes every identified issue. This is a complete professional transformation — not a light edit.
+Your task: transform this CV into a flawless, interview-winning document that incorporates ALL of the admin's feedback and fixes every identified issue. Model the final output closely after the Veronica Mensah sample CV style — tight spacing, clean structure, every bullet starting with a strong action verb, quantified where possible.
 
 ━━━ CONTEXT ━━━
 TARGET OPPORTUNITY : ${targetLabel}
 CURRENT YEAR       : ${currentYear} (dates up to ${currentYear} are valid — do NOT flag or alter them as future dates)
 ${adminFeedbackSection}${aiIssueSummary}${extraSection}
-━━━ TRANSFORMATION RULES ━━━
 
-1. APPLY EVERY PIECE OF ADMIN FEEDBACK — this is the highest priority. Every point raised must be addressed.
-2. PRESERVE ALL FACTS — do not fabricate, change, or remove any date, company name, role title, or achievement from the original CV.
-3. BULLET MASTERY — every bullet opens with a strong past-tense action verb, states what was done with precision, and shows a result or scale with numbers where possible.
-4. BANNED PHRASES — never use: "Responsible for", "Was involved in", "Helped with", "Worked on", "Assisted in", "Participated in", "Duties included", "Was on the team".
-5. DATE FORMAT — every date must be "Mon YYYY – Mon YYYY" (e.g. Jun 2024 – Aug 2024). Current roles: "Oct 2025 – Present". Never write full month names.
-6. PAGE LENGTH — include all relevant content. 1–3 pages is acceptable. Never truncate substantive, relevant content.
-7. REMOVE — home address, date of birth, gender, marital status, nationality, religion, passport number. Replace references with "References available upon request."
+━━━ SEO AFRICA CV GUIDELINES (APPLY ALL) ━━━
+1. LENGTH: 1 page for under 2 years total experience. 2 pages for 2–5 years. Up to 3 pages only if all content is highly relevant and substantive. Never pad — never truncate genuinely relevant content.
+2. FONT: Times New Roman throughout. Name at top in bold uppercase ~20pt. All body text 10–10.5pt. Black only.
+3. FORMAT: Clean, professional, no colours, no tables, no text boxes, no graphics.
+4. NAME: First Name [Middle Name optional] Last Name — centred at top in BOLD UPPERCASE.
+5. CONTACT: Email (professional Gmail-style) | Phone with country code (+233) | LinkedIn URL — all on one centred line.
+6. EDUCATION: Tertiary only. University name + location, degree title, dates, academic standing (GPA/class), relevant courses. NO secondary school unless specifically requested.
+7. EXPERIENCE: Organisation name in BOLD, role title in bold, location right-aligned, dates right-aligned. Bullets = achievements not responsibilities. Every bullet starts with strong past-tense action verb. Quantify with numbers, %, GHS/USD, team sizes wherever possible.
+8. LEADERSHIP: Same format as experience. If no bullet points exist for a role, list it as a single line with dates.
+9. SKILLS: Split into Technical and Professional columns/lines. Languages only at Intermediate+ level.
+10. CERTIFICATIONS & AWARDS: Bullet list format. Name, Issuing Body, Year.
+11. EXCLUDE: Home address, date of birth, gender, marital status, nationality, religion, passport number, photo, headshot, beginner-level languages.
+12. REFERENCES: Replace with "References available upon request" — one line at the end.
+13. CONSISTENCY: Same date format throughout (Mon YYYY – Mon YYYY). Same bullet style. Same capitalisation rules.
+14. ACTION VERBS — BANNED: "Responsible for", "Was involved in", "Helped with", "Worked on", "Assisted in", "Participated in", "Duties included", "Gained experience in", "Exposure to".
+
+━━━ CRITICAL: PRESERVE ALL CONTENT ━━━
+Read the ENTIRE original CV. Do NOT drop, skip, merge, or omit ANY entry — no matter how minor. If it is in the original, it MUST appear in the output, rewritten professionally. Do NOT fabricate any fact, figure, date, company, or achievement not in the original.
+
+━━━ SPACING RULES (match Veronica Mensah sample) ━━━
+• Line-height: 1.35 maximum on all text
+• Between roles: margin-top:8px — NOT <br> tags
+• Bullet lists: margin-top:3px, li margin-bottom:2px
+• Section titles: margin:10px 0 4px — tight but clear
+• Overall: compact and well-packed — every line of space must earn its place
 
 ━━━ OUTPUT FORMAT ━━━
 Return ONLY raw HTML using these exact classes. No markdown. No code fences. Start directly with <div class="cv-name">.
 
 <div class="cv-name">FULL NAME IN CAPS</div>
-<div class="cv-contact">email | phone | linkedin (only include fields present)</div>
+<div class="cv-contact">email | +233 XX XXX XXXX | linkedin (only include fields present in original)</div>
 
 [Professional summary if present or strongly beneficial:]
 <div class="cv-section-title">PROFESSIONAL SUMMARY</div>
-<div style="font-size:10pt;line-height:1.6;margin-bottom:8px;">3–4 sentence summary.</div>
+<div style="font-size:10pt;line-height:1.35;margin-bottom:6px;">3–4 sentence summary.</div>
 
 <div class="cv-section-title">EDUCATION</div>
-<div class="cv-entry-header"><span class="cv-entry-org">Institution</span><span class="cv-entry-loc">City, Country</span></div>
-<div class="cv-entry-header"><span class="cv-entry-title">Degree</span><span class="cv-entry-date">Mon YYYY – Mon YYYY</span></div>
-<div style="font-size:10pt;margin-top:2px;">Academic Standing: ... | Relevant Courses: ...</div><br/>
+<div class="cv-entry-header"><span class="cv-entry-org">Full Institution Name</span><span class="cv-entry-loc">City, Country</span></div>
+<div class="cv-entry-header"><span class="cv-entry-title">Degree Title</span><span class="cv-entry-date">Mon YYYY – Mon YYYY</span></div>
+<div style="font-size:10pt;margin-top:1px;margin-bottom:6px;line-height:1.35;">Academic Standing: ... | Relevant Courses: ...</div>
 
 <div class="cv-section-title">PROFESSIONAL EXPERIENCE</div>
-<div class="cv-entry-header"><span class="cv-entry-org">Company</span><span class="cv-entry-loc">City, Country</span></div>
+<div class="cv-entry-header"><span class="cv-entry-org">Company Name</span><span class="cv-entry-loc">City, Country</span></div>
 <div class="cv-entry-header"><span class="cv-entry-title">Job Title</span><span class="cv-entry-date">Mon YYYY – Mon YYYY</span></div>
-<ul class="cv-bullets"><li>Strong action verb + what + measurable result.</li></ul><br/>
+<ul class="cv-bullets" style="margin-top:3px;margin-bottom:0;"><li style="margin-bottom:2px;">Strong action verb + what + measurable result.</li></ul>
+<div style="margin-top:8px;"></div>
+[repeat for each role]
 
 <div class="cv-section-title">LEADERSHIP EXPERIENCE</div>
-<div class="cv-entry-header"><span class="cv-entry-title">Role, Organisation</span><span class="cv-entry-date">Mon YYYY – Mon YYYY</span></div>
-<ul class="cv-bullets"><li>Strong bullet.</li></ul><br/>
+<div class="cv-entry-header"><span class="cv-entry-title">Role Title, Organisation</span><span class="cv-entry-date">Mon YYYY – Mon YYYY</span></div>
+<ul class="cv-bullets" style="margin-top:3px;margin-bottom:0;"><li style="margin-bottom:2px;">Strong bullet if applicable.</li></ul>
+<div style="margin-top:6px;"></div>
 
 <div class="cv-section-title">SKILLS</div>
-<div style="font-size:10pt;margin-bottom:4px;"><strong>Technical:</strong> ...</div>
-<div style="font-size:10pt;margin-bottom:4px;"><strong>Professional:</strong> ...</div>
-<div style="font-size:10pt;"><strong>Languages:</strong> ...</div>
+<div style="font-size:10pt;margin-bottom:3px;line-height:1.35;"><strong>Technical:</strong> skill1, skill2 ...</div>
+<div style="font-size:10pt;margin-bottom:3px;line-height:1.35;"><strong>Professional:</strong> skill1, skill2</div>
+<div style="font-size:10pt;line-height:1.35;"><strong>Languages:</strong> English (Fluent), ...</div>
 
 <div class="cv-section-title">CERTIFICATIONS & AWARDS</div>
-<ul class="cv-awards-list"><li>Name, Body (Year)</li></ul>`;
+<ul class="cv-awards-list" style="margin-top:3px;"><li style="margin-bottom:2px;">Name, Body (Year)</li></ul>
+
+[Include ALL other sections from the original: Volunteer, Research, Projects, Professional Bodies — use cv-section-title + tight content]
+
+<div style="font-size:10pt;margin-top:10px;">References available upon request.</div>`;
 
   try {
     let requestBody;

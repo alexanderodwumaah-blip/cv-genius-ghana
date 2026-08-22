@@ -1,9 +1,64 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // ===== SUBSCRIPTIONS =====
+    match /subscriptions/{uid} {
+      // Users can read and write their own subscription document
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if request.auth != null && request.auth.uid == uid;
+      // Admins can read and update all subscriptions (to approve/reject)
+      allow read, write: if request.auth != null &&
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    // ===== USER CVs (built/refined/saved) =====
     match /cvs/{cvId} {
       allow read, write: if request.auth != null && request.auth.uid == resource.data.uid;
       allow create: if request.auth != null && request.auth.uid == request.resource.data.uid;
     }
+
+    // ===== CV REVIEW SUBMISSIONS =====
+    match /cv_submissions/{subId} {
+      // Users can create and read their own submissions
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.uid;
+      allow read, update: if request.auth != null && request.auth.uid == resource.data.uid;
+      allow delete: if request.auth != null && request.auth.uid == resource.data.uid;
+
+      // Admin can read and write all submissions
+      allow read, write: if request.auth != null &&
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    // ===== ADMIN REGISTRY =====
+    match /admins/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false; // Only writable via Firebase Console
+    }
+
+    // ===== REVIEW FEEDBACK (admin → user) =====
+    match /cv_reviews/{reviewId} {
+      allow read: if request.auth != null && (
+        request.auth.uid == resource.data.uid ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+      allow create, update, delete: if request.auth != null &&
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    // ===== MESSAGES (admin <-> user on a submission) =====
+    match /cv_messages/{msgId} {
+      allow read: if request.auth != null && (
+        request.auth.uid == resource.data.uid ||
+        request.auth.uid == resource.data.adminId ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null && (
+        request.auth.uid == resource.data.senderId ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
   }
 }
