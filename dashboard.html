@@ -1881,25 +1881,35 @@ window.adminCopyRefinedCV = () => {
 window.adminPrintRefinedCV = () => {
   const content = document.getElementById('adminRefinedOutput')?.innerHTML;
   if (!content) { showToast('No rewritten CV to download.', true); return; }
-  const printWin = window.open('', '_blank', 'width=800,height=900');
-  printWin.document.write(`<!DOCTYPE html><html><head><title>Refined CV</title>
+  const cleanContent = content
+    .replace(/<div[^>]*font-size:8pt[^>]*>[\s\S]*?<\/div>/gi, '')
+    .replace(/<br\s*\/?>\s*<div[^>]*border-top[^>]*>[\s\S]*?<\/div>/gi, '');
+  const printWin = window.open('', '_blank', 'width=900,height=1100');
+  if (!printWin) { showToast('Popup blocked — please allow popups and try again.', true); return; }
+  printWin.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Refined CV</title>
     <style>
-      body{font-family:'Times New Roman',serif;font-size:11pt;margin:2cm;color:#000;line-height:1.5;}
-      .cv-name{text-align:center;font-size:22pt;font-weight:bold;text-transform:uppercase;margin-bottom:4px;}
-      .cv-contact{text-align:center;font-size:10pt;margin-bottom:16px;}
-      .cv-section-title{font-size:11pt;font-weight:bold;text-transform:uppercase;border-bottom:1.5px solid #000;margin:14px 0 8px;padding-bottom:2px;letter-spacing:0.05em;}
-      .cv-entry-header{display:flex;justify-content:space-between;align-items:baseline;}
-      .cv-entry-org{font-weight:bold;}
-      .cv-entry-title{font-weight:bold;font-size:10pt;}
-      .cv-entry-date{font-size:10pt;}
-      .cv-bullets{margin:4px 0 0 18px;}
-      .cv-bullets li{margin-bottom:3px;font-size:10pt;}
-      .cv-awards-list{list-style:disc;margin-left:18px;}
-      .cv-awards-list li{font-size:10pt;margin-bottom:3px;}
+      @page { size: A4; margin: 1.8cm; }
+      @media print { html,body { margin:0!important;padding:0!important; } @page { margin:1.8cm; } }
+      * { box-sizing:border-box; }
+      body { font-family:'Times New Roman',serif; font-size:10.5pt; margin:0; padding:0; color:#000; line-height:1.35; }
+      .cv-name { text-align:center; font-size:20pt; font-weight:bold; text-transform:uppercase; margin-bottom:3px; }
+      .cv-contact { text-align:center; font-size:10pt; margin-bottom:10px; line-height:1.35; }
+      .cv-section-title { font-size:10.5pt; font-weight:bold; text-transform:uppercase; border-bottom:1.5px solid #000; margin:10px 0 4px; padding-bottom:2px; letter-spacing:0.04em; }
+      .cv-entry-header { display:flex; justify-content:space-between; align-items:baseline; line-height:1.35; }
+      .cv-entry-org { font-weight:bold; font-size:10pt; }
+      .cv-entry-loc { font-size:10pt; font-style:italic; }
+      .cv-entry-title { font-weight:bold; font-size:10pt; }
+      .cv-entry-date { font-size:10pt; }
+      .cv-bullets { margin:2px 0 0 16px; padding:0; }
+      .cv-bullets li { margin-bottom:2px; font-size:10pt; line-height:1.35; }
+      .cv-awards-list { list-style:disc; margin-left:16px; padding:0; }
+      .cv-awards-list li { font-size:10pt; margin-bottom:2px; line-height:1.35; }
+      [style*="font-size:8pt"],[style*="font-size: 8pt"] { display:none!important; }
     </style>
-  </head><body>${content}</body></html>`);
+  </head><body>${cleanContent}</body></html>`);
   printWin.document.close();
-  setTimeout(() => { printWin.print(); }, 600);
+  printWin.onload = function() { setTimeout(() => { printWin.focus(); printWin.print(); }, 400); };
+  setTimeout(() => { try { printWin.focus(); printWin.print(); } catch(e) {} }, 900);
 };
 
 window.adminAttachRefinedCVOutput = async () => {

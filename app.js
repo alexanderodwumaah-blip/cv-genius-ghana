@@ -745,27 +745,114 @@ function copyRefinedCV() {
 }
 
 // ===== PRINT/PDF =====
+const PRINT_CSS = `
+  @page {
+    size: A4;
+    margin: 1.8cm 1.8cm 1.8cm 1.8cm;
+  }
+  @media print {
+    html, body { margin: 0 !important; padding: 0 !important; }
+    /* Suppress browser-generated headers/footers (date, time, URL, title) */
+    @page { margin: 1.8cm; }
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Times New Roman', serif;
+    font-size: 10.5pt;
+    margin: 0;
+    padding: 0;
+    color: #000;
+    line-height: 1.35;
+  }
+  .cv-name {
+    text-align: center;
+    font-size: 20pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-bottom: 3px;
+    letter-spacing: 0.02em;
+  }
+  .cv-contact {
+    text-align: center;
+    font-size: 10pt;
+    margin-bottom: 10px;
+    line-height: 1.35;
+  }
+  .cv-section-title {
+    font-size: 10.5pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    border-bottom: 1.5px solid #000;
+    margin: 10px 0 4px;
+    padding-bottom: 2px;
+    letter-spacing: 0.04em;
+  }
+  .cv-entry-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    line-height: 1.35;
+  }
+  .cv-entry-org { font-weight: bold; font-size: 10pt; }
+  .cv-entry-loc { font-size: 10pt; font-style: italic; }
+  .cv-entry-title { font-weight: bold; font-size: 10pt; }
+  .cv-entry-date { font-size: 10pt; }
+  .cv-bullets {
+    margin: 2px 0 0 16px;
+    padding: 0;
+  }
+  .cv-bullets li {
+    margin-bottom: 2px;
+    font-size: 10pt;
+    line-height: 1.35;
+  }
+  .cv-awards-list {
+    list-style: disc;
+    margin-left: 16px;
+    padding: 0;
+  }
+  .cv-awards-list li {
+    font-size: 10pt;
+    margin-bottom: 2px;
+    line-height: 1.35;
+  }
+  /* Strip any footer/header injected by the AI */
+  [style*="font-size:8pt"], [style*="font-size: 8pt"] { display: none !important; }
+`;
+
 function printCV(htmlContent, filename) {
-  const printWin = window.open('', '_blank', 'width=800,height=900');
-  printWin.document.write(`<!DOCTYPE html><html><head>
-    <title>${filename}</title>
-    <style>
-      body { font-family: 'Times New Roman', serif; font-size: 11pt; margin: 2cm; color: #000; line-height: 1.5; }
-      .cv-name { text-align: center; font-size: 22pt; font-weight: bold; text-transform: uppercase; margin-bottom: 4px; }
-      .cv-contact { text-align: center; font-size: 10pt; margin-bottom: 16px; }
-      .cv-section-title { font-size: 11pt; font-weight: bold; text-transform: uppercase; border-bottom: 1.5px solid #000; margin: 14px 0 8px; padding-bottom: 2px; letter-spacing: 0.05em; }
-      .cv-entry-header { display: flex; justify-content: space-between; align-items: baseline; }
-      .cv-entry-org { font-weight: bold; }
-      .cv-entry-title { font-weight: bold; font-size: 10pt; }
-      .cv-entry-date { font-size: 10pt; }
-      .cv-bullets { margin: 4px 0 0 18px; }
-      .cv-bullets li { margin-bottom: 3px; font-size: 10pt; }
-      .cv-awards-list { list-style: disc; margin-left: 18px; }
-      .cv-awards-list li { font-size: 10pt; margin-bottom: 3px; }
-    </style>
-  </head><body>${htmlContent}</body></html>`);
+  const printWin = window.open('', '_blank', 'width=900,height=1100');
+  if (!printWin) {
+    showToast('Popup blocked. Please allow popups for this site and try again.', true);
+    return;
+  }
+  // Strip the AI-generated footer line (✦ Refined by... line)
+  const cleanContent = htmlContent
+    .replace(/<div[^>]*font-size:8pt[^>]*>[\s\S]*?<\/div>/gi, '')
+    .replace(/<br\s*\/?>\s*<div[^>]*border-top[^>]*>[\s\S]*?<\/div>/gi, '');
+
+  printWin.document.write(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8"/>
+  <title>${filename}</title>
+  <style>${PRINT_CSS}</style>
+</head>
+<body>${cleanContent}</body>
+</html>`);
   printWin.document.close();
-  setTimeout(() => { printWin.print(); }, 600);
+  // Wait for fonts/layout to settle before printing
+  printWin.onload = function() {
+    setTimeout(() => {
+      printWin.focus();
+      printWin.print();
+    }, 400);
+  };
+  // Fallback if onload doesn't fire
+  setTimeout(() => {
+    try { printWin.focus(); printWin.print(); } catch(e) {}
+  }, 900);
 }
 
 // ===== BUILDER TAB NAVIGATION =====
@@ -1624,12 +1711,19 @@ function downloadCoverLetter() {
   if (!text || text.includes('AI is writing your cover letter')) {
     showToast('Please wait for the cover letter to finish generating.', true); return;
   }
-  const printWin = window.open('', '_blank', 'width=800,height=900');
-  printWin.document.write(`<!DOCTYPE html><html><head><title>Cover Letter</title>
-    <style>body{font-family:'Times New Roman',serif;font-size:12pt;margin:2.5cm;color:#000;line-height:1.8;}p{margin-bottom:12pt;}</style>
+  const printWin = window.open('', '_blank', 'width=900,height=1100');
+  if (!printWin) { showToast('Popup blocked — please allow popups and try again.', true); return; }
+  printWin.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Cover Letter</title>
+    <style>
+      @page { size: A4; margin: 2.5cm; }
+      @media print { html,body { margin:0!important;padding:0!important; } @page { margin:2.5cm; } }
+      body { font-family:'Times New Roman',serif; font-size:12pt; margin:0; padding:0; color:#000; line-height:1.8; }
+      p { margin-bottom:12pt; }
+    </style>
     </head><body><pre style="font-family:'Times New Roman',serif;font-size:12pt;white-space:pre-wrap;line-height:1.8;">${text}</pre></body></html>`);
   printWin.document.close();
-  setTimeout(() => { printWin.print(); }, 500);
+  printWin.onload = function() { setTimeout(() => { printWin.focus(); printWin.print(); }, 400); };
+  setTimeout(() => { try { printWin.focus(); printWin.print(); } catch(e) {} }, 900);
   // Auto-save to Firestore if logged in
   const htmlContent = `<pre style="font-family:'Times New Roman',serif;font-size:11pt;line-height:1.8;white-space:pre-wrap;">${text}</pre>`;
   if (window.saveCVToFirestore) saveCVToFirestore('cover_letter', `Cover Letter (${new Date().toLocaleDateString('en-GB')})`, htmlContent, '', '');
