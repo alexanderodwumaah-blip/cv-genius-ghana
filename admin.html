@@ -342,7 +342,7 @@
 </div><!-- end #adminApp -->
 
 <!-- ADMIN LOGIN MODAL — two-step: secret code first, then credentials -->
-<div class="modal-overlay" id="adminLoginModal" style="z-index:600;">
+<div class="modal-overlay" id="adminLoginModal" style="z-index:2000;">
   <div class="modal-box" style="max-width:400px;">
 
     <!-- STEP 1: SECRET CODE -->
@@ -500,7 +500,9 @@ window.showAdminLogin = () => {
   document.getElementById('secretCodeInput').value = '';
   document.getElementById('secretCodeError').style.display = 'none';
   document.getElementById('adminLoginModal').classList.add('active');
-  setTimeout(() => document.getElementById('secretCodeInput').focus(), 100);
+  // Ensure the modal is on top of the access-denied screen
+  document.getElementById('adminLoginModal').style.zIndex = '2000';
+  setTimeout(() => document.getElementById('secretCodeInput').focus(), 150);
 };
 
 window.checkSecretCode = () => {
