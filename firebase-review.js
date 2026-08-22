@@ -292,6 +292,7 @@ export {
   fileToBase64,
   submitCVForReview,
   aiScanCV,
+  callGeminiReview,
   pushReviewToUser,
   uploadRefinedCV,
   sendMessage, getMessages, listenMessages,
