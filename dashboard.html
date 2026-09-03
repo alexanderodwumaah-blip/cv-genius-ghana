@@ -286,8 +286,8 @@
   </style>
 </head>
 <body>
-<!-- ACCESS DENIED (shown before auth check) -->
-<div id="accessDenied" class="access-denied" style="display:none;">
+<!-- ACCESS DENIED (shown by default — auth script hides it if admin is already signed in) -->
+<div id="accessDenied" class="access-denied" style="display:flex;">
   <div class="icon"><i class="fas fa-lock" style="font-size:3.5rem;color:var(--primary);"></i></div>
   <h2 style="font-size:1.4rem;font-weight:800;">Admin Access Required</h2>
   <p style="color:var(--text-light);max-width:340px;line-height:1.6;">This dashboard is restricted. Enter the secret access code to continue.</p>
@@ -295,7 +295,7 @@
 </div>
 
 <!-- LOADING -->
-<div id="loadingScreen" style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;color:var(--text-light);font-size:0.9rem;background:var(--bg);z-index:1000;">
+<div id="loadingScreen" style="position:fixed;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;gap:14px;color:var(--text-light);font-size:0.9rem;background:var(--bg);z-index:1000;">
   <div class="spinner" style="width:36px;height:36px;border-width:4px;"></div>
   <p>Verifying admin access&hellip;</p>
 </div>
@@ -580,111 +580,82 @@ let unsubMsgs = null;
 let cvPdfFrameLoaded = false;
 
 // ===== AUTH =====
-// Hard timeout: if onAuthStateChanged never fires (module import failed silently),
-// show accessDenied after 5 seconds so the user isn't stuck on loading forever.
+// Fallback: if onAuthStateChanged never fires within 6s (e.g. module failed to load),
+// drop straight to the access-denied / login screen.
 setTimeout(() => {
   const loadingEl = document.getElementById('loadingScreen');
   if (loadingEl && loadingEl.style.display !== 'none') {
-    console.error('onAuthStateChanged never fired — forcing access denied screen');
     loadingEl.style.display = 'none';
     document.getElementById('accessDenied').style.display = 'flex';
   }
-}, 5000);
+}, 6000);
 
-// Guard against concurrent onAuthStateChanged invocations (e.g. signOut inside
-// the handler triggering a second call before the first one finishes).
-let _authCheckInProgress = false;
+// Tracks whether we are mid-way through verifying an admin so we don't run
+// the check twice for the SAME sign-in event.  We deliberately do NOT block
+// the null-user (sign-out) callback — that must always run to clear the UI.
+let _verifyingAdmin = false;
 
 onAuthStateChanged(auth, async user => {
-  // If a check is already running, skip this re-entrant call.
-  // This prevents the signOut() we call on non-admin users from
-  // spawning a second overlapping auth-state handler.
-  if (_authCheckInProgress) {
-    console.log('Auth check already in progress, skipping...');
+  // ── No user: show access-denied immediately ──────────────────────────────
+  if (!user) {
+    _verifyingAdmin = false;
+    document.getElementById('loadingScreen').style.display = 'none';
+    document.getElementById('adminApp').style.display = 'none';
+    document.getElementById('accessDenied').style.display = 'flex';
     return;
   }
-  _authCheckInProgress = true;
 
+  // ── User signed in but we're already checking — ignore duplicate fire ────
+  if (_verifyingAdmin) return;
+  _verifyingAdmin = true;
+
+  // Show loading while we check Firestore
+  document.getElementById('loadingScreen').style.display = 'flex';
+  document.getElementById('accessDenied').style.display = 'none';
+
+  let admin = false;
   try {
-    if (!user) {
-      console.log('No user signed in');
-      document.getElementById('loadingScreen').style.display = 'none';
-      document.getElementById('accessDenied').style.display = 'flex';
-      document.getElementById('adminApp').style.display = 'none';
-      _authCheckInProgress = false;
-      return;
-    }
+    const snap = await Promise.race([
+      getDoc(doc(db, 'admins', user.uid)),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 8000))
+    ]);
+    admin = snap.exists();
+  } catch (e) {
+    console.warn('Admin check error:', e.message);
+    admin = false;
+  }
 
-    console.log('User signed in, verifying admin status...');
-    // Show loading while we verify admin status — keep visible until resolved
-    document.getElementById('loadingScreen').style.display = 'flex';
-    document.getElementById('accessDenied').style.display = 'none';
-    document.getElementById('adminApp').style.display = 'none';
+  // Always hide loading
+  document.getElementById('loadingScreen').style.display = 'none';
 
-    let admin = false;
-    try {
-      admin = await Promise.race([
-        isAdmin(user.uid),
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Admin check timed out')), 10000)
-        )
-      ]);
-      console.log('Admin check result:', admin);
-    } catch (e) {
-      console.warn('isAdmin check failed:', e.message);
-      admin = false;
-    }
-
-    // Always hide the loading screen regardless of outcome
-    document.getElementById('loadingScreen').style.display = 'none';
-
-    if (!admin) {
-      console.log('User is not an admin');
-      document.getElementById('accessDenied').style.display = 'flex';
-      document.getElementById('adminApp').style.display = 'none';
-      // Restore the login button if the modal is open
-      const loginModal = document.getElementById('adminLoginModal');
-      if (loginModal?.classList.contains('active')) {
-        const errEl = document.getElementById('loginError');
-        if (errEl) {
-          errEl.textContent = '⛔ This account is not registered as an admin.';
-          errEl.style.display = 'block';
-        }
-        const btn = document.getElementById('loginBtn');
-        if (btn) { btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Sign In'; btn.disabled = false; }
-      } else {
-        loginModal?.classList.remove('active');
-      }
-      // Release the guard BEFORE signing out so the null-user callback
-      // can run cleanly without being blocked.
-      _authCheckInProgress = false;
-      try { await signOut(auth); } catch (_) {}
-      return;
-    }
-
-    // Admin confirmed — show the dashboard
-    console.log('Admin confirmed, showing dashboard');
-    document.getElementById('adminLoginModal')?.classList.remove('active');
-    currentAdmin = user;
-    const avatarEl = document.getElementById('adminAvatar');
-    const nameEl = document.getElementById('adminName');
-    if (avatarEl) avatarEl.textContent = (user.displayName || user.email)[0].toUpperCase();
-    if (nameEl) nameEl.textContent = user.displayName || user.email.split('@')[0];
-    document.getElementById('adminApp').style.display = 'flex';
-    document.getElementById('loadingScreen').style.display = 'none';
-    document.getElementById('accessDenied').style.display = 'none';
-    showPage('dashboard');
-    loadAllSubmissions();
-    loadAllSubscriptions();
-
-  } catch (error) {
-    console.error('Critical error in onAuthStateChanged:', error);
-    document.getElementById('loadingScreen').style.display = 'none';
+  if (!admin) {
+    // Not an admin — show error in login modal if open, then sign out
     document.getElementById('accessDenied').style.display = 'flex';
     document.getElementById('adminApp').style.display = 'none';
-  } finally {
-    _authCheckInProgress = false;
+    const loginModal = document.getElementById('adminLoginModal');
+    if (loginModal?.classList.contains('active')) {
+      const errEl = document.getElementById('loginError');
+      if (errEl) { errEl.textContent = '⛔ This account is not registered as an admin.'; errEl.style.display = 'block'; }
+      const btn = document.getElementById('loginBtn');
+      if (btn) { btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Sign In'; btn.disabled = false; }
+    }
+    _verifyingAdmin = false;
+    try { await signOut(auth); } catch (_) {}
+    return;
   }
+
+  // ── Admin confirmed ───────────────────────────────────────────────────────
+  _verifyingAdmin = false;
+  document.getElementById('adminLoginModal')?.classList.remove('active');
+  currentAdmin = user;
+  const avatarEl = document.getElementById('adminAvatar');
+  const nameEl   = document.getElementById('adminName');
+  if (avatarEl) avatarEl.textContent = (user.displayName || user.email)[0].toUpperCase();
+  if (nameEl)   nameEl.textContent   = user.displayName || user.email.split('@')[0];
+  document.getElementById('adminApp').style.display = 'flex';
+  showPage('dashboard');
+  loadAllSubmissions();
+  loadAllSubscriptions();
 });
 
 window.showAdminLogin = () => {
