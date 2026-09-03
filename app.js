@@ -129,25 +129,34 @@ function formatFileSize(bytes) {
 const GEMINI_API_KEY = window.__GEMINI_KEY__ || '';
 
 // Model list ordered: best quality first, with free-tier fallbacks.
-// All are confirmed live stable models as of August 2026.
 const GEMINI_MODELS = [
-  'gemini-2.5-flash',       // Best price/performance — primary workhorse
-  'gemini-2.5-pro',         // Highest quality — used when flash quota is hit
-  'gemini-2.5-flash-lite',  // Fastest, highest free quota — reliable fallback
-  'gemini-3.6-flash',       // New-gen Flash — additional fallback
-  'gemini-3.7-flash',       // Latest flagship — last resort
+  'gemini-1.5-flash',       // Best price/performance — primary workhorse
+  'gemini-1.5-pro',         // Highest quality — used when flash quota is hit
+  'gemini-1.5-flash-8b'     // Fastest, highest free quota — reliable fallback
 ];
+
+// Per-request timeout for a single Gemini fetch (90 seconds).
+// Without this, a hung TCP connection keeps the spinner running forever.
+const GEMINI_FETCH_TIMEOUT_MS = 90_000;
 
 async function callGemini(requestBody) {
   let lastError = null;
   for (const model of GEMINI_MODELS) {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`;
+
+    // Wrap each fetch in an AbortController so we can time it out cleanly.
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), GEMINI_FETCH_TIMEOUT_MS);
+
     try {
       const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody)
+        body: JSON.stringify(requestBody),
+        signal: controller.signal
       });
+      clearTimeout(timeoutId);
+
       if (!response.ok) {
         const err = await response.json().catch(() => ({}));
         const msg = err.error?.message || `HTTP ${response.status}`;
@@ -176,7 +185,14 @@ async function callGemini(requestBody) {
       data._modelUsed = model;
       return data;
     } catch (e) {
+      clearTimeout(timeoutId);
       const msg = e.message || '';
+      // AbortError means our timeout fired — treat as "busy, try next model"
+      if (e.name === 'AbortError') {
+        console.warn(`Model ${model} timed out after ${GEMINI_FETCH_TIMEOUT_MS / 1000}s — trying next model…`);
+        lastError = new Error(`Model ${model} timed out`);
+        continue;
+      }
       if (msg.includes('not found') || msg.includes('not supported') ||
           msg.includes('no longer available') || msg.includes('ListModels') ||
           msg.includes('quota') || msg.includes('RESOURCE_EXHAUSTED') ||
@@ -350,6 +366,13 @@ async function refineCV() {
     msgIdx = Math.min(msgIdx + 1, progressMessages.length - 1);
     if (btn.disabled) btn.innerHTML = `<span class="spinner"></span> ${progressMessages[msgIdx]}`;
   }, 3500);
+
+  // Always restore the button — even if an error or sub-check throws
+  const restoreBtn = () => {
+    clearInterval(msgTimer);
+    btn.innerHTML = originalBtnText;
+    btn.disabled = false;
+  };
 
   try {
     const spellingLabel = spelling === 'british' ? 'British English' : 'American English';
@@ -557,14 +580,21 @@ EXACT HTML STRUCTURE TO USE:
     document.getElementById('improvementsList').innerHTML =
       improvements.map(i => `<li>${i}</li>`).join('');
 
-    clearInterval(msgTimer);
-    btn.innerHTML = originalBtnText;
-    btn.disabled = false;
+    // Restore the button now — before the subscription check so the UI is
+    // always responsive even if the sub check is slow or fails.
+    restoreBtn();
 
     // ── PAYWALL CHECK ──────────────────────────────────────────────────────────
     // Check subscription status AFTER generating output (AI always runs fully).
     // Non-premium users see a blurred preview and an unlock prompt.
-    const sub = window.checkSubscription ? await window.checkSubscription() : { status: 'none' };
+    // Guard with try/catch so a Firestore error never prevents step 4 from showing.
+    let sub = { status: 'none' };
+    try {
+      sub = window.checkSubscription ? await window.checkSubscription() : { status: 'none' };
+    } catch (subErr) {
+      console.warn('Subscription check failed (non-fatal):', subErr.message);
+    }
+
     if (sub.status === 'active') {
       // Premium user — show full output, wire up download button normally
       document.getElementById('refinedOutput').style.webkitMaskImage = '';
@@ -580,19 +610,18 @@ EXACT HTML STRUCTURE TO USE:
     goToStep(4);
 
   } catch (err) {
-    clearInterval(msgTimer);
-    btn.innerHTML = originalBtnText;
-    btn.disabled = false;
+    restoreBtn();
 
     // Give a clear, non-technical error message
     let userMsg = err.message || 'Something went wrong.';
     if (userMsg.includes('quota') || userMsg.includes('rate limit') ||
         userMsg.includes('RESOURCE_EXHAUSTED') || userMsg.includes('busy') ||
-        userMsg.includes('capacity')) {
+        userMsg.includes('capacity') || userMsg.includes('timed out')) {
       userMsg = 'The AI is at capacity right now. Please wait 30–60 seconds and tap "Refine My CV" again.';
     } else if (userMsg.includes('incomplete') || userMsg.includes('empty')) {
       userMsg = 'The AI returned an incomplete result. Please try again.';
-    } else if (userMsg.includes('network') || userMsg.includes('fetch') || userMsg.includes('Failed to fetch')) {
+    } else if (userMsg.includes('network') || userMsg.includes('fetch') ||
+               userMsg.includes('Failed to fetch') || userMsg.includes('AbortError')) {
       userMsg = 'Network error — please check your internet connection and try again.';
     }
     showToast(userMsg, true);
@@ -1110,9 +1139,6 @@ function applyBuilderPaywall(subStatus) {
         <button onclick="checkSubscriptionAndUnlock('builder')" style="background:#f0f0f8;color:#5a5a7a;border:none;border-radius:10px;padding:12px;font-size:0.85rem;font-weight:600;cursor:pointer;">
           <i class="fas fa-sync"></i> I've already paid &mdash; check now
         </button>
-        <button onclick="document.getElementById('builderPaywallOverlay').remove()" style="background:transparent;color:#aaa;border:none;font-size:0.8rem;cursor:pointer;padding:6px;">
-          Close
-        </button>
       </div>
       <p style="font-size:0.72rem;color:#ccc;margin-top:14px;">Payment via MoMo &middot; Verified manually within hours &middot; No auto-renewal</p>
     </div>`;
@@ -1603,27 +1629,36 @@ async function showCoverLetter(name, contact, target, role, cvText) {
   const modal = document.getElementById('coverLetterModal');
   const contentEl = document.getElementById('coverLetterContent');
 
+  // Track the current generation attempt so stale results are discarded
+  // if the modal is closed and reopened before the previous call finishes.
+  const generationId = Date.now();
+  modal._generationId = generationId;
+
   // Show modal immediately with loading state
-  contentEl.textContent = '';
+  contentEl.innerHTML = '';
   modal.classList.add('active');
 
   // Show spinner inside the modal content area
   contentEl.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;gap:16px;color:#5a5a7a;font-family:'Inter',sans-serif;">
     <div class="spinner" style="width:40px;height:40px;border-width:4px;border-top-color:var(--primary);"></div>
     <p style="font-size:0.95rem;">AI is writing your cover letter…</p>
+    <p style="font-size:0.78rem;color:#aaa;">Usually takes 10–20 seconds. Close this window at any time.</p>
   </div>`;
 
+  let letterText = null;
   try {
-    const aiLetter = await generateCoverLetterAI(name, contact, target, role, cvText);
-    if (aiLetter) {
-      contentEl.textContent = aiLetter;
-      return;
-    }
-    // AI returned empty — show template with a note
-    showToast('AI was unavailable — showing a template version. Try again in a moment.', true);
+    // Wrap the AI call in a 60-second timeout so the modal never stays
+    // in a perpetual loading state if the network hangs.
+    letterText = await Promise.race([
+      generateCoverLetterAI(name, contact, target, role, cvText),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Cover letter generation timed out')), 60000)
+      )
+    ]);
   } catch (err) {
     const isQuota = err.message?.includes('quota') || err.message?.includes('capacity') ||
-                    err.message?.includes('rate limit') || err.message?.includes('busy');
+                    err.message?.includes('rate limit') || err.message?.includes('busy') ||
+                    err.message?.includes('timed out');
     const msg = isQuota
       ? 'AI is busy right now — showing a template version. Try again in 30 seconds.'
       : 'AI generation failed — showing a template version.';
@@ -1631,7 +1666,15 @@ async function showCoverLetter(name, contact, target, role, cvText) {
     showToast(msg, true);
   }
 
-  // Fallback: static template (clearly labelled so user knows it's a starting point)
+  // Discard result if modal was closed or reopened during the async wait
+  if (modal._generationId !== generationId) return;
+
+  if (letterText) {
+    contentEl.textContent = letterText;
+    return;
+  }
+
+  // Fallback: static template
   const cl = buildCoverLetter(name, contact, target, role, cvText);
   contentEl.textContent = cl;
 }
@@ -1740,7 +1783,11 @@ function copyCoverLetter() {
 
 function closeCLModal(e, force) {
   if (force || (e && e.target === document.getElementById('coverLetterModal'))) {
-    document.getElementById('coverLetterModal').classList.remove('active');
+    const modal = document.getElementById('coverLetterModal');
+    // Invalidate any in-flight generation so its result is not displayed
+    // after the user has already closed the modal.
+    if (modal) modal._generationId = null;
+    modal?.classList.remove('active');
   }
 }
 

@@ -27,26 +27,35 @@ const GEMINI_KEY = window.__GEMINI_KEY__ || '';
 
 // Current working models — same order as app.js for consistency
 const GEMINI_MODELS_REVIEW = [
-  'gemini-2.5-flash',
-  'gemini-2.5-pro',
-  'gemini-2.5-flash-lite',
-  'gemini-3.6-flash',
-  'gemini-3.7-flash'
+  'gemini-1.5-flash',
+  'gemini-1.5-pro',
+  'gemini-1.5-flash-8b'
 ];
+
+// Per-request fetch timeout — prevents a hung TCP connection from keeping
+// the admin "Scanning…" state forever.
+const REVIEW_FETCH_TIMEOUT_MS = 90_000;
 
 async function callGeminiReview(requestBody) {
   let lastError = null;
   for (const model of GEMINI_MODELS_REVIEW) {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_KEY}`;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), REVIEW_FETCH_TIMEOUT_MS);
     try {
-      const resp = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(requestBody) });
+      const resp = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
       if (resp.ok) {
         const data = await resp.json();
         return data;
       }
-      const err = await resp.json().catch(()=>({}));
+      const err = await resp.json().catch(() => ({}));
       const msg = err.error?.message || `HTTP ${resp.status}`;
-      // Fall through to next model on quota (429), model-not-found (404/400), or deprecation
       const shouldFallback =
         resp.status === 404 || resp.status === 429 ||
         (resp.status === 400 && (msg.includes('not found') || msg.includes('not supported') || msg.includes('INVALID_ARGUMENT'))) ||
@@ -56,7 +65,13 @@ async function callGeminiReview(requestBody) {
       if (shouldFallback) { lastError = new Error(msg); continue; }
       throw new Error(msg);
     } catch (e) {
+      clearTimeout(timeoutId);
       const msg = e.message || '';
+      if (e.name === 'AbortError') {
+        console.warn(`Review scan: model ${model} timed out — trying next…`);
+        lastError = new Error(`${model} timed out`);
+        continue;
+      }
       if (msg.includes('not found') || msg.includes('not supported') ||
           msg.includes('no longer available') || msg.includes('ListModels') ||
           msg.includes('quota') || msg.includes('RESOURCE_EXHAUSTED')) {
@@ -190,8 +205,46 @@ Analyse this CV thoroughly and return a JSON object with this EXACT structure (n
     // Try Gemini models via the fallback helper
     const data = await callGeminiReview(requestBody);
     let text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    text = text.replace(/^```json\s*/i,'').replace(/^```\s*/i,'').replace(/\s*```$/i,'').trim();
-    const result = JSON.parse(text);
+
+    // ── Robust JSON extraction ──────────────────────────────────────────────
+    // Gemini sometimes wraps output in markdown fences, adds prose before/after,
+    // or returns trailing commas / comments inside the JSON block.
+    // Strategy: strip fences → find first '{' to last '}' → repair → parse.
+
+    // 1. Strip ALL markdown code fences (```json … ``` or ``` … ```)
+    text = text
+      .replace(/```json\s*/gi, '')
+      .replace(/```\s*/gi, '')
+      .trim();
+
+    // 2. Extract the JSON object: everything from the first '{' to the last '}'
+    const firstBrace = text.indexOf('{');
+    const lastBrace  = text.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace > firstBrace) {
+      text = text.slice(firstBrace, lastBrace + 1);
+    }
+
+    // 3. Light repair: remove JavaScript-style trailing commas before } or ]
+    //    e.g.  ["foo", "bar",]  →  ["foo", "bar"]
+    text = text.replace(/,\s*([}\]])/g, '$1');
+
+    // 4. Attempt parse; if it still fails, surface a clear error message
+    let result;
+    try {
+      result = JSON.parse(text);
+    } catch (parseErr) {
+      // Try one more time after stripping single-line // comments (rare but seen)
+      const stripped = text.replace(/\/\/[^\n]*/g, '').replace(/,\s*([}\]])/g, '$1');
+      try {
+        result = JSON.parse(stripped);
+      } catch {
+        throw new Error(
+          `AI returned a response that could not be parsed as JSON. ` +
+          `Raw preview: ${text.slice(0, 120)}…`
+        );
+      }
+    }
+    // ── End robust JSON extraction ──────────────────────────────────────────
 
     await updateDoc(doc(db, 'cv_submissions', submissionId), {
       aiScanStatus: 'done',
