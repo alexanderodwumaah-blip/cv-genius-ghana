@@ -25,11 +25,13 @@ const db = getFirestore(app);
 // ===== GEMINI CONFIG =====
 const GEMINI_KEY = window.__GEMINI_KEY__ || '';
 
-// Current working models — same order as app.js for consistency
+// Current working models — updated to current Gemini API stable endpoints
 const GEMINI_MODELS_REVIEW = [
-  'gemini-1.5-flash',
-  'gemini-1.5-pro',
-  'gemini-1.5-flash-8b'
+  'gemini-2.5-flash',
+  'gemini-2.5-flash-lite',
+  'gemini-3.5-flash',
+  'gemini-3.6-flash',
+  'gemini-2.5-pro'
 ];
 
 // Per-request fetch timeout — prevents a hung TCP connection from keeping

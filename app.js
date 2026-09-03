@@ -56,6 +56,10 @@ function goToStep(n) {
   if (n > 1 && n === 2) {
     const target = document.querySelector('input[name="target"]:checked');
     if (!target) { showToast('Please select a target opportunity first.', true); return; }
+    // Cover Letter Only — tell the user to upload/paste their CV, then we generate the letter
+    if (target.value === 'cover_letter') {
+      showToast('Upload your CV below and we\'ll generate a professional cover letter from it.', false);
+    }
   }
   if (n > 2 && n === 3) {
     const text = document.getElementById('cvPasteText').value.trim();
@@ -130,9 +134,11 @@ const GEMINI_API_KEY = window.__GEMINI_KEY__ || '';
 
 // Model list ordered: best quality first, with free-tier fallbacks.
 const GEMINI_MODELS = [
-  'gemini-1.5-flash',       // Best price/performance — primary workhorse
-  'gemini-1.5-pro',         // Highest quality — used when flash quota is hit
-  'gemini-1.5-flash-8b'     // Fastest, highest free quota — reliable fallback
+  'gemini-2.5-flash',       // Best price/performance — primary
+  'gemini-2.5-flash-lite',  // Fastest, most budget-friendly
+  'gemini-3.5-flash',       // Previous-gen flash, still stable
+  'gemini-3.6-flash',       // Stable fallback
+  'gemini-2.5-pro'          // Most advanced — last resort
 ];
 
 // Per-request timeout for a single Gemini fetch (90 seconds).
@@ -338,6 +344,16 @@ async function refineCV() {
   const target    = targetEl.value;
   const specificRole = document.getElementById('specific-role').value.trim();
   const pasteText = document.getElementById('cvPasteText').value.trim();
+
+  // ── Cover Letter Only target: skip CV refining, go straight to CL generator ──
+  if (target === 'cover_letter') {
+    if (!uploadedFile && !pasteText) {
+      showToast('Please upload or paste your CV so we can generate your cover letter.', true); return;
+    }
+    const cvText = pasteText || (uploadedText || '');
+    showCoverLetter(null, null, 'general', specificRole, cvText);
+    return;
+  }
   const length    = document.getElementById('cvLength').value;
   const tone      = document.getElementById('cvTone').value;
   const spelling  = document.getElementById('spelling').value;
@@ -1206,48 +1222,83 @@ const sampleData = {
 
   engineering: `<div class="cv-name">KWABENA MENSAH BOATENG</div>
 <div class="cv-contact">kboateng.eng@gmail.com | +233 24 876 5432 | linkedin.com/in/kwabena-boateng-eng</div>
+
 <div class="cv-section-title">EDUCATION</div>
 <div class="cv-entry-header"><span class="cv-entry-org">University of Energy and Natural Resources (UENR)</span><span class="cv-entry-loc">Sunyani, Ghana</span></div>
 <div class="cv-entry-header"><span class="cv-entry-title">BSc. Electrical and Electronics Engineering</span><span class="cv-entry-date">Sep 2021 – Jun 2025</span></div>
-<div style="font-size:10pt; margin-top:2px;">Academic Standing: Second Class Upper | CGPA: 3.61/4.00</div>
-<div style="font-size:10pt;">Relevant Courses: Power System Analysis, High Voltage Engineering, Power Generation Transmission & Distribution, Renewable Energy Systems, Digital Electronics</div>
+<div style="font-size:10pt; margin-top:2px;">Academic Standing: Second Class Upper (Honours) &nbsp;|&nbsp; CGPA: 3.61 / 4.00</div>
+<div style="font-size:10pt; margin-top:1px;">Final Year Project: Design and Simulation of a Grid-Tied Solar PV System for an Off-Grid Community in the Bono Region — Achieved 94% in project assessment.</div>
+<div style="font-size:10pt; margin-top:1px;">Relevant Courses: Power System Analysis, High Voltage Engineering, Power Generation Transmission &amp; Distribution, Renewable Energy Systems, Digital Electronics, Control Systems Engineering, Industrial Automation</div>
+
 <div class="cv-section-title">PROFESSIONAL EXPERIENCE</div>
 <div class="cv-entry-header"><span class="cv-entry-org">Ghana Grid Company Limited (GRIDCo)</span><span class="cv-entry-loc">Accra, Ghana</span></div>
-<div class="cv-entry-header"><span class="cv-entry-title">National Service Personnel – System Operations Department</span><span class="cv-entry-date">Oct 2025 – Present</span></div>
+<div class="cv-entry-header"><span class="cv-entry-title">National Service Personnel – System Operations &amp; Maintenance Planning Department</span><span class="cv-entry-date">Oct 2025 – Present</span></div>
 <ul class="cv-bullets">
-  <li>Monitors real-time power system operations across Ghana's national transmission network, supporting load dispatch and voltage control activities.</li>
-  <li>Assisted in the preparation of 12 weekly system performance reports, improving documentation accuracy by 25% through structured Excel-based templates.</li>
-  <li>Participated in a substation commissioning exercise at Pokuase 330/161kV substation, gaining practical exposure to protection relay testing and energisation procedures.</li>
-  <li>Supported the maintenance planning team by compiling outage data for 8 transmission lines into a centralised fault register.</li>
+  <li>Monitors real-time power flow across Ghana's national 161kV/330kV transmission network, supporting load dispatch decisions and frequency regulation in the National Control Centre.</li>
+  <li>Redesigned 12 weekly system performance report templates in Excel, reducing preparation time by 35% and improving reporting accuracy by 25% as confirmed by the Department Head.</li>
+  <li>Participated in the commissioning of the Pokuase 330/161kV substation extension — assisted in protection relay testing, secondary injection testing, and energisation sequence verification for 2 new transformer bays.</li>
+  <li>Compiled and maintained a centralised fault register tracking outage events on 8 transmission corridors, enabling a 20% improvement in fault pattern identification for quarterly maintenance planning.</li>
+  <li>Contributed to the preparation of the Q1 2026 Annual Maintenance Programme (AMP), identifying 14 priority maintenance items across transmission lines in the Northern Interconnected System.</li>
 </ul>
-<div class="cv-entry-header" style="margin-top:8px;"><span class="cv-entry-org">Volta River Authority (VRA)</span><span class="cv-entry-loc">Tema, Ghana</span></div>
+
+<div class="cv-entry-header" style="margin-top:8px;"><span class="cv-entry-org">Volta River Authority (VRA) – Generation &amp; Transmission Division</span><span class="cv-entry-loc">Tema, Ghana</span></div>
 <div class="cv-entry-header"><span class="cv-entry-title">Electrical Engineering Intern</span><span class="cv-entry-date">Jul 2024 – Sep 2024</span></div>
 <ul class="cv-bullets">
-  <li>Rotated through the Generation, Transmission, and Control departments, gaining exposure to hydro and thermal power generation systems at the Akosombo and Kpong plants.</li>
-  <li>Designed a basic load-flow simulation model in MATLAB for a section of the VRA network as part of a departmental training project.</li>
-  <li>Compiled and analysed monthly equipment inspection reports for 5 generator units, contributing to predictive maintenance scheduling.</li>
+  <li>Rotated across Generation, Transmission, and System Control departments at Akosombo and Kpong plants — gained hands-on exposure to 160MW hydro generation units, step-up transformers, and SCADA monitoring systems.</li>
+  <li>Developed a MATLAB/Simulink load-flow simulation model for a 12-bus section of the VRA transmission network, validating active and reactive power flows within 3% of measured field values.</li>
+  <li>Compiled and cross-referenced monthly inspection reports for 5 generator units (totalling 640MW nameplate capacity), identifying 2 anomalies flagged for engineering review.</li>
+  <li>Assisted in post-fault analysis of a protection misoperation on the Akosombo–Tema 161kV line, contributing findings to the Incident Report submitted to the Transmission Manager.</li>
 </ul>
-<div class="cv-entry-header" style="margin-top:8px;"><span class="cv-entry-org">Electricity Company of Ghana (ECG) – Brong-Ahafo Region</span><span class="cv-entry-loc">Sunyani, Ghana</span></div>
-<div class="cv-entry-header"><span class="cv-entry-title">Electrical Engineering Intern</span><span class="cv-entry-date">Jun 2023 – Aug 2023</span></div>
+
+<div class="cv-entry-header" style="margin-top:8px;"><span class="cv-entry-org">Electricity Company of Ghana (ECG) – Brong-Ahafo Regional Office</span><span class="cv-entry-loc">Sunyani, Ghana</span></div>
+<div class="cv-entry-header"><span class="cv-entry-title">Electrical Engineering Intern – Distribution &amp; Maintenance</span><span class="cv-entry-date">Jun 2023 – Aug 2023</span></div>
 <ul class="cv-bullets">
-  <li>Supported the Fault and Maintenance team in conducting patrols and fault detection on 33kV distribution lines serving over 4,000 customers in the Sunyani municipality.</li>
-  <li>Assisted in the installation and testing of 3 new distribution transformers, reducing localised outage frequency by an estimated 18% in the affected communities.</li>
+  <li>Deployed with the Fault &amp; Maintenance crew on 33kV and 11kV distribution line patrols covering 6 feeders serving over 4,000 customers across the Sunyani municipality — reduced average fault response time by 22% through improved patrol scheduling.</li>
+  <li>Supported the installation, stringing, and testing of 3 new 315kVA pole-mounted distribution transformers in Fiapre and Atronie communities, directly restoring reliable supply to approximately 850 households.</li>
+  <li>Calculated transformer loading ratios for 10 distribution transformers using field meter readings, identifying 2 units operating above 85% rated capacity and recommending deloading measures adopted by the Regional Engineer.</li>
+  <li>Prepared technical field reports for 18 maintenance interventions, maintaining 100% documentation compliance for the regional supervisor's monthly submission to ECG headquarters.</li>
 </ul>
+
+<div class="cv-section-title">FINAL YEAR PROJECT</div>
+<div class="cv-entry-header"><span class="cv-entry-title">Design and Simulation of a Grid-Tied 50kW Solar PV System — Bono Region, Ghana</span><span class="cv-entry-date">Jan 2025 – Jun 2025</span></div>
+<ul class="cv-bullets">
+  <li>Conducted site assessment and solar irradiance analysis using NASA POWER data for a selected community in the Bono Region with 6.2 kWh/m²/day average insolation.</li>
+  <li>Designed a 50kW grid-tied PV system in PVsyst, specifying panel tilt, inverter sizing, string configuration, and protection scheme — projected annual energy yield of 72,500 kWh with PR of 81.4%.</li>
+  <li>Performed harmonic distortion analysis and developed a filter design in MATLAB to reduce THD from 8.3% to under 3% as per IEEE 519-2022 standards.</li>
+  <li>Produced full technical documentation (single-line diagram, equipment schedule, load flow report) and presented findings to a panel of 5 faculty assessors, receiving a score of 94/100.</li>
+</ul>
+
 <div class="cv-section-title">LEADERSHIP EXPERIENCE</div>
-<div class="cv-entry-header"><span class="cv-entry-title">General Secretary, Electrical & Electronics Engineering Students' Association (ELEESA-UENR)</span><span class="cv-entry-date">Oct 2023 – Sep 2024</span></div>
+<div class="cv-entry-header"><span class="cv-entry-title">General Secretary, Electrical &amp; Electronics Engineering Students' Association (ELEESA-UENR)</span><span class="cv-entry-date">Oct 2023 – Sep 2024</span></div>
 <ul class="cv-bullets">
-  <li>Coordinated 4 departmental seminars and 2 industry visit programmes attended by 150+ engineering students, strengthening industry–academia linkages.</li>
-  <li>Managed departmental records and correspondence, improving administrative response time by 40%.</li>
+  <li>Planned and executed 4 technical seminars — topics included Power System Stability and Renewable Energy Integration — attended by 150+ engineering students and 6 industry speakers from GRIDCo, ECG, and BXC Energy.</li>
+  <li>Organised 2 industry immersion visits to GRIDCo's Tema Substation and ECG's Brong-Ahafo Region, coordinating logistics for 45 students and securing GHS 8,500 in sponsorship from 3 corporate partners.</li>
+  <li>Managed the association's official correspondence, budget records, and meeting minutes — improved administrative response time by 40% by introducing a shared digital filing system.</li>
 </ul>
+<div class="cv-entry-header" style="margin-top:8px;"><span class="cv-entry-title">Project Team Lead, Arduino &amp; Embedded Systems Bootcamp (ELEESA-UENR)</span><span class="cv-entry-date">Aug 2023</span></div>
+<ul class="cv-bullets">
+  <li>Led a 4-person team to build an automated street lighting prototype using Arduino, LDR sensors, and relay modules — demonstrated live to 80+ students at the closing exhibition.</li>
+</ul>
+
 <div class="cv-section-title">SKILLS</div>
-<div style="font-size:10pt; margin-bottom:4px;"><strong>Technical:</strong> AutoCAD Electrical, MATLAB (Simulink), ETAP (Power Systems), Python, C++, Multisim, Microsoft Excel (Advanced), PLC Basics</div>
-<div style="font-size:10pt; margin-bottom:4px;"><strong>Professional:</strong> Technical Report Writing, Analytical Thinking, Team Collaboration, Problem Solving</div>
+<div style="font-size:10pt; margin-bottom:4px;"><strong>Power &amp; Electrical:</strong> Power System Analysis, Protection Relay Coordination, Load Flow Studies (ETAP, MATLAB/Simulink), Substation Design, AutoCAD Electrical, PVsyst</div>
+<div style="font-size:10pt; margin-bottom:4px;"><strong>Programming &amp; Software:</strong> Python (NumPy, Pandas), MATLAB, C/C++, Multisim, Microsoft Excel (Advanced), PLC Basics (Siemens S7)</div>
+<div style="font-size:10pt; margin-bottom:4px;"><strong>Professional:</strong> Technical Report Writing, Project Management, Engineering Presentations, Root-Cause Fault Analysis, Team Leadership</div>
 <div style="font-size:10pt;"><strong>Languages:</strong> English (Fluent), Twi (Fluent)</div>
-<div class="cv-section-title">CERTIFICATIONS & AWARDS</div>
+
+<div class="cv-section-title">CERTIFICATIONS &amp; AWARDS</div>
 <ul class="cv-awards-list">
-  <li>Certificate of Participation, 5-Day Arduino & Embedded Systems Programming Bootcamp, ELEESA-UENR (2023)</li>
+  <li>Best Engineering Final Year Project, UENR School of Engineering Annual Fair (2025) — Solar PV Design Project</li>
   <li>Best Engineering Project Presentation, UENR School of Engineering Annual Fair (2024)</li>
   <li>Certificate of Completion, Introduction to Renewable Energy Systems, Coursera – Duke University (2024)</li>
+  <li>Certificate of Participation, 5-Day Arduino &amp; Embedded Systems Programming Bootcamp, ELEESA-UENR (2023)</li>
+  <li>Certificate of Completion, Python for Everybody (Specialisation), Coursera – University of Michigan (2023)</li>
+</ul>
+
+<div class="cv-section-title">PROFESSIONAL BODIES</div>
+<ul class="cv-awards-list">
+  <li>Student Member, Ghana Institution of Engineering (GhIE)</li>
+  <li>Student Member, Institute of Electrical and Electronics Engineers (IEEE) – Ghana Section</li>
 </ul>`,
 
   national_service: `<div class="cv-name">KWAME ASANTE BOATENG</div>
@@ -1308,20 +1359,248 @@ const sampleData = {
   <li>Vice-Chancellor's Award for Academic Excellence, University of Ghana (2022)</li>
   <li>African Economic Research Consortium (AERC) Short Course Certificate in Macroeconomics (2023)</li>
   <li>Best Graduating Student, Department of Economics, University of Ghana (2022)</li>
-</ul>`
+</ul>`,
+
+  oil_gas: `<div class="cv-name">EMMANUEL ASANTE ACHEAMPONG</div>
+<div class="cv-contact">e.acheampong@gmail.com | +233 20 456 7890 | linkedin.com/in/emmanuel-acheampong-eng</div>
+
+<div class="cv-section-title">EDUCATION</div>
+<div class="cv-entry-header"><span class="cv-entry-org">Kwame Nkrumah University of Science &amp; Technology (KNUST)</span><span class="cv-entry-loc">Kumasi, Ghana</span></div>
+<div class="cv-entry-header"><span class="cv-entry-title">BSc. Chemical Engineering</span><span class="cv-entry-date">Sep 2019 – Jun 2023</span></div>
+<div style="font-size:10pt; margin-top:2px;">Academic Standing: First Class Honours &nbsp;|&nbsp; CGPA: 3.78 / 4.00</div>
+<div style="font-size:10pt; margin-top:1px;">Final Year Project: Optimisation of Gas Processing Parameters at a Simulated Upstream Separator — Supervisor: Prof. K. Agyemang, Dept. of Chemical Engineering.</div>
+<div style="font-size:10pt; margin-top:1px;">Relevant Courses: Petroleum Refining &amp; Petrochemicals, Thermodynamics, Mass Transfer, Process Simulation (Aspen HYSYS), HSE Management, Fluid Mechanics</div>
+
+<div class="cv-section-title">PROFESSIONAL EXPERIENCE</div>
+<div class="cv-entry-header"><span class="cv-entry-org">Ghana National Petroleum Corporation (GNPC)</span><span class="cv-entry-loc">Accra, Ghana</span></div>
+<div class="cv-entry-header"><span class="cv-entry-title">National Service Personnel – Upstream Operations &amp; Technical Services</span><span class="cv-entry-date">Oct 2023 – Sep 2024</span></div>
+<ul class="cv-bullets">
+  <li>Supported the Technical Services team in monitoring production data from the Jubilee and TEN fields (combined capacity ~100,000 bopd), preparing daily production variance reports that flagged a 4.3% decline trend prompting an engineering review.</li>
+  <li>Assisted in the preparation of the Q2 2024 Well Integrity Assessment Report for 6 producing wells, compiling pressure build-up test data and gas-oil ratio trends across 3 reservoir zones.</li>
+  <li>Participated in a 3-day offshore logistics and HSE orientation at the Jubilee FPSO — certified in Well Control Level 1 (IWCF) and Offshore Survival &amp; Firefighting (OPITO BOSIET).</li>
+  <li>Developed an Excel macro tool to automate reconciliation of daily oil allocation data from 4 co-venturers, reducing manual processing time by 60% and eliminating a recurring discrepancy in the monthly production statement.</li>
+  <li>Contributed to the Environmental Impact Assessment (EIA) review for a proposed gas flare-out project, researching international best practices and summarising findings in a 12-page technical note adopted by the Environmental Affairs unit.</li>
+</ul>
+<div class="cv-entry-header" style="margin-top:8px;"><span class="cv-entry-org">Tullow Oil Ghana Limited</span><span class="cv-entry-loc">Accra, Ghana</span></div>
+<div class="cv-entry-header"><span class="cv-entry-title">Process Engineering Intern</span><span class="cv-entry-date">Jun 2022 – Aug 2022</span></div>
+<ul class="cv-bullets">
+  <li>Assigned to the Process &amp; Facilities team supporting topsides operations at the Jubilee FPSO — rotated across separation, compression, and water injection modules.</li>
+  <li>Built an Aspen HYSYS simulation model for a 3-stage separator to evaluate the effect of inlet GOR variation on gas export quality, findings validated against measured field data to within 2.1%.</li>
+  <li>Conducted a root-cause analysis of recurring high-level alarms on the produced water treatment unit, identifying a calibration drift in 2 level transmitters — recommended remedial action adopted by the Maintenance Supervisor.</li>
+  <li>Prepared a Process Flow Diagram (PFD) update for a new chemical injection skid, collaborating with the Integrity and Instrumentation teams to ensure accuracy for the Management of Change (MOC) package.</li>
+</ul>
+<div class="cv-entry-header" style="margin-top:8px;"><span class="cv-entry-org">Tema Oil Refinery (TOR)</span><span class="cv-entry-loc">Tema, Ghana</span></div>
+<div class="cv-entry-header"><span class="cv-entry-title">Chemical Engineering Intern – Refinery Operations</span><span class="cv-entry-date">Jul 2021 – Aug 2021</span></div>
+<ul class="cv-bullets">
+  <li>Rotated through Crude Distillation Unit (CDU), Fluid Catalytic Cracking (FCC), and Utilities departments — logged operating parameters and compiled shift handover reports for 3 process units.</li>
+  <li>Assisted in a heat exchanger fouling study, calculating heat transfer coefficients from plant data and estimating an 8.5% reduction in thermal efficiency on the CDU preheat train.</li>
+</ul>
+
+<div class="cv-section-title">LEADERSHIP EXPERIENCE</div>
+<div class="cv-entry-header"><span class="cv-entry-title">President, Chemical Engineering Students' Association (CESA-KNUST)</span><span class="cv-entry-date">Oct 2021 – Sep 2022</span></div>
+<ul class="cv-bullets">
+  <li>Led a 12-member executive team, organising 3 industry talks (GNPC, TOR, Unilever) and an annual inter-departmental process design competition attended by 200+ students.</li>
+  <li>Secured GHS 22,000 in sponsorship from 4 corporate partners to fund the association's Annual Dinner and Awards ceremony — largest fundraise in the association's 8-year history.</li>
+</ul>
+
+<div class="cv-section-title">SKILLS</div>
+<div style="font-size:10pt; margin-bottom:4px;"><strong>Process &amp; Engineering:</strong> Aspen HYSYS, Aspen Plus, AutoCAD P&amp;ID, MATLAB, Python, Microsoft Excel (Advanced VBA), Gas Chromatography (Basic)</div>
+<div style="font-size:10pt; margin-bottom:4px;"><strong>Industry:</strong> Upstream Operations, Separator Design, Well Integrity, Flare Management, HAZOP Studies (Participant), Permit-to-Work (PTW) Systems</div>
+<div style="font-size:10pt; margin-bottom:4px;"><strong>HSE:</strong> IWCF Well Control Level 1, OPITO BOSIET (Offshore Survival), ISO 14001 Environmental Awareness</div>
+<div style="font-size:10pt;"><strong>Languages:</strong> English (Fluent), Twi (Fluent)</div>
+
+<div class="cv-section-title">CERTIFICATIONS &amp; AWARDS</div>
+<ul class="cv-awards-list">
+  <li>IWCF Well Control Level 1 Certification (Subsea) — International Well Control Forum (2024)</li>
+  <li>OPITO BOSIET — Offshore Survival &amp; Firefighting Certification (2024)</li>
+  <li>First Class Honours, BSc Chemical Engineering, KNUST (2023)</li>
+  <li>Best Final Year Project, Department of Chemical Engineering, KNUST (2023)</li>
+  <li>Aspen HYSYS Process Simulation Certificate, AspenTech (2022)</li>
+</ul>
+
+<div class="cv-section-title">PROFESSIONAL BODIES</div>
+<ul class="cv-awards-list">
+  <li>Graduate Member, Ghana Institution of Engineering (GhIE)</li>
+  <li>Student Member, Society of Petroleum Engineers (SPE) – Ghana Section</li>
+</ul>`,
+
+  mining: `<div class="cv-name">ABIGAIL KONADU ASANTE</div>
+<div class="cv-contact">a.asante.mining@gmail.com | +233 27 345 6789 | linkedin.com/in/abigail-asante-mining</div>
+
+<div class="cv-section-title">EDUCATION</div>
+<div class="cv-entry-header"><span class="cv-entry-org">University of Mines and Technology (UMaT)</span><span class="cv-entry-loc">Tarkwa, Ghana</span></div>
+<div class="cv-entry-header"><span class="cv-entry-title">BSc. Mining Engineering</span><span class="cv-entry-date">Sep 2019 – Jun 2023</span></div>
+<div style="font-size:10pt; margin-top:2px;">Academic Standing: Second Class Upper (Honours) &nbsp;|&nbsp; CGPA: 3.54 / 4.00</div>
+<div style="font-size:10pt; margin-top:1px;">Final Year Project: Slope Stability Analysis for the Southern Cutback of the Damang Open-Pit Mine using Rocscience RS2 — achieved factor of safety of 1.42 under saturated conditions.</div>
+<div style="font-size:10pt; margin-top:1px;">Relevant Courses: Rock Mechanics, Mine Planning &amp; Design, Drill &amp; Blast Engineering, Mine Ventilation, Environmental Management in Mining, Ore Reserve Estimation, Geotechnical Engineering</div>
+
+<div class="cv-section-title">PROFESSIONAL EXPERIENCE</div>
+<div class="cv-entry-header"><span class="cv-entry-org">AngloGold Ashanti (Obuasi Mine)</span><span class="cv-entry-loc">Obuasi, Ghana</span></div>
+<div class="cv-entry-header"><span class="cv-entry-title">National Service Personnel – Underground Mine Planning &amp; Technical Services</span><span class="cv-entry-date">Oct 2023 – Sep 2024</span></div>
+<ul class="cv-bullets">
+  <li>Supported the Mine Planning team in updating the Annual Mine Plan for Levels 42–47 of the Obuasi underground mine, contributing to short-range scheduling of 4 active stopes with combined planned ore tonnage of 38,000 t/month.</li>
+  <li>Conducted daily underground inspection rounds on active development headings, recording advance rates, support conditions, and blast results — maintained a 100% reporting compliance rate for the 8-month period.</li>
+  <li>Performed ore reserve reconciliation between the geological block model and actual mined tonnage for Q1 2024, identifying a 6.2% dilution variance in Stope 4215 and presenting findings to the Mine Manager.</li>
+  <li>Assisted in the design of 3 crown pillar configurations using Rocscience Examine3D, evaluating failure risk under varying stress conditions — designs adopted in the H2 2024 stope extraction sequence.</li>
+  <li>Compiled the weekly Blasting Performance Report, tracking powder factor, fragmentation index, and overbreak volumes across 12 blast events, contributing to a 9% improvement in average fragmentation score over the service year.</li>
+</ul>
+<div class="cv-entry-header" style="margin-top:8px;"><span class="cv-entry-org">Gold Fields Ghana (Tarkwa Mine)</span><span class="cv-entry-loc">Tarkwa, Ghana</span></div>
+<div class="cv-entry-header"><span class="cv-entry-title">Mining Engineering Intern – Open Pit Operations</span><span class="cv-entry-date">Jun 2022 – Aug 2022</span></div>
+<ul class="cv-bullets">
+  <li>Embedded with the Drill &amp; Blast team on Tarkwa's South Pit — assisted in blast design calculations (burden, spacing, stemming) for 8 production blasts targeting a 15m bench height in oxide ore.</li>
+  <li>Used Vulcan 3D software to generate pit outline cross-sections for a proposed pushback, verifying slope angles against the Geotechnical Design Parameters Manual and flagging a 3° inconsistency for review.</li>
+  <li>Shadowed the Grade Control Geologist on ore–waste boundary delineation, sampling 22 blast holes and contributing to the daily dig-limit map used by the excavator operators.</li>
+  <li>Prepared a mine site water management audit comparing the actual tailings dam freeboard level against the ICMM Standard — identified a 0.4m shortfall and escalated to the Environmental Coordinator.</li>
+</ul>
+<div class="cv-entry-header" style="margin-top:8px;"><span class="cv-entry-org">Ghana Manganese Company (GMC)</span><span class="cv-entry-loc">Nsuta, Ghana</span></div>
+<div class="cv-entry-header"><span class="cv-entry-title">Mining Engineering Intern – Open Cast Operations</span><span class="cv-entry-date">Jul 2021 – Aug 2021</span></div>
+<ul class="cv-bullets">
+  <li>Supported dragline and shovel operations on the main open-cast benches, monitoring daily production KPIs (tonnes moved, fuel consumption, downtime hours) and reporting against budget targets.</li>
+  <li>Assisted in a haul road condition assessment covering 4.2km of mine roads, logging rut depth, surface defects, and drainage blockages — survey informed the Q3 maintenance priority schedule.</li>
+</ul>
+
+<div class="cv-section-title">LEADERSHIP EXPERIENCE</div>
+<div class="cv-entry-header"><span class="cv-entry-title">Vice President, Mining Engineering Students' Association (MESA-UMaT)</span><span class="cv-entry-date">Oct 2021 – Sep 2022</span></div>
+<ul class="cv-bullets">
+  <li>Co-organised the annual MESA Underground Mine Tour to AngloGold Ashanti Obuasi for 55 students, managing logistics, safety inductions, and post-visit technical reports — received the Dean's commendation for industry engagement.</li>
+  <li>Launched a peer-tutoring programme for 2nd-year Rock Mechanics students, recruiting 6 tutors and improving the cohort's average assessment score by 18%.</li>
+</ul>
+
+<div class="cv-section-title">SKILLS</div>
+<div style="font-size:10pt; margin-bottom:4px;"><strong>Mining Software:</strong> Vulcan 3D (Intermediate), Rocscience Suite (RS2, Slide, Examine3D), AutoCAD, Surpac (Basic), Microsoft Excel (Advanced)</div>
+<div style="font-size:10pt; margin-bottom:4px;"><strong>Technical:</strong> Slope Stability Analysis, Drill &amp; Blast Design, Underground Mine Planning, Ore Reserve Estimation (JORC Framework), Geotechnical Monitoring, Ventilation Calculations</div>
+<div style="font-size:10pt; margin-bottom:4px;"><strong>HSE:</strong> ICMM Tailings Standard Awareness, Mine Rescue (Trained), Permit-to-Work (PTW), GHS Mining Regulations (LI 2182)</div>
+<div style="font-size:10pt;"><strong>Languages:</strong> English (Fluent), Twi (Fluent), Fante (Intermediate)</div>
+
+<div class="cv-section-title">CERTIFICATIONS &amp; AWARDS</div>
+<ul class="cv-awards-list">
+  <li>Best Final Year Project, Department of Mining Engineering, UMaT (2023) — Slope Stability Analysis, Damang Mine</li>
+  <li>Certificate of Completion, Rocscience RS2 Geotechnical Analysis Training, UMaT (2023)</li>
+  <li>Mine Rescue Certificate, Ghana Mines Rescue Brigade, UMaT (2022)</li>
+  <li>Merit Award, UMaT School of Engineering &amp; Technology (2022) — Top 5 in Year 3 cohort</li>
+</ul>
+
+<div class="cv-section-title">PROFESSIONAL BODIES</div>
+<ul class="cv-awards-list">
+  <li>Graduate Member, Ghana Institution of Engineering (GhIE)</li>
+  <li>Student Member, Australasian Institute of Mining and Metallurgy (AusIMM) – Student Chapter</li>
+</ul>`,
+
+  renewable: `<div class="cv-name">DANIEL OFORI-MENSAH</div>
+<div class="cv-contact">d.oforimensah@gmail.com | +233 55 678 9012 | linkedin.com/in/daniel-ofori-mensah</div>
+
+<div class="cv-section-title">EDUCATION</div>
+<div class="cv-entry-header"><span class="cv-entry-org">Kwame Nkrumah University of Science &amp; Technology (KNUST)</span><span class="cv-entry-loc">Kumasi, Ghana</span></div>
+<div class="cv-entry-header"><span class="cv-entry-title">BSc. Mechanical Engineering</span><span class="cv-entry-date">Sep 2019 – Jun 2023</span></div>
+<div style="font-size:10pt; margin-top:2px;">Academic Standing: Second Class Upper (Honours) &nbsp;|&nbsp; CGPA: 3.65 / 4.00</div>
+<div style="font-size:10pt; margin-top:1px;">Final Year Project: Performance Analysis of a Hybrid Solar-Wind Mini-Grid System for a Rural Community in Northern Ghana — simulated in HOMER Pro with optimal LCOE of $0.19/kWh.</div>
+<div style="font-size:10pt; margin-top:1px;">Relevant Courses: Thermodynamics, Heat Transfer, Renewable Energy Technology, Engineering Materials, Fluid Mechanics, Mechanical Design, CAD/CAM, Project Management</div>
+
+<div class="cv-section-title">PROFESSIONAL EXPERIENCE</div>
+<div class="cv-entry-header"><span class="cv-entry-org">BXC Energy Ghana Limited</span><span class="cv-entry-loc">Accra, Ghana</span></div>
+<div class="cv-entry-header"><span class="cv-entry-title">National Service Personnel – Solar Projects &amp; Engineering</span><span class="cv-entry-date">Oct 2023 – Sep 2024</span></div>
+<ul class="cv-bullets">
+  <li>Supported the delivery of 6 rooftop solar PV installations (ranging from 15kW to 120kW) for commercial and industrial clients in Greater Accra and Ashanti regions, contributing to a combined installed capacity of 385kWp within the service year.</li>
+  <li>Conducted pre-installation site assessments (roof load surveys, shading analysis, grid connection studies) for 11 prospective projects and compiled feasibility reports adopted directly in client proposals worth a combined GHS 3.2m.</li>
+  <li>Used PVsyst and AutoCAD to produce system design drawings, energy yield simulations, and single-line diagrams for 4 projects, achieving within 5% accuracy against post-commissioning measured output on 3 completed sites.</li>
+  <li>Coordinated with the procurement team on equipment specifications for inverters and mounting structures, comparing technical datasheets for 7 supplier quotations and recommending selections that reduced average BOS cost by 12%.</li>
+  <li>Developed a commissioning checklist and handover documentation template adopted company-wide, reducing post-handover technical queries from clients by an estimated 30%.</li>
+</ul>
+<div class="cv-entry-header" style="margin-top:8px;"><span class="cv-entry-org">Public Utilities Regulatory Commission (PURC)</span><span class="cv-entry-loc">Accra, Ghana</span></div>
+<div class="cv-entry-header"><span class="cv-entry-title">Engineering Intern – Renewable Energy &amp; Technical Regulation</span><span class="cv-entry-date">Jun 2022 – Aug 2022</span></div>
+<ul class="cv-bullets">
+  <li>Assisted the Technical Division in reviewing 8 mini-grid licence applications, assessing technical specifications for compliance with the PURC Renewable Energy Act (Act 832) and the Mini-Grid Regulations (LI 2395).</li>
+  <li>Compiled a comparative analysis of mini-grid tariff structures across 5 West African regulatory jurisdictions (Ghana, Senegal, Nigeria, Sierra Leone, Uganda) — research used in the preparation of PURC's 2022 Mini-Grid Policy Position Paper.</li>
+  <li>Participated in a 2-day technical site inspection of a 100kW solar mini-grid project in the Savannah Region, evaluating battery bank condition, protection relay settings, and metering accuracy against approved design documentation.</li>
+</ul>
+<div class="cv-entry-header" style="margin-top:8px;"><span class="cv-entry-org">Mechanical Engineering Workshop, KNUST</span><span class="cv-entry-loc">Kumasi, Ghana</span></div>
+<div class="cv-entry-header"><span class="cv-entry-title">Research Assistant – Solar Thermal Performance Testing</span><span class="cv-entry-date">Jan 2023 – Jun 2023</span></div>
+<ul class="cv-bullets">
+  <li>Built and instrumented a flat-plate solar collector test rig for a departmental research project, logging temperature, flow rate, and irradiance data across 60+ test cycles.</li>
+  <li>Analysed collector efficiency curves using MATLAB, demonstrating a 14% improvement in thermal output with a double-glazed cover plate — findings submitted to the Journal of Renewable &amp; Sustainable Energy (under review).</li>
+</ul>
+
+<div class="cv-section-title">LEADERSHIP EXPERIENCE</div>
+<div class="cv-entry-header"><span class="cv-entry-title">Coordinator, Clean Energy Student Initiative (CESI-KNUST)</span><span class="cv-entry-date">Sep 2021 – Jun 2023</span></div>
+<ul class="cv-bullets">
+  <li>Co-founded and led a 35-member student energy advocacy group — organised Ghana's first student-led Solar Rooftop Campaign, engaging 400+ students on the economics and environmental impact of distributed solar generation.</li>
+  <li>Partnered with BXC Energy and the Energy Commission to host a 2-day Clean Energy Career Forum attended by 180 students and 9 industry speakers — received the Vice-Chancellor's Award for Student Innovation (2022).</li>
+</ul>
+
+<div class="cv-section-title">SKILLS</div>
+<div style="font-size:10pt; margin-bottom:4px;"><strong>Renewable Energy:</strong> PVsyst, HOMER Pro, SAM (NREL), MATLAB/Simulink, SolarEdge Monitoring, AutoCAD (Electrical Layouts), PV System Design, Mini-Grid Sizing</div>
+<div style="font-size:10pt; margin-bottom:4px;"><strong>Mechanical:</strong> SolidWorks (3D Modelling), ANSYS Fluent (Basic CFD), Thermodynamic System Analysis, Heat Exchanger Design, AutoCAD Mechanical</div>
+<div style="font-size:10pt; margin-bottom:4px;"><strong>Professional:</strong> Technical Proposal Writing, Project Management (MS Project), Stakeholder Reporting, Procurement Support, Commissioning Documentation</div>
+<div style="font-size:10pt;"><strong>Languages:</strong> English (Fluent), Twi (Fluent), French (Basic)</div>
+
+<div class="cv-section-title">CERTIFICATIONS &amp; AWARDS</div>
+<ul class="cv-awards-list">
+  <li>Vice-Chancellor's Award for Student Innovation, KNUST (2022) — Clean Energy Career Forum</li>
+  <li>Best Final Year Project, Department of Mechanical Engineering, KNUST (2023)</li>
+  <li>Solar Energy International (SEI) — PV Design Certificate (2023)</li>
+  <li>Certificate of Completion, HOMER Pro Microgrid Design, Homer Energy (2022)</li>
+  <li>Certificate of Completion, Introduction to Sustainable Energy, edX – MIT (2022)</li>
+</ul>
+
+<div class="cv-section-title">PROFESSIONAL BODIES</div>
+<ul class="cv-awards-list">
+  <li>Graduate Member, Ghana Institution of Engineering (GhIE)</li>
+  <li>Member, Ghana Renewable Energy Association (GREA)</li>
+</ul>`,
+
+  cover_letter_sample: `<div style="font-family:'Times New Roman',serif;font-size:11pt;line-height:1.8;color:#000;padding:8px 0;">
+<p style="margin-bottom:18px;">15 October 2025</p>
+
+<p style="margin-bottom:18px;">The Head of Graduate Recruitment<br>
+Ghana Grid Company Limited (GRIDCo)<br>
+Electro Volta House, Accra<br>
+Ghana</p>
+
+<p style="margin-bottom:18px;"><strong>RE: Application for Graduate Electrical Engineer — Transmission System Operations</strong></p>
+
+<p style="margin-bottom:14px;">When Ghana's national grid faced its most severe load-shedding crisis in a decade, GRIDCo's System Operations team managed the country's 161kV/330kV transmission network through it — balancing generation dispatch, managing emergency outages, and keeping industrial production running across the country. That operational complexity is precisely where I want to build my career, and where I believe I can contribute immediately.</p>
+
+<p style="margin-bottom:14px;">As a National Service Personnel in GRIDCo's System Operations &amp; Maintenance Planning Department since October 2025, I have already developed a working understanding of your environment: monitoring real-time power flow in the National Control Centre, contributing to the Pokuase 330/161kV substation commissioning, and redesigning 12 weekly reporting templates that reduced preparation time by 35%. Before joining GRIDCo, I built a load-flow simulation model in MATLAB/Simulink for a 12-bus section of the VRA transmission network — validating active and reactive power flows within 3% of measured field values — and designed a 50kW grid-tied solar PV system achieving a performance ratio of 81.4%, which was awarded Best Final Year Project at the UENR School of Engineering Annual Fair 2025.</p>
+
+<p style="margin-bottom:14px;">GRIDCo's Graduate Engineer programme offers structured exposure across Transmission Planning, System Operations, and Protection &amp; Control — the three technical pillars that underpin every aspect of Ghana's energy transition. My hands-on experience across GRIDCo, VRA, and ECG, combined with proficiency in ETAP, MATLAB/Simulink, and AutoCAD Electrical, means I can contribute from day one while developing the depth your senior engineering roles demand. I am particularly motivated by GRIDCo's ongoing work on the Coastal Transmission Backbone and the integration of utility-scale renewables — challenges I have studied academically and encountered first-hand during my service.</p>
+
+<p style="margin-bottom:18px;">I would welcome the opportunity to discuss how my background and commitment to Ghana's power sector can support GRIDCo's mission. Thank you for your time and consideration.</p>
+
+<p style="margin-bottom:4px;">Yours faithfully,</p>
+<p style="margin-bottom:4px;"><strong>KWABENA MENSAH BOATENG</strong></p>
+<p style="margin-bottom:0px;">BSc. Electrical &amp; Electronics Engineering (Second Class Upper), UENR</p>
+<p style="margin-bottom:0px;">kboateng.eng@gmail.com &nbsp;|&nbsp; +233 24 876 5432</p>
+</div>`
 };
 
 function showSample(key) {
   document.getElementById('modalContent').innerHTML = sampleData[key] || '<p>Sample not found.</p>';
   document.getElementById('sampleModal').classList.add('active');
-  // Store the current sample key for download
   document.getElementById('sampleModal').dataset.currentKey = key;
+  // Update modal title for cover letter sample
+  const titleEl = document.getElementById('sampleModalTitle');
+  if (titleEl) {
+    if (key === 'cover_letter_sample') {
+      titleEl.textContent = 'Sample Cover Letter — GRIDCo Graduate Engineer';
+    } else {
+      titleEl.textContent = 'Sample CV';
+    }
+  }
 }
 
 function downloadSampleCV() {
   const content = document.getElementById('modalContent').innerHTML;
   const key = document.getElementById('sampleModal').dataset.currentKey || 'sample';
-  const names = { veronica: 'Veronica_Mensah_CV', engineering: 'Alexander_Opoku_CV', national_service: 'National_Service_Sample_CV', postgrad: 'Postgraduate_Sample_CV' };
+  const names = {
+    veronica: 'Veronica_Mensah_CV',
+    engineering: 'Kwabena_Mensah_Boateng_CV',
+    national_service: 'National_Service_Sample_CV',
+    postgrad: 'Postgraduate_Sample_CV',
+    oil_gas: 'Emmanuel_Acheampong_CV',
+    mining: 'Abigail_Asante_CV',
+    renewable: 'Daniel_Ofori_Mensah_CV',
+    cover_letter_sample: 'Sample_Cover_Letter_GRIDCo'
+  };
   printCV(content, names[key] || 'Sample_CV');
 }
 

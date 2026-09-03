@@ -259,7 +259,7 @@
           <label class="target-option"><input type="radio" name="target" value="ngo"><div class="target-box"><span class="t-icon">🌍</span><span class="t-name">NGO / Development</span></div></label>
           <label class="target-option"><input type="radio" name="target" value="banking"><div class="target-box"><span class="t-icon">🏦</span><span class="t-name">Banking & Finance</span></div></label>
           <label class="target-option"><input type="radio" name="target" value="tech"><div class="target-box"><span class="t-icon">💻</span><span class="t-name">Tech / Engineering</span></div></label>
-          <label class="target-option"><input type="radio" name="target" value="cover_letter"><div class="target-box"><span class="t-icon">✉️</span><span class="t-name">Cover Letter</span></div></label>
+          <label class="target-option"><input type="radio" name="target" value="cover_letter"><div class="target-box"><span class="t-icon">✉️</span><span class="t-name">Cover Letter Only</span></div></label>
         </div>
         <div class="form-group mt-20">
           <label>Specific Role / Programme (optional)</label>
@@ -812,7 +812,7 @@
   <div class="container">
     <div class="section-header">
       <h2>Sample CVs for Inspiration</h2>
-      <p>See how a well-structured CV looks across different profiles and fields.</p>
+      <p>See how a top-tier CV looks across different fields — Finance, Engineering, Oil &amp; Gas, Mining, Renewables, and more. Plus a real cover letter sample.</p>
     </div>
     <div class="samples-grid">
       <div class="sample-card" onclick="showSample('veronica')">
@@ -838,6 +838,30 @@
         <h4>Postgraduate Studies</h4>
         <p>A professional applying for an MSc or MBA programme</p>
         <span class="sample-tag">Academia</span>
+      </div>
+      <div class="sample-card" onclick="showSample('oil_gas')">
+        <div class="sample-icon">🛢️</div>
+        <h4>Oil &amp; Gas</h4>
+        <p>Emmanuel Asante Acheampong — BSc Chemical Engineering, GNPC &amp; Tullow Oil</p>
+        <span class="sample-tag">Oil &amp; Gas / Upstream</span>
+      </div>
+      <div class="sample-card" onclick="showSample('mining')">
+        <div class="sample-icon">⛏️</div>
+        <h4>Mining Engineering</h4>
+        <p>Abigail Konadu Asante — BSc Mining Engineering, AngloGold &amp; Gold Fields</p>
+        <span class="sample-tag">Mining / Extractives</span>
+      </div>
+      <div class="sample-card" onclick="showSample('renewable')">
+        <div class="sample-icon">☀️</div>
+        <h4>Renewable Energy</h4>
+        <p>Daniel Ofori-Mensah — BSc Mechanical Engineering, BXC Energy &amp; PURC</p>
+        <span class="sample-tag">Renewables / Energy</span>
+      </div>
+      <div class="sample-card" onclick="showSample('cover_letter_sample')" style="border-color:var(--gold-dark);background:linear-gradient(135deg,#fffde7,#fff);">
+        <div class="sample-icon">✉️</div>
+        <h4>Cover Letter</h4>
+        <p>Kwabena Mensah Boateng — Graduate Engineer applying to GRIDCo full-time</p>
+        <span class="sample-tag" style="background:var(--gold-dark);color:#1a1a2e;">Cover Letter</span>
       </div>
     </div>
   </div>
@@ -873,6 +897,7 @@
 <div class="modal-overlay" id="sampleModal" onclick="closeSampleModal(event)">
   <div class="modal-box">
     <button class="modal-close" onclick="closeSampleModal(null, true)"><i class="fas fa-times"></i></button>
+    <p id="sampleModalTitle" style="font-size:0.75rem;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:12px;">Sample CV</p>
     <div class="modal-content" id="modalContent"></div>
     <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:24px;border-top:1px solid var(--border);padding-top:20px;">
       <button class="btn-primary" onclick="downloadSampleCV()"><i class="fas fa-download"></i> Download This Sample</button>
