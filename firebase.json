@@ -10,6 +10,8 @@
       "firestore.rules",
       "storage.rules",
       "firestore.indexes.json",
+      "firebase-debug.log",
+      "firebase-debug.*.log",
       ".git/**",
       ".vscode/**"
     ],
@@ -32,6 +34,12 @@
         "source": "**/*.css",
         "headers": [
           { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+        ]
+      },
+      {
+        "source": "images/**",
+        "headers": [
+          { "key": "Cache-Control", "value": "public, max-age=604800" }
         ]
       }
     ]

@@ -234,7 +234,7 @@
   <p>Upload your CV and receive detailed, professional feedback from our review team within 24–48 hours.</p>
   <div class="hero-features">
     <div class="hero-feat"><i class="fas fa-clock"></i> 24–48 Hour Turnaround</div>
-    <div class="hero-feat"><i class="fas fa-robot"></i> AI Pre-Analysis Included</div>
+    <div class="hero-feat"><i class="fas fa-search"></i> Instant Pre-Analysis Included</div>
     <div class="hero-feat"><i class="fas fa-comments"></i> Direct Messaging with Reviewer</div>
     <div class="hero-feat"><i class="fas fa-file-upload"></i> Refined CV Upload Option</div>
   </div>
@@ -263,6 +263,9 @@
   <!-- LOGGED IN CONTENT – hidden by default, shown once auth resolves -->
   <div id="loggedInContent" style="display:none;">
 
+    <!-- SUBSCRIPTION STATUS BANNER (populated by JS after auth) -->
+    <div id="subStatusBanner" style="display:none;margin-bottom:20px;"></div>
+
     <!-- SIGNED-IN WELCOME BAR -->
     <div id="userWelcomeBar" style="background:var(--primary-light);border:1.5px solid rgba(0,107,63,0.2);border-radius:14px;padding:14px 20px;margin-bottom:24px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
       <div id="userWelcomeAvatar" style="width:40px;height:40px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.1rem;flex-shrink:0;">?</div>
@@ -289,8 +292,8 @@
             <div class="timeline-content"><div class="timeline-label">You Submit Your CV</div><div class="timeline-desc">Upload your CV file (PDF or Word) and add any notes about your target opportunity.</div></div>
           </div>
           <div class="timeline-step">
-            <div class="timeline-left"><div class="timeline-dot dot-done"><i class="fas fa-robot"></i></div><div class="timeline-line done"></div></div>
-            <div class="timeline-content"><div class="timeline-label">AI Instantly Scans Your CV</div><div class="timeline-desc">Our AI pre-analyses your CV for formatting, language, structure, and content issues to assist the reviewer.</div></div>
+            <div class="timeline-left"><div class="timeline-dot dot-done"><i class="fas fa-search"></i></div><div class="timeline-line done"></div></div>
+            <div class="timeline-content"><div class="timeline-label">Your CV is Pre-Analysed</div><div class="timeline-desc">Your CV is instantly scanned for formatting, language, structure, and content issues to assist the reviewer.</div></div>
           </div>
           <div class="timeline-step">
             <div class="timeline-left"><div class="timeline-dot dot-active"><i class="fas fa-user-edit"></i></div><div class="timeline-line"></div></div>
@@ -493,7 +496,6 @@ let unsubMessages = null;
 // ===== AUTH STATE =====
 auth.onAuthStateChanged(user => {
   currentUser = user;
-  // Hide loading state regardless of auth outcome
   const loadingEl = document.getElementById('authLoadingState');
   if (loadingEl) loadingEl.style.display = 'none';
   if (user) {
@@ -510,11 +512,75 @@ auth.onAuthStateChanged(user => {
     const nameInput = document.getElementById('submitName');
     if (nameInput && !nameInput.value) nameInput.value = user.displayName || '';
     loadSubmissions();
+    // Show subscription status banner
+    checkAndShowSubBanner(user.uid);
   } else {
     document.getElementById('signinPrompt').style.display = 'block';
     document.getElementById('loggedInContent').style.display = 'none';
   }
 });
+
+// ===== SUBSCRIPTION BANNER =====
+async function checkAndShowSubBanner(uid) {
+  const banner = document.getElementById('subStatusBanner');
+  if (!banner) return;
+  try {
+    const snap = await db.collection('subscriptions').doc(uid).get();
+    const sub = snap.exists ? snap.data() : null;
+    const hasAccess = sub
+      && sub.status === 'active'
+      && sub.expiresAt?.toDate
+      && sub.expiresAt.toDate() > new Date()
+      && (sub.plan === 'review_gh20' || sub.plan === 'all_gh35');
+
+    if (hasAccess) {
+      const expiry = sub.expiresAt.toDate().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+      banner.style.display = 'block';
+      banner.innerHTML = `
+        <div style="background:linear-gradient(135deg,#e8f5ee,#f0faf5);border:1.5px solid #006b3f;border-radius:14px;padding:14px 20px;display:flex;align-items:center;gap:14px;font-family:'Inter',sans-serif;">
+          <div style="font-size:1.8rem;flex-shrink:0;">👑</div>
+          <div style="flex:1;">
+            <div style="font-weight:800;color:#004d2d;font-size:0.92rem;">Premium Active — Expert Review Unlocked</div>
+            <div style="font-size:0.78rem;color:#5a7a6a;margin-top:2px;">Your subscription is valid until <strong>${expiry}</strong>. Fill in the form below and submit your CV.</div>
+          </div>
+          <span style="background:#006b3f;color:#fff;font-size:0.72rem;font-weight:700;padding:4px 12px;border-radius:20px;white-space:nowrap;">Active</span>
+        </div>`;
+    } else if (sub && sub.status === 'pending') {
+      banner.style.display = 'block';
+      banner.innerHTML = `
+        <div style="background:#fffbea;border:1.5px solid #fcd116;border-radius:14px;padding:14px 20px;display:flex;align-items:center;gap:14px;font-family:'Inter',sans-serif;">
+          <div style="font-size:1.8rem;flex-shrink:0;">⏳</div>
+          <div style="flex:1;">
+            <div style="font-weight:800;color:#7a6000;font-size:0.92rem;">Payment Under Verification</div>
+            <div style="font-size:0.78rem;color:#9a8020;margin-top:2px;">Your payment request has been received. Once verified, you'll be able to submit your CV. Usually within a few hours.</div>
+          </div>
+        </div>`;
+    } else {
+      // No active subscription — show upgrade prompt above the form
+      banner.style.display = 'block';
+      banner.innerHTML = `
+        <div style="background:#fff0f0;border:2px solid #ce1126;border-radius:14px;padding:18px 20px;font-family:'Inter',sans-serif;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+            <div style="font-size:1.8rem;flex-shrink:0;">🔒</div>
+            <div>
+              <div style="font-weight:800;color:#8b0000;font-size:0.95rem;">Subscription Required</div>
+              <div style="font-size:0.82rem;color:#c0392b;margin-top:2px;">Expert CV Review is a premium feature. Subscribe to submit your CV.</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <a href="index.html" style="display:inline-flex;align-items:center;gap:8px;background:#006b3f;color:#fff;border:none;border-radius:9px;padding:11px 20px;font-size:0.88rem;font-weight:700;cursor:pointer;text-decoration:none;">
+              <i class="fas fa-crown"></i> Subscribe — GH₵20 / 6 Months
+            </a>
+            <button onclick="recheckExpertAccess()" style="display:inline-flex;align-items:center;gap:8px;background:#fff;color:#5a5a7a;border:1.5px solid #d0d0e8;border-radius:9px;padding:11px 16px;font-size:0.85rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;">
+              <i class="fas fa-sync"></i> I've already paid — check now
+            </button>
+          </div>
+        </div>`;
+    }
+  } catch(e) {
+    console.warn('subBanner error:', e);
+  }
+}
 
 // ===== MODAL =====
 function openSignInModal() {
@@ -650,6 +716,24 @@ function fileToBase64(file) {
 // ===== SUBMIT CV =====
 async function submitCV() {
   if (!currentUser) { showToast('Please sign in first.', true); return; }
+
+  // ── Subscription gate ──────────────────────────────────────────────────
+  // Expert Review requires plan: review_gh20 or all_gh35
+  const subSnap = await db.collection('subscriptions').doc(currentUser.uid).get().catch(() => null);
+  const subData = subSnap && subSnap.exists ? subSnap.data() : null;
+  const hasReviewAccess = subData
+    && subData.status === 'active'
+    && subData.expiresAt
+    && subData.expiresAt.toDate
+    && subData.expiresAt.toDate() > new Date()
+    && (subData.plan === 'review_gh20' || subData.plan === 'all_gh35');
+
+  if (!hasReviewAccess) {
+    showSubscriptionWall(subData);
+    return;
+  }
+  // ── End subscription gate ───────────────────────────────────────────────
+
   const name = document.getElementById('submitName').value.trim();
   const target = document.getElementById('submitTarget').value;
   const notes = document.getElementById('submitNotes').value.trim();
@@ -720,6 +804,80 @@ async function submitCV() {
     btn.disabled = false;
     document.getElementById('uploadProgress').classList.remove('show');
     showToast('Submission failed: ' + e.message, true);
+  }
+}
+
+// ===== SUBSCRIPTION WALL (Expert Review gate) =====
+function showSubscriptionWall(subData) {
+  // Remove existing wall if any
+  document.getElementById('expertReviewSubWall')?.remove();
+
+  const isPending = subData && subData.status === 'pending';
+  const isExpired = subData && subData.status === 'expired';
+
+  const statusMsg = isPending
+    ? `<div style="background:#fff8e1;border:1.5px solid #fcd116;border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:0.83rem;color:#7a6000;display:flex;align-items:center;gap:8px;">
+        <i class="fas fa-clock"></i>
+        <span>Your payment is <strong>being verified</strong>. We'll activate your account within a few hours.</span>
+      </div>`
+    : isExpired
+    ? `<div style="background:#fff0f0;border:1.5px solid #ce1126;border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:0.83rem;color:#8b0000;display:flex;align-items:center;gap:8px;">
+        <i class="fas fa-exclamation-circle"></i>
+        <span>Your subscription has <strong>expired</strong>. Renew to continue submitting CVs for expert review.</span>
+      </div>`
+    : '';
+
+  const wall = document.createElement('div');
+  wall.id = 'expertReviewSubWall';
+  wall.style.cssText = 'position:fixed;inset:0;background:rgba(10,10,30,0.75);z-index:9000;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);font-family:"Inter",sans-serif;';
+  wall.innerHTML = `
+    <div style="background:#fff;border-radius:20px;padding:36px 32px;max-width:440px;width:100%;text-align:center;box-shadow:0 24px 80px rgba(0,0,0,0.3);">
+      <div style="font-size:2.5rem;margin-bottom:12px;">&#128274;</div>
+      <h2 style="font-size:1.15rem;font-weight:800;color:#1a1a2e;margin-bottom:8px;">Expert Review is a Premium Feature</h2>
+      <p style="font-size:0.87rem;color:#5a5a7a;line-height:1.7;margin-bottom:16px;">
+        Submitting your CV for expert human review requires an active <strong>Expert Review</strong> or <strong>All Features</strong> subscription.
+      </p>
+      ${statusMsg}
+      <div style="background:linear-gradient(135deg,#006b3f,#004d2d);border-radius:14px;padding:18px 20px;margin:0 0 20px;color:#fff;text-align:left;">
+        <div style="font-size:0.75rem;font-weight:700;letter-spacing:0.08em;opacity:0.8;margin-bottom:8px;">WHAT YOU GET</div>
+        <div style="font-size:0.83rem;opacity:0.9;line-height:1.8;">
+          &#10003; Expert human feedback on your CV<br/>
+          &#10003; Annotations directly on your document<br/>
+          &#10003; Direct messaging with your reviewer<br/>
+          &#10003; Optional rewritten CV upload<br/>
+          &#10003; Delivered in 24&#8211;48 hours
+        </div>
+        <div style="margin-top:12px;font-size:1.4rem;font-weight:800;">GH&#8373;20 <span style="font-size:0.78rem;font-weight:400;opacity:0.8;">/ 6 months</span></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <a href="index.html#subscribe" onclick="document.getElementById('expertReviewSubWall').remove()" style="display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#006b3f,#004d2d);color:#fff;border:none;border-radius:10px;padding:14px;font-size:0.92rem;font-weight:700;cursor:pointer;text-decoration:none;box-shadow:0 4px 16px rgba(0,107,63,0.3);">
+          <i class="fas fa-crown"></i> Subscribe Now &mdash; GH&#8373;20 / 6 Months
+        </a>
+        <button onclick="recheckExpertAccess()" style="background:#f0f0f8;color:#5a5a7a;border:none;border-radius:10px;padding:12px;font-size:0.85rem;font-weight:600;cursor:pointer;">
+          <i class="fas fa-sync"></i> I've already paid &mdash; check now
+        </button>
+      </div>
+      <p style="font-size:0.72rem;color:#ccc;margin-top:14px;">Payment via Mobile Money &middot; Verified within hours &middot; No auto-renewal</p>
+    </div>`;
+  document.body.appendChild(wall);
+}
+
+async function recheckExpertAccess() {
+  const subSnap = await db.collection('subscriptions').doc(currentUser.uid).get().catch(() => null);
+  const subData = subSnap && subSnap.exists ? subSnap.data() : null;
+  const hasAccess = subData
+    && subData.status === 'active'
+    && subData.expiresAt?.toDate
+    && subData.expiresAt.toDate() > new Date()
+    && (subData.plan === 'review_gh20' || subData.plan === 'all_gh35');
+  if (hasAccess) {
+    document.getElementById('expertReviewSubWall')?.remove();
+    checkAndShowSubBanner(currentUser.uid);
+    showToast('Access confirmed! You can now submit your CV.');
+  } else if (subData?.status === 'pending') {
+    showToast('Your payment is still being verified. Please check back in a few hours.', true);
+  } else {
+    showToast('No active Expert Review subscription found.', true);
   }
 }
 

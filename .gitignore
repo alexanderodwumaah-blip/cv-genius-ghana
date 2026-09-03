@@ -3,4 +3,9 @@ node_modules/
 *.log
 .DS_Store
 Thumbs.db
+
+# API keys — NEVER commit
 config.js
+
+# Firebase cache
+.firebase/

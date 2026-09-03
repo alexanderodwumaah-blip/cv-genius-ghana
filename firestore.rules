@@ -2,17 +2,61 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ===== SUBSCRIPTIONS =====
-    match /subscriptions/{uid} {
-      // Users can read and write their own subscription document
+    // ===== ADMIN REGISTRY =====
+    // Admins read their own doc to confirm access. Write only via Firebase Console.
+    match /admins/{uid} {
       allow read: if request.auth != null && request.auth.uid == uid;
-      allow create, update: if request.auth != null && request.auth.uid == uid;
-      // Admins can read and update all subscriptions (to approve/reject)
-      allow read, write: if request.auth != null &&
-        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+      allow write: if false;
     }
 
-    // ===== USER CVs (built/refined/saved) =====
+    // ===== SUBSCRIPTIONS =====
+    match /subscriptions/{docUid} {
+      // Any authenticated user can read their own subscription
+      allow read: if request.auth != null && request.auth.uid == docUid;
+
+      // Users can CREATE their own pending request only — no self-granting active status
+      allow create: if request.auth != null
+        && request.auth.uid == docUid
+        && request.resource.data.status == 'pending'
+        && request.resource.data.uid == docUid
+        && request.resource.data.wasJustActivated == false
+        && request.resource.data.flagged == false;
+
+      // Users can UPDATE only to resubmit — allowed when current status is pending or expired
+      // They cannot change any admin-controlled fields
+      allow update: if request.auth != null
+        && request.auth.uid == docUid
+        && (resource.data.status == 'pending' || resource.data.status == 'expired' || resource.data.status == 'active')
+        && request.resource.data.status == 'pending'
+        && request.resource.data.expiresAt == resource.data.expiresAt
+        && request.resource.data.wasJustActivated == resource.data.wasJustActivated
+        && request.resource.data.flagged == resource.data.flagged;
+
+      // Users can write limited fields on their own active doc:
+      // - exportCount / exportCountDate (daily cap tracking)
+      // - status = 'expired' (auto-expire when expiresAt passes)
+      // - wasJustActivated = false (clearing the notification flag)
+      allow update: if request.auth != null
+        && request.auth.uid == docUid
+        && resource.data.status == 'active'
+        && (
+          // Auto-expire: client sets status to 'expired'
+          (request.resource.data.status == 'expired'
+            && request.resource.data.expiresAt == resource.data.expiresAt)
+          ||
+          // Export counter update (recordExport)
+          (request.resource.data.status == 'active'
+            && request.resource.data.expiresAt == resource.data.expiresAt
+            && request.resource.data.wasJustActivated == false)
+        );
+
+      // Admins can read and write all subscription documents
+      // Admin check: the user has their own document in the admins collection
+      allow read, write: if request.auth != null
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    // ===== USER CVs =====
     match /cvs/{cvId} {
       allow read, write: if request.auth != null && request.auth.uid == resource.data.uid;
       allow create: if request.auth != null && request.auth.uid == request.resource.data.uid;
@@ -20,33 +64,24 @@ service cloud.firestore {
 
     // ===== CV REVIEW SUBMISSIONS =====
     match /cv_submissions/{subId} {
-      // Users can create and read their own submissions
       allow create: if request.auth != null && request.auth.uid == request.resource.data.uid;
       allow read, update: if request.auth != null && request.auth.uid == resource.data.uid;
       allow delete: if request.auth != null && request.auth.uid == resource.data.uid;
-
-      // Admin can read and write all submissions
-      allow read, write: if request.auth != null &&
-        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+      allow read, write: if request.auth != null
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
 
-    // ===== ADMIN REGISTRY =====
-    match /admins/{uid} {
-      allow read: if request.auth != null && request.auth.uid == uid;
-      allow write: if false; // Only writable via Firebase Console
-    }
-
-    // ===== REVIEW FEEDBACK (admin → user) =====
+    // ===== REVIEW FEEDBACK =====
     match /cv_reviews/{reviewId} {
       allow read: if request.auth != null && (
         request.auth.uid == resource.data.uid ||
         exists(/databases/$(database)/documents/admins/$(request.auth.uid))
       );
-      allow create, update, delete: if request.auth != null &&
-        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+      allow create, update, delete: if request.auth != null
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
 
-    // ===== MESSAGES (admin <-> user on a submission) =====
+    // ===== MESSAGES =====
     match /cv_messages/{msgId} {
       allow read: if request.auth != null && (
         request.auth.uid == resource.data.uid ||
