@@ -658,47 +658,9 @@ onAuthStateChanged(auth, async user => {
   loadAllSubscriptions();
 });
 
-window.showAdminLogin = () => {
-  // Always reset to step 1 when opening
-  document.getElementById('loginStep1').style.display = 'block';
-  document.getElementById('loginStep2').style.display = 'none';
-  document.getElementById('secretCodeInput').value = '';
-  document.getElementById('secretCodeError').style.display = 'none';
-  document.getElementById('adminLoginModal').classList.add('active');
-  // Ensure the modal is on top of the access-denied screen
-  document.getElementById('adminLoginModal').style.zIndex = '2000';
-  setTimeout(() => document.getElementById('secretCodeInput').focus(), 150);
-};
+// showAdminLogin, checkSecretCode, backToCodeStep are defined in the plain script below.
 
-window.checkSecretCode = () => {
-  const code = document.getElementById('secretCodeInput').value;
-  const errEl = document.getElementById('secretCodeError');
-  if (code === 'cv2026!') {
-    errEl.style.display = 'none';
-    document.getElementById('loginStep1').style.display = 'none';
-    document.getElementById('loginStep2').style.display = 'block';
-    setTimeout(() => document.getElementById('adminEmail').focus(), 100);
-  } else {
-    errEl.style.display = 'block';
-    document.getElementById('secretCodeInput').value = '';
-    document.getElementById('secretCodeInput').focus();
-    // Shake animation
-    const input = document.getElementById('secretCodeInput');
-    input.style.borderColor = 'var(--red)';
-    input.style.animation = 'shake 0.4s ease';
-    setTimeout(() => { input.style.borderColor = ''; input.style.animation = ''; }, 600);
-  }
-};
-
-window.backToCodeStep = () => {
-  document.getElementById('loginStep2').style.display = 'none';
-  document.getElementById('loginStep1').style.display = 'block';
-  document.getElementById('secretCodeInput').value = '';
-  document.getElementById('secretCodeError').style.display = 'none';
-  setTimeout(() => document.getElementById('secretCodeInput').focus(), 100);
-};
-
-window.doAdminLogin = async () => {
+window._doAdminLogin = async () => {
   const email = document.getElementById('adminEmail').value.trim();
   const pass = document.getElementById('adminPassword') ? document.getElementById('adminPassword').value : document.getElementById('adminPass').value;
   const errEl = document.getElementById('loginError');
@@ -733,7 +695,7 @@ window.doAdminLogin = async () => {
   }
 };
 
-window.adminForgotPassword = async () => {
+window._adminForgotPassword = async () => {
   const email = document.getElementById('adminEmail').value.trim();
   if (!email) {
     const errEl = document.getElementById('loginError');
@@ -758,7 +720,7 @@ window.adminForgotPassword = async () => {
   }
 };
 
-window.signOutAdmin = async () => {  await signOut(auth);
+window._signOutAdmin = async () => {  await signOut(auth);
   location.reload();
 };
 
@@ -2448,5 +2410,69 @@ document.querySelectorAll('.sidebar-link').forEach(btn => {
 });
 
 </script>
+
+<!-- ===== PLAIN SCRIPT: login modal functions must be global for onclick= to work ===== -->
+<script>
+// These functions only need the DOM — no Firebase — so they live in a plain script
+// that is guaranteed to be parsed and available before any button click.
+
+function showAdminLogin() {
+  document.getElementById('loginStep1').style.display = 'block';
+  document.getElementById('loginStep2').style.display = 'none';
+  document.getElementById('secretCodeInput').value = '';
+  document.getElementById('secretCodeError').style.display = 'none';
+  const m = document.getElementById('adminLoginModal');
+  m.classList.add('active');
+  m.style.zIndex = '2000';
+  setTimeout(() => document.getElementById('secretCodeInput').focus(), 150);
+}
+
+function checkSecretCode() {
+  const code = document.getElementById('secretCodeInput').value;
+  const errEl = document.getElementById('secretCodeError');
+  if (code === 'cv2026!') {
+    errEl.style.display = 'none';
+    document.getElementById('loginStep1').style.display = 'none';
+    document.getElementById('loginStep2').style.display = 'block';
+    setTimeout(() => document.getElementById('adminEmail').focus(), 100);
+  } else {
+    errEl.style.display = 'block';
+    document.getElementById('secretCodeInput').value = '';
+    document.getElementById('secretCodeInput').focus();
+    const input = document.getElementById('secretCodeInput');
+    input.style.borderColor = '#ce1126';
+    input.style.animation = 'shake 0.4s ease';
+    setTimeout(() => { input.style.borderColor = ''; input.style.animation = ''; }, 600);
+  }
+}
+
+function backToCodeStep() {
+  document.getElementById('loginStep2').style.display = 'none';
+  document.getElementById('loginStep1').style.display = 'block';
+  document.getElementById('secretCodeInput').value = '';
+  document.getElementById('secretCodeError').style.display = 'none';
+  setTimeout(() => document.getElementById('secretCodeInput').focus(), 100);
+}
+
+// doAdminLogin and adminForgotPassword use Firebase — they are set on window
+// by the module script. Wrap them so onclick= can always call them even if
+// the module is still loading (queues the call until ready).
+function doAdminLogin() {
+  if (typeof window._doAdminLogin === 'function') {
+    window._doAdminLogin();
+  } else {
+    setTimeout(doAdminLogin, 200); // retry until module ready
+  }
+}
+function adminForgotPassword() {
+  if (typeof window._adminForgotPassword === 'function') {
+    window._adminForgotPassword();
+  }
+}
+function signOutAdmin() {
+  if (typeof window._signOutAdmin === 'function') window._signOutAdmin();
+}
+</script>
+
 </body>
 </html>
