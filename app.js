@@ -145,6 +145,25 @@ const GEMINI_MODELS = [
 // Without this, a hung TCP connection keeps the spinner running forever.
 const GEMINI_FETCH_TIMEOUT_MS = 90_000;
 
+// ── Extract the actual text from a Gemini response ─────────────────────────
+// Gemini 2.5/3.x thinking models return multiple parts. The first part(s) may
+// be "thought" parts (thought:true). We iterate all parts and take the last
+// non-thought text part — that is always the final answer.
+function extractGeminiText(data) {
+  const parts = data?.candidates?.[0]?.content?.parts || [];
+  let text = '';
+  for (const part of parts) {
+    if (!part.thought && typeof part.text === 'string') {
+      text = part.text; // keep overwriting — last non-thought part wins
+    }
+  }
+  // Fallback: if all parts were thought parts, grab the very last part's text
+  if (!text && parts.length > 0) {
+    text = parts[parts.length - 1]?.text || '';
+  }
+  return text;
+}
+
 async function callGemini(requestBody) {
   let lastError = null;
   for (const model of GEMINI_MODELS) {
@@ -537,27 +556,27 @@ EXACT HTML STRUCTURE TO USE:
               { inline_data: { mime_type: mimeType, data: fileData.base64 } }
             ]
           }],
-          generationConfig: { temperature: 0.12, maxOutputTokens: 8192 }
+          generationConfig: { temperature: 0.12, maxOutputTokens: 8192, thinkingConfig: { thinkingBudget: 0 } }
         };
       } else {
         // TXT fallback
         const extracted = fileData?.text || '';
         requestBody = {
           contents: [{ parts: [{ text: prompt + `\n\n━━━ CV TO REFINE ━━━\n${extracted}` }] }],
-          generationConfig: { temperature: 0.12, maxOutputTokens: 8192 }
+          generationConfig: { temperature: 0.12, maxOutputTokens: 8192, thinkingConfig: { thinkingBudget: 0 } }
         };
       }
     } else {
       // Pasted text path
       requestBody = {
         contents: [{ parts: [{ text: prompt + `\n\n━━━ CV TO REFINE ━━━\n${pasteText}` }] }],
-        generationConfig: { temperature: 0.12, maxOutputTokens: 8192 }
+        generationConfig: { temperature: 0.12, maxOutputTokens: 8192, thinkingConfig: { thinkingBudget: 0 } }
       };
     }
 
     const response = await callGemini(requestBody);
     const modelUsed = response._modelUsed || 'gemini';
-    let refinedHTML = response.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    let refinedHTML = extractGeminiText(response) || '';
 
     // Strip any markdown code fences the model might wrap around the output
     refinedHTML = refinedHTML
@@ -1873,9 +1892,13 @@ Return ONLY the formatted cover letter text. No preamble, no notes, no markdown.
   try {
     const geminiData = await callGemini({
       contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.45, maxOutputTokens: 800 }
+      generationConfig: {
+        temperature: 0.45,
+        maxOutputTokens: 800,
+        thinkingConfig: { thinkingBudget: 0 }
+      }
     });
-    const text = geminiData.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+    const text = extractGeminiText(geminiData)?.trim();
     return text || null;
   } catch (e) {
     console.warn('Gemini cover letter also failed:', e.message);

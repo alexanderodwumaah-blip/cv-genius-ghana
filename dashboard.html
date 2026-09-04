@@ -2005,12 +2005,12 @@ Return ONLY raw HTML using these exact classes. No markdown. No code fences. Sta
           { text: prompt + '\n\n[THE ORIGINAL CV DOCUMENT IS ATTACHED - read every section before writing]' },
           { inline_data: { mime_type: cvMime, data: cvFileData } }
         ]}],
-        generationConfig: { temperature: 0.1, maxOutputTokens: 8192 }
+        generationConfig: { temperature: 0.1, maxOutputTokens: 8192, thinkingConfig: { thinkingBudget: 0 } }
       };
     } else {
       requestBody = {
         contents: [{ parts: [{ text: prompt + `\n\n[CV file not available - rewrite based on the admin feedback and smart analysis findings above, producing the best possible output from the available information.]` }] }],
-        generationConfig: { temperature: 0.1, maxOutputTokens: 8192 }
+        generationConfig: { temperature: 0.1, maxOutputTokens: 8192, thinkingConfig: { thinkingBudget: 0 } }
       };
     }
 
@@ -2021,7 +2021,11 @@ Return ONLY raw HTML using these exact classes. No markdown. No code fences. Sta
         setTimeout(() => reject(new Error('Rewrite timed out after 120 seconds. Please try again.')), 120_000)
       )
     ]);
-    let refinedHTML = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    // Extract text from thinking-aware Gemini 2.5/3.x response (thought parts come first)
+    const _adminParts = data?.candidates?.[0]?.content?.parts || [];
+    let refinedHTML = '';
+    for (const _p of _adminParts) { if (!_p.thought && typeof _p.text === 'string') { refinedHTML = _p.text; } }
+    if (!refinedHTML && _adminParts.length > 0) { refinedHTML = _adminParts[_adminParts.length - 1]?.text || ''; }
     refinedHTML = refinedHTML
       .replace(/^```html\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```\s*$/i, '').trim()
       .replace(/^<!DOCTYPE[^>]*>\s*/i, '')

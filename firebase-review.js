@@ -194,19 +194,42 @@ Analyse this CV thoroughly and return a JSON object with this EXACT structure (n
             { inline_data: { mime_type: fileMimeType, data: fileData } }
           ]
         }],
-        generationConfig: { temperature: 0.1, maxOutputTokens: 4096 }
+        generationConfig: {
+          temperature: 0.1,
+          maxOutputTokens: 4096,
+          thinkingConfig: { thinkingBudget: 0 }  // disable thinking — we need clean JSON output
+        }
       };
     } else {
       // File was too large — ask Gemini to note this
       requestBody = {
         contents: [{ parts: [{ text: prompt + `\n\nNote: CV file "${fileName}" was too large to attach. Provide a partial analysis indicating the file needs to be reviewed manually.` }] }],
-        generationConfig: { temperature: 0.1, maxOutputTokens: 2048 }
+        generationConfig: {
+          temperature: 0.1,
+          maxOutputTokens: 2048,
+          thinkingConfig: { thinkingBudget: 0 }
+        }
       };
     }
 
     // Try Gemini models via the fallback helper
     const data = await callGeminiReview(requestBody);
-    let text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+    // Gemini 2.5/3.x thinking models return multiple parts — the first part(s)
+    // may be "thought" parts (thought:true). We need the last non-thought text part.
+    const parts = data.candidates?.[0]?.content?.parts || [];
+    let text = '';
+    // Collect all non-thought text parts (in order), then use the last one
+    // which is always the final answer. If no thought parts exist, this still works.
+    for (const part of parts) {
+      if (!part.thought && typeof part.text === 'string') {
+        text = part.text; // keep overwriting — last non-thought part wins
+      }
+    }
+    // Fallback: if all parts were thought parts, grab the very last part's text
+    if (!text && parts.length > 0) {
+      text = parts[parts.length - 1]?.text || '';
+    }
 
     // ── Robust JSON extraction ──────────────────────────────────────────────
     // Gemini sometimes wraps output in markdown fences, adds prose before/after,
